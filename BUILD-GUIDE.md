@@ -1,0 +1,83 @@
+# بىلىم خەزىنىسى v2.5.0 — قاچىلاش ۋە .EXE ياساش قوللانمىسى
+
+## 1. ئالدىنقى شەرتلەر
+
+كومپيۇتېرىڭىزغا تۆۋەندىكىلەرنى قاچىلاڭ:
+- **Node.js** (v18 ياكى يۇقىرى): https://nodejs.org
+- **Git**: https://git-scm.com
+
+## 2. تۆت خىل ئۇسۇل بار
+
+### ئۇسۇل A: ئاپتوماتىك (ئەڭ ئاسان)
+
+PowerShell ياكى CMD ئېچىپ:
+
+```bash
+cd C:\bilim-hezinisi-v242
+BUILD.cmd
+```
+
+بۇ بىر بۇيرۇق بىلەن ھەممىسى ئاپتوماتىك تاماملىنىدۇ:
+- npm install (بوغچا قاچىلاش)
+- pdf.js تەڭشەش
+- Source ZIP ياساش
+- Installer .exe + Portable .exe ياساش
+
+### ئۇسۇل B: قول بىلەن (قەدەممۇقەدەم)
+
+```bash
+cd C:\bilim-hezinisi-v242
+
+# 1. بوغچىلارنى قاچىلاش
+npm install
+
+# 2. pdf.js نى لوكالغا تەڭشەش
+npm run setup
+
+# 3. دېتالنى سىنايمىز (مەجبۇرى ئەمەس)
+npm start
+
+# 4. Source ZIP ياساش
+node make-source-zip.js
+
+# 5. Installer + Portable .exe ياساش
+npm run dist
+```
+
+### ئۇسۇل C: پەقەت Source ZIP لازىم بولسا
+
+```bash
+cd C:\bilim-hezinisi-v242
+node make-source-zip.js
+```
+
+### ئۇسۇل D: پەقەت سىناش (npm start)
+
+```bash
+cd C:\bilim-hezinisi-v242
+npm install
+npm start
+```
+
+## 3. چىقىدىغان ھۆججەتلەر
+
+Build تامام بولغاندا `dist/` ھۆججەتخانىسىدا:
+
+| ھۆججەت | چۈشەندۈرۈش |
+|---|---|
+| `Bilim Hezinisi Setup 2.5.0.exe` | قاچىلاش ھۆججىتى (NSIS). ئۈستەل يۈزىدە «بىلىم خەزىنىسى» shortcut ياسايدۇ |
+| `BilimHezinisi-Portable-2.5.0.exe` | قاچىلاشسىز ئىشلەتكىلى بولىدىغان نۇسخا. بىۋاسىتە قوزغىتىلىدۇ |
+| `BilimHezinisi-Source-2.5.0.zip` | ئاساسلىق كود ھۆججىتى (node_modules سىز) |
+
+## 4. ۋىرۇس تەكشۈرگۈچ ئاگاھلاندۇرۇشى
+
+Electron دېتاللىرى بەزىدە ۋىرۇس تەكشۈرگۈچنى قوزغىتىدۇ:
+- **Avast/AVG** توسسا: "Allow App" نى تاللاڭ
+- **Windows SmartScreen** توسسا: "More info" → "Run anyway" نى تاللاڭ
+
+## 5. v2.5.0 يېڭىلىقلار
+
+1. **ئىزدەش ياخشىلاندى** — ngram ئالگورىتمى تۈزىتىلدى، batch IPC + cache بىلەن تېزلەتتى
+2. **خاتىرە دەپتەرگە toggle قوشۇلدى** — «كىتاب ئامبىرىدىن ئىزدەش» ۋە «ئىملانى تەكشۈرۈش»
+3. **ئىملا تەكشۈرۈش** — UyghurSpell ئاساسىدا، 54,000+ سۆزلۈك لۇغەت بىلەن
+4. **تېزلىك ئاشۇرۇلدى** — ئىزدەش ۋاقتى كۆرۈنەرلىك قىسقاردى

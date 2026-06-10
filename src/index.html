@@ -1,0 +1,2442 @@
+<!DOCTYPE html>
+<html lang="ug" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data: file:; img-src 'self' data: file:; connect-src 'self';">
+<title>بىلىم خەزىنىسى</title>
+<!-- pdf.js: fully local, no CDN (offline-first) -->
+<script src="../assets/pdfjs/pdf.min.js"></script>
+<script>if(window.pdfjsLib){pdfjsLib.GlobalWorkerOptions.workerSrc='../assets/pdfjs/pdf.worker.min.js';}</script>
+<style>
+@font-face {
+  font-family: 'UKIJ Ekran';
+  src: url('../assets/ukijekran.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'trad-arabic';
+  src: url('../assets/trad-arabic.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'trad-arabic';
+  src: url('../assets/trad-arabic-bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Bahij Nazanin';
+  src: url('../assets/Bahij_Nazanin-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+:root {
+  --am: #BA7517; --ab: #FAEEDA; --ab2: rgba(186,117,23,0.2); --at: #633806;
+  --bg: #FFFBF5; --bg2: #F5F0E8; --bg3: #EDE8DF;
+  --text: #1A1208; --text2: #6B5A3E; --text3: #A0916F;
+  --border: rgba(139,100,40,0.15); --border2: rgba(139,100,40,0.28);
+  --jf: 'UKIJ Ekran', 'Traditional Arabic', 'Arabic Typesetting', serif;
+  --radius: 10px; --radius2: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.dark) {
+    --am: #EF9F27; --ab: rgba(99,56,6,0.22); --ab2: rgba(239,159,39,0.25); --at: #FAC775;
+    --bg: #1A1208; --bg2: #231A0C; --bg3: #2E2210;
+    --text: #F5EDD8; --text2: #C4A97A; --text3: #7A6444;
+    --border: rgba(200,150,60,0.15); --border2: rgba(200,150,60,0.28);
+  }
+}
+html.dark {
+  --am: #EF9F27; --ab: rgba(99,56,6,0.22); --ab2: rgba(239,159,39,0.25); --at: #FAC775;
+  --bg: #1A1208; --bg2: #231A0C; --bg3: #2E2210;
+  --text: #F5EDD8; --text2: #C4A97A; --text3: #7A6444;
+  --border: rgba(200,150,60,0.15); --border2: rgba(200,150,60,0.28);
+}
+html.sepia {
+  --am: #A0621A; --ab: rgba(160,98,26,0.15); --ab2: rgba(160,98,26,0.2); --at: #7B4A10;
+  --bg: #F4EADB; --bg2: #EDE0CC; --bg3: #E4D5BD;
+  --text: #3B2A10; --text2: #6B5030; --text3: #998060;
+  --border: rgba(139,100,40,0.2); --border2: rgba(139,100,40,0.35);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--jf); font-size: 15px; overflow: hidden; height: 100vh; display: flex; flex-direction: column; direction: rtl; }
+#titlebar { height: 36px; background: var(--bg2); border-bottom: 0.5px solid var(--border); display: flex; align-items: center; padding: 0 12px; gap: 10px; flex-shrink: 0; -webkit-app-region: drag; user-select: none; }
+#titlebar .logo { font-size: 13px; font-weight: 600; color: var(--am); }
+#titlebar .ver { font-size: 10px; color: var(--text3); font-family: monospace; }
+#hd { display: flex; align-items: center; gap: 8px; padding: 0 14px; height: 54px; background: var(--bg); border-bottom: 0.5px solid var(--border); flex-shrink: 0; }
+#sb { display: flex; flex: 1; align-items: center; background: var(--bg2); border: 0.5px solid var(--border); border-radius: 22px; padding: 0 12px; gap: 6px; max-width: 520px; position: relative; }
+#si { flex: 1; background: none; border: none; outline: none; color: var(--text); font-family: var(--jf); font-size: 14px; padding: 8px 0; direction: rtl; min-width: 0; }
+#si::placeholder { color: var(--text3); }
+.hbtn { font-size: 12px; background: none; border: 0.5px solid var(--border2); color: var(--text2); padding: 6px 12px; border-radius: var(--radius2); cursor: pointer; font-family: var(--jf); white-space: nowrap; transition: all .15s; }
+.hbtn:hover { background: var(--bg2); color: var(--text); }
+.hbtn.p { background: var(--am); border-color: var(--am); color: #fff; font-weight: 600; }
+.hbtn.p:hover { opacity: 0.9; }
+#layout { display: flex; flex: 1; overflow: hidden; }
+#side { width: 200px; background: var(--bg2); border-left: 0.5px solid var(--border); overflow-y: auto; flex-shrink: 0; padding-bottom: 12px; }
+#main { flex: 1; overflow-y: auto; padding: 14px 16px; }
+.sec { font-size: 10px; color: var(--text3); padding: 10px 12px 4px; letter-spacing: 0.8px; font-family: sans-serif; text-transform: uppercase; }
+.ci { display: flex; align-items: center; justify-content: space-between; padding: 7px 12px; cursor: pointer; font-size: 13px; color: var(--text2); transition: background .12s; gap: 4px; border-right: 2.5px solid transparent; }
+.ci:hover { background: var(--bg3); color: var(--text); }
+.ci.on { background: var(--ab); color: var(--at); border-right-color: var(--am); }
+.ci .cn { font-size: 10px; color: var(--text3); background: var(--bg); padding: 1px 6px; border-radius: 8px; font-family: sans-serif; flex-shrink: 0; }
+.ci.on .cn { background: var(--ab2); color: var(--at); }
+.tb { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.tvt { font-size: 14px; font-weight: 600; color: var(--text); }
+.vb { background: none; border: 0.5px solid var(--border2); color: var(--text2); padding: 4px 10px; border-radius: var(--radius2); font-size: 13px; cursor: pointer; transition: all .12s; }
+.vb.on { background: var(--ab); border-color: var(--ab2); color: var(--at); }
+#srt { font-size: 12px; padding: 4px 8px; background: var(--bg2); border: 0.5px solid var(--border2); color: var(--text2); border-radius: var(--radius2); direction: rtl; cursor: pointer; outline: none; font-family: var(--jf); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 10px; }
+.rows { display: flex; flex-direction: column; gap: 6px; }
+.card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 12px; cursor: pointer; transition: all .15s; border-top: 3px solid transparent; position: relative; }
+.card:hover { border-color: var(--border2); border-top-color: var(--am); box-shadow: 0 2px 12px rgba(186,117,23,0.08); }
+.cprog { position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--am); border-radius: 0 0 10px 10px; }
+.cico { height: 82px; background: var(--bg2); border-radius: var(--radius2); display: flex; align-items: center; justify-content: center; font-size: 30px; margin-bottom: 8px; position: relative; }
+.cfmt { position: absolute; bottom: 4px; left: 4px; font-size: 9px; background: var(--bg); border: 0.5px solid var(--border); color: var(--am); padding: 1px 5px; border-radius: 2px; font-family: monospace; font-weight: 700; }
+.ct { font-size: 12.5px; font-weight: 600; color: var(--text); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 4px; }
+.ca { font-size: 11px; color: var(--text2); margin-bottom: 5px; }
+.ccat { font-size: 10px; color: var(--at); background: var(--ab); padding: 2px 7px; border-radius: 10px; display: inline-block; }
+.cbac { display: flex; gap: 5px; margin-top: 9px; }
+.cbac button { flex: 1; padding: 5px; border-radius: 5px; border: 0.5px solid var(--border2); cursor: pointer; font-size: 12px; font-family: var(--jf); background: none; color: var(--text2); transition: all .12s; }
+.cbac button:hover { background: var(--ab); color: var(--at); border-color: var(--ab2); }
+.cbac .del { max-width: 30px; color: var(--text3); }
+.row { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius2); padding: 10px 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all .12s; position: relative; }
+.row:hover { border-color: var(--border2); background: var(--bg2); }
+.rowt { font-size: 13.5px; font-weight: 600; color: var(--text); }
+.rowm { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.empty { text-align: center; padding: 60px 20px; color: var(--text3); }
+.empty .ei { font-size: 48px; margin-bottom: 14px; opacity: .35; }
+.sr { border: 0.5px solid var(--border); border-radius: var(--radius2); padding: 12px 14px; margin-bottom: 7px; cursor: pointer; background: var(--bg); transition: background .12s; }
+.sr:hover { background: var(--bg2); }
+.srt2 { font-size: 14px; font-weight: 600; color: var(--am); margin-bottom: 3px; }
+.srm { font-size: 11px; color: var(--text3); margin: 2px 0; font-family: sans-serif; }
+.snip { font-size: 12px; color: var(--text2); padding: 7px 10px; background: var(--bg2); border-radius: 4px; margin-top: 6px; line-height: 1.9; }
+.snip mark, mark { background: var(--ab2); color: var(--am); border-radius: 2px; padding: 0 2px; }
+@keyframes readerHitFlash {
+  0%   { background: var(--am); color: #fff; box-shadow: 0 0 0 4px var(--ab2); }
+  60%  { background: var(--am); color: #fff; box-shadow: 0 0 0 4px var(--ab2); }
+  100% { background: var(--ab2); color: var(--am); box-shadow: 0 0 0 0 transparent; }
+}
+mark.reader-hit-flash { animation: readerHitFlash 1.5s ease-out 1; }
+.sr-expand { margin-top: 6px; }
+.sr-toggle { background: var(--ab); color: var(--am); border: none; border-radius: 4px; padding: 5px 12px; font-size: 11px; font-family: var(--jf); cursor: pointer; transition: background .12s, color .12s; font-weight: 600; }
+.sr-toggle:hover:not(:disabled) { background: var(--am); color: #fff; }
+.sr-toggle:disabled { opacity: 0.7; cursor: default; }
+.sr-more { margin-top: 8px; max-height: 420px; overflow-y: auto; padding-right: 4px; border-right: 2px solid var(--ab); }
+.sr-snip-row { display: block; }
+.sr-snip-num { display: inline-block; min-width: 22px; color: var(--am); font-weight: 700; font-size: 11px; margin-left: 4px; }
+/* Search history dropdown */
+#search-history { position: absolute; top: 100%; right: 0; left: 0; background: var(--bg); border: 0.5px solid var(--border2); border-radius: var(--radius2); max-height: 260px; overflow-y: auto; z-index: 100; display: none; box-shadow: 0 6px 16px rgba(0,0,0,0.12); margin-top: 6px; padding: 4px 0; }
+#search-history.on { display: block; }
+.sh-header { padding: 6px 14px 4px 14px; font-size: 10px; color: var(--text3); font-family: sans-serif; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 0.5px solid var(--border); margin-bottom: 4px; }
+.sh-item { padding: 8px 14px; font-size: 12px; color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background .1s; font-family: var(--jf); direction: rtl; gap: 10px; }
+.sh-item:hover { background: var(--bg2); color: var(--text); }
+.sh-item .sh-query { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sh-item .sh-count { font-size: 10px; color: var(--text3); font-family: sans-serif; flex-shrink: 0; }
+.sh-empty { padding: 12px 14px; font-size: 12px; color: var(--text3); text-align: center; font-family: var(--jf); }
+/* Pagination */
+.pagination { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 20px; padding-top: 12px; border-top: 0.5px solid var(--border); }
+.pagination button, .pagination span { padding: 6px 10px; border-radius: var(--radius2); font-size: 12px; cursor: pointer; font-family: var(--jf); }
+.pagination button { background: none; border: 0.5px solid var(--border2); color: var(--text2); transition: all .12s; }
+.pagination button:hover { background: var(--bg2); color: var(--text); }
+.pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+.pagination span { color: var(--text3); font-family: sans-serif; }
+/* Overlays */
+.ov { position: fixed; inset: 0; z-index: 50; display: none; align-items: flex-start; justify-content: center; background: rgba(0,0,0,0.5); padding: 20px; overflow-y: auto; }
+.ov.on { display: flex; }
+.mbox { background: var(--bg); border: 0.5px solid var(--border2); border-radius: var(--radius); width: 100%; max-width: 480px; margin: auto; }
+.mh { padding: 14px 18px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.mh h2 { font-size: 15px; font-weight: 600; color: var(--text); }
+.mc { padding: 16px 18px; }
+.fl { margin-bottom: 12px; }
+.fl label { display: block; font-size: 11px; color: var(--text2); margin-bottom: 5px; }
+.inp { width: 100%; padding: 8px 12px; border: 0.5px solid var(--border2); border-radius: var(--radius2); font-size: 13px; color: var(--text); background: var(--bg2); font-family: var(--jf); direction: rtl; outline: none; transition: border-color .15s; }
+.inp:focus { border-color: var(--am); }
+.fz { border: 1.5px dashed var(--border2); border-radius: var(--radius); padding: 20px; text-align: center; cursor: pointer; position: relative; transition: all .15s; }
+.fz:hover, .fz.dg { border-color: var(--am); background: var(--ab); }
+.fz .file-icon { font-size: 28px; margin-bottom: 6px; }
+.fz .fz-t { font-size: 13px; color: var(--text2); }
+.fz .fz-s { font-size: 11px; color: var(--text3); margin-top: 4px; font-family: monospace; }
+.finfo { font-size: 12px; color: var(--at); padding: 6px 10px; background: var(--ab); border-radius: 4px; margin-top: 6px; display: none; }
+.pb { height: 4px; background: var(--bg3); border-radius: 2px; margin-top: 6px; display: none; overflow: hidden; }
+.pf { height: 100%; background: var(--am); border-radius: 2px; transition: width .3s; width: 0; }
+.fa { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; padding-top: 12px; border-top: 0.5px solid var(--border); }
+/* Reader */
+#rdr { position: fixed; inset: 0; z-index: 100; display: none; flex-direction: column; background: var(--bg); }
+#rdr.on { display: flex; }
+#rdr-wrapper { display: flex; flex: 1; overflow: hidden; }
+#rnotes-panel { width: 250px; background: var(--bg2); border-left: 0.5px solid var(--border); overflow-y: auto; flex-shrink: 0; display: none; flex-direction: column; }
+#rnotes-panel.on { display: flex; }
+#rnotes-header { padding: 12px; border-bottom: 0.5px solid var(--border); font-size: 13px; font-weight: 600; color: var(--text); }
+#rnotes-list { flex: 1; overflow-y: auto; padding: 8px; }
+.rnote { padding: 10px; border: 0.5px solid var(--border); border-radius: var(--radius2); margin-bottom: 6px; background: var(--bg); cursor: pointer; transition: all .12s; }
+.rnote:hover { border-color: var(--am); background: var(--bg3); }
+.rnote-text { font-size: 12px; color: var(--text); margin-bottom: 4px; line-height: 1.4; }
+.rnote-date { font-size: 10px; color: var(--text3); margin-bottom: 6px; }
+.rnote-del { background: none; border: none; color: var(--text3); font-size: 12px; cursor: pointer; padding: 2px; float: left; }
+.rnote-del:hover { color: var(--am); }
+#rnotes-input-area { padding: 8px; border-top: 0.5px solid var(--border); }
+#rnotes-input-area textarea { width: 100%; padding: 8px; border: 0.5px solid var(--border); border-radius: var(--radius2); font-family: var(--jf); font-size: 12px; color: var(--text); background: var(--bg); direction: rtl; resize: vertical; min-height: 60px; }
+#rnotes-input-area button { width: 100%; margin-top: 6px; padding: 6px; background: var(--am); color: #fff; border: none; border-radius: var(--radius2); cursor: pointer; font-size: 12px; font-family: var(--jf); }
+#rh { display: flex; align-items: center; gap: 8px; padding: 0 14px; height: 48px; border-bottom: 0.5px solid var(--border); flex-shrink: 0; background: var(--bg); flex-wrap: wrap; }
+#rtitle { flex: 1; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); min-width: 200px; }
+.rsc { display: flex; align-items: center; gap: 5px; background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 14px; padding: 4px 10px; }
+.rsc input { background: none; border: none; outline: none; color: var(--text); font-family: var(--jf); font-size: 12px; width: 120px; direction: rtl; }
+#rc { flex: 1; overflow-y: auto; padding: 28px 40px; }
+#rc .inner { max-width: 800px; margin: 0 auto; }
+#rt { line-height: 2.0; color: var(--text); word-break: break-word; direction: rtl; }
+#rt p { margin: 0 0 0.4em 0; }
+#rt p:last-child { margin-bottom: 0; }
+#rt .arabic-text { font-family: 'Traditional Arabic', 'trad-arabic', serif; line-height: 1.8; }
+.font-selector { font-size: 11px; padding: 3px 8px; background: var(--bg2); border: 0.5px solid var(--border2); color: var(--text2); border-radius: var(--radius2); cursor: pointer; font-family: var(--jf); outline: none; direction: rtl; }
+#rmeta { margin-bottom: 18px; padding-bottom: 14px; border-bottom: 0.5px solid var(--border); }
+/* Progress */
+#progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: var(--am); z-index: 9999; transition: width .3s, opacity .3s; opacity: 0; }
+/* Toast */
+#toast { position: fixed; bottom: 16px; left: 16px; z-index: 9000; display: flex; flex-direction: column; gap: 5px; }
+.tk { padding: 9px 14px; border-radius: var(--radius2); font-size: 12px; background: var(--bg); border: 0.5px solid; max-width: 280px; font-family: var(--jf); animation: tin .2s; }
+.tk.s { border-color: #3B6D11; color: #3B6D11; }
+.tk.e { border-color: #A32D2D; color: #A32D2D; }
+.tk.i { border-color: var(--am); color: var(--am); }
+@keyframes tin { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+/* About panel */
+#about { position: fixed; inset: 0; z-index: 200; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); }
+#about.on { display: flex; }
+#abox { background: var(--bg); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 28px; max-width: 360px; width: 100%; text-align: center; }
+/* Stats modal */
+#statsov { max-width: 500px; }
+.stat-group { margin-bottom: 16px; padding: 12px; background: var(--bg2); border-radius: var(--radius2); }
+.stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.stat-val { font-size: 18px; font-weight: 700; color: var(--am); margin-bottom: 6px; }
+.stat-bar { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 12px; }
+.stat-bar-name { flex: 1; color: var(--text2); }
+.stat-bar-track { flex: 1; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+.stat-bar-fill { height: 100%; background: var(--am); border-radius: 3px; transition: width .3s; }
+.stat-bar-val { color: var(--text3); font-family: sans-serif; font-size: 10px; min-width: 40px; text-align: left; }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+/* Hide number input spinners */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+/* Custom RTL Menu Bar */
+#menubar { display: flex; align-items: center; gap: 0; direction: rtl; -webkit-app-region: no-drag; margin-right: 8px; }
+#menubar .menu-item { position: relative; }
+#menubar .menu-item > button { background: none; border: none; color: var(--text2); font-family: var(--jf); font-size: 12px; padding: 6px 10px; cursor: pointer; border-radius: 3px; transition: background .12s; white-space: nowrap; }
+#menubar .menu-item > button:hover, #menubar .menu-item.open > button { background: var(--bg3); color: var(--text); }
+#menubar .submenu { display: none; position: absolute; top: 100%; right: 0; background: var(--bg); border: 0.5px solid var(--border2); border-radius: var(--radius2); min-width: 220px; padding: 4px 0; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,0.15); direction: rtl; }
+#menubar .menu-item.open .submenu { display: block; }
+#menubar .submenu button { display: flex; align-items: center; justify-content: space-between; width: 100%; background: none; border: none; color: var(--text); font-family: var(--jf); font-size: 12px; padding: 7px 14px; cursor: pointer; text-align: right; transition: background .1s; white-space: nowrap; }
+#menubar .submenu button:hover { background: var(--ab); color: var(--at); }
+#menubar .submenu .shortcut { font-size: 10px; color: var(--text3); font-family: monospace; margin-right: auto; padding-right: 16px; }
+#menubar .submenu .sep { height: 1px; background: var(--border); margin: 4px 8px; }
+
+/* New module fonts (Quran + Notes) */
+@font-face{font-family:'UthmanicHafs';src:url('../assets/fonts/UthmanicHafs1.otf') format('opentype');font-weight:normal;font-display:swap;}
+@font-face{font-family:'UthmanicHafs';src:url('../assets/fonts/UthmanicHafs1B.otf') format('opentype');font-weight:bold;font-display:swap;}
+@font-face{font-family:'UKIJ Esliye';src:url('../assets/fonts/UKIJEsliye.ttf') format('truetype');font-weight:normal;font-display:swap;}
+@font-face{font-family:'UKIJ Esliye';src:url('../assets/fonts/UKIJEsliyeBold.ttf') format('truetype');font-weight:bold;font-display:swap;}
+@font-face{font-family:'UKIJ Tuz';src:url('../assets/fonts/UKIJTuz.ttf') format('truetype');font-weight:normal;font-display:swap;}
+@font-face{font-family:'UKIJ Tuz';src:url('../assets/fonts/UKIJTuzBold.ttf') format('truetype');font-weight:bold;font-display:swap;}
+@font-face{font-family:'UKIJ Tuz Kitab';src:url('../assets/fonts/UKIJTuzKitab.ttf') format('truetype');font-weight:normal;font-display:swap;}
+@font-face{font-family:'UKIJ Tuz Kitab';src:url('../assets/fonts/UKIJTuzKitabBold.ttf') format('truetype');font-weight:bold;font-display:swap;}
+@font-face{font-family:'UKIJ Tuz Tom';src:url('../assets/fonts/UKIJTuzTom.ttf') format('truetype');font-weight:normal;font-display:swap;}
+
+/* Mode tabs (library / quran / notes) */
+.mode-tabs { display:flex; flex-direction:column; padding:8px; gap:4px; border-bottom:0.5px solid var(--border); margin-bottom:6px; }
+.mt { padding:8px 12px; border-radius:var(--radius2); cursor:pointer; font-size:13px; color:var(--text2); transition:background .12s; display:flex; align-items:center; gap:8px; user-select:none; }
+.mt:hover { background:var(--bg3); color:var(--text); }
+.mt.on { background:var(--am); color:#fff; font-weight:600; }
+</style>
+</head>
+<body>
+
+<div id="progress" style="width:0"></div>
+
+<!-- Title bar -->
+<div id="titlebar">
+  <!-- Custom RTL Menu Bar (right side) -->
+  <div id="menubar">
+    <div class="menu-item" id="menu-file">
+      <button onclick="toggleMenu('menu-file')">ھۆججەت</button>
+      <div class="submenu">
+        <button onclick="closeMenus();showAdd()">يېڭى كىتاب قوشۇش <span class="shortcut">Ctrl+N</span></button>
+        <button onclick="closeMenus();showBatchImport()">توپلاپ كىتاب قوشۇش</button>
+        <div class="sep"></div>
+        <button onclick="closeMenus();showBulkExport()">📤 تۈر بويىچە توپلاپ چۈشۈرۈش</button>
+        <div class="sep"></div>
+        <button onclick="closeMenus();openDataFolder()">سانلىق مەلۇمات ھۆججەتخانىسىنى ئېچىش</button>
+        <div class="sep"></div>
+        <button onclick="closeMenus();window.close()">دېتالدىن چىقىش <span class="shortcut">Ctrl+Q</span></button>
+      </div>
+    </div>
+    <div class="menu-item" id="menu-edit">
+      <button onclick="toggleMenu('menu-edit')">تەھرىرلەش</button>
+      <div class="submenu">
+        <button onclick="closeMenus();document.execCommand('undo')">يېنىۋېلىش <span class="shortcut">Ctrl+Z</span></button>
+        <button onclick="closeMenus();document.execCommand('redo')">قايتا قىلىش <span class="shortcut">Ctrl+Shift+Z</span></button>
+        <div class="sep"></div>
+        <button onclick="closeMenus();document.execCommand('cut')">كېسىش <span class="shortcut">Ctrl+X</span></button>
+        <button onclick="closeMenus();document.execCommand('copy')">نۇسخىلاش <span class="shortcut">Ctrl+C</span></button>
+        <button onclick="closeMenus();document.execCommand('paste')">چاپلاش <span class="shortcut">Ctrl+V</span></button>
+        <div class="sep"></div>
+        <button onclick="closeMenus();document.execCommand('selectAll')">ھەممىنى تاللاش <span class="shortcut">Ctrl+A</span></button>
+        <div class="sep"></div>
+        <button onclick="closeMenus();document.getElementById('si').focus()">ئىزدەش <span class="shortcut">Ctrl+F</span></button>
+      </div>
+    </div>
+    <div class="menu-item" id="menu-view">
+      <button onclick="toggleMenu('menu-view')">كۆرۈنۈش</button>
+      <div class="submenu">
+        <button onclick="closeMenus();location.reload()">قايتا يۈكلەش <span class="shortcut">Ctrl+R</span></button>
+        <div class="sep"></div>
+        <button onclick="closeMenus();toggleDarkMode()">قاراڭغۇ / يورۇق ھالەت</button>
+        <div class="sep"></div>
+        <button onclick="closeMenus();setView('g')">تور كۆرۈنۈشى</button>
+        <button onclick="closeMenus();setView('l')">تىزىملىك كۆرۈنۈشى</button>
+      </div>
+    </div>
+    <div class="menu-item" id="menu-window">
+      <button onclick="toggleMenu('menu-window')">كۆزنەك</button>
+      <div class="submenu">
+        <button onclick="closeMenus();showStats()">ئاماللىق سانلار</button>
+        <button onclick="closeMenus();showCatsMgr()">تۈرلەرنى باشقۇرۇش</button>
+        <div class="sep"></div>
+        <button onclick="closeMenus();runCleanup()">🧹 قالدۇق ھۆججەتلەرنى تازىلاش</button>
+      </div>
+    </div>
+    <div class="menu-item" id="menu-help">
+      <button onclick="toggleMenu('menu-help')">ياردەم</button>
+      <div class="submenu">
+        <button onclick="closeMenus();showAbout()">دېتال ھەققىدە</button>
+        <button onclick="closeMenus();showStats()">ئاماللىق سانلار</button>
+      </div>
+    </div>
+  </div>
+  <span class="logo">📚 بىلىم خەزىنىسى</span>
+  <span class="ver" id="ver">v1.0.0</span>
+  <div style="flex:1"></div>
+  <button class="hbtn" onclick="toggleDarkMode()" style="font-size:11px;-webkit-app-region:no-drag" id="darkToggle" title="قاراڭغۇ / يورۇق ھالەت">🌙</button>
+</div>
+
+<!-- Header -->
+<div id="hd">
+  <div id="sb">
+    <span style="font-size:13px;color:var(--text3)">🔍</span>
+    <input type="text" id="si" placeholder="كىتاب نامى، ئاپتور ياكى مەزمۇن ئىچىدىن ئىزدەش..." onkeydown="if(event.key==='Enter'){hideSearchHistory(true);doSearch()}" onfocus="if(!this.value)loadSearchHistory()" onblur="hideSearchHistory()">
+    <button onclick="clearSearch()" id="clr" style="background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;display:none">✕</button>
+    <button onclick="doSearch()" style="background:none;border:none;color:var(--am);font-size:13px;cursor:pointer;font-family:var(--jf);font-weight:600">ئىزدەش</button>
+    <div id="search-history"></div>
+  </div>
+  <button class="hbtn" onclick="showCatsMgr()" title="تۈرلەرنى باشقۇرۇش">📂 تۈرلەر</button>
+  <button class="hbtn" onclick="showBatchImport()" title="بىرنەچچە كىتابنى بىراقلا قوشۇش">📁 توپلاپ قوشۇش</button>
+  <button class="hbtn p" onclick="showAdd()" title="يېڭى كىتاب قوشۇشۇش (Ctrl+N)">+ كىتاب قوشۇش</button>
+</div>
+
+<!-- Main layout -->
+<div id="layout">
+  <aside id="side"></aside>
+  <main id="main">
+    <div class="tb">
+      <span class="tvt" id="vtitle">بارلىق كىتابلار</span>
+      <div style="margin-right:auto;display:flex;gap:4px">
+        <button class="vb on" id="gvb" onclick="setView('g')" title="تور كۆرۈنۈشى">⊞</button>
+        <button class="vb" id="lvb" onclick="setView('l')" title="تىزىملىك كۆرۈنۈشى">☰</button>
+      </div>
+      <select id="srt" onchange="S.sort=this.value;S.page=1;renderBooks()">
+        <option value="d">يېڭى قوشۇلغانلىرى بويىچە</option>
+        <option value="t">كىتاب نامى بويىچە</option>
+        <option value="a">ئاپتور ئىسمى بويىچە</option>
+        <option value="c">تۈرى بويىچە</option>
+      </select>
+    </div>
+    <div id="bd"></div>
+    <div id="pagination"></div>
+  </main>
+</div>
+
+<!-- Add Book Modal -->
+<div class="ov" id="addov">
+  <div class="mbox">
+    <div class="mh">
+      <h2 id="addTitle">📥 يېڭى كىتاب قوشۇش</h2>
+      <button onclick="hideAdd()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
+    </div>
+    <div class="mc">
+      <div class="fl">
+        <label>كىتاب ھۆججىتى</label>
+        <div class="fz" id="fz">
+          <div class="file-icon">📄</div>
+          <div class="fz-t">ھۆججەتنى سۆرەپ تاشلاڭ ياكى چېكىڭ</div>
+          <div class="fz-s">PDF · TXT · DOCX · DOC</div>
+        </div>
+        <div class="finfo" id="finfo"></div>
+        <div class="pb" id="pb"><div class="pf" id="pf"></div></div>
+      </div>
+      <div class="fl"><label>كىتاب نامى *</label><input id="btitle" class="inp" placeholder="كىتاب نامىنى كىرگۈزۈڭ"></div>
+      <div class="fl"><label>ئاپتور</label><input id="bauth" class="inp" placeholder="ئاپتور ئىسمى"></div>
+      <div class="fl"><label>تۈر</label><select id="bcat" class="inp" style="cursor:pointer"></select></div>
+      <div class="fl"><label>قىسقىچە چۈشەندۈرۈش</label><textarea id="bdesc" rows="3" class="inp" style="resize:vertical" placeholder="كىتاب ھەققىدە قىسقىچە..."></textarea></div>
+      <div class="fa">
+        <button onclick="hideAdd()" class="hbtn">بىكار قىلىش</button>
+        <button onclick="addBook()" class="hbtn p">📚 كۈتۈپخانىغا قوشۇش</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Book Modal -->
+<div class="ov" id="editov">
+  <div class="mbox">
+    <div class="mh">
+      <h2>✏️ كىتابنى تەھرىرلە</h2>
+      <button onclick="hideEdit()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
+    </div>
+    <div class="mc">
+      <div class="fl"><label>كىتاب نامى *</label><input id="etitle" class="inp" placeholder="كىتاب نامىنى كىرگۈزۈڭ"></div>
+      <div class="fl"><label>ئاپتور</label><input id="eauth" class="inp" placeholder="ئاپتور ئىسمى"></div>
+      <div class="fl"><label>تۈر</label><select id="ecat" class="inp" style="cursor:pointer"></select></div>
+      <div class="fl"><label>قىسقىچە چۈشەندۈرۈش</label><textarea id="edesc" rows="3" class="inp" style="resize:vertical" placeholder="كىتاب ھەققىدە قىسقىچە..."></textarea></div>
+      <div class="fa">
+        <button onclick="hideEdit()" class="hbtn">بىكار قىلىش</button>
+        <button onclick="saveEditBook()" class="hbtn p">💾 ساقلاش</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Batch Import Modal -->
+<div class="ov" id="batchov">
+  <div class="mbox" style="max-width: 520px;">
+    <div class="mh">
+      <h2>📁 توپلاپ كىتاب قوشۇش</h2>
+      <button onclick="hideBatchImport()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
+    </div>
+    <div class="mc">
+      <p style="font-size:12px;color:var(--text2);margin-bottom:12px">ئىچىدە PDF · TXT · DOCX · DOC ھۆججەتلىرى بار ھۆججەتخانىنى تاللاڭ:</p>
+      <div class="fl"><label>تۈرى</label><select id="batchcat" class="inp" style="cursor:pointer"></select></div>
+      <button onclick="selectBatchFolder()" class="hbtn p" style="width:100%;margin-bottom:12px">📁 ھۆججەتخانا تاللاش</button>
+      <div id="batchlist" style="max-height:300px;overflow-y:auto;border:0.5px solid var(--border);border-radius:var(--radius2);padding:8px;display:none;margin-bottom:12px">
+      </div>
+      <p id="batchinfo" style="font-size:11px;color:var(--text3);margin-bottom:12px;display:none"></p>
+      <div id="batchStatus" style="font-size:12px;color:var(--text2);margin:8px 0;text-align:center;font-family:sans-serif"></div>
+      <div class="fa">
+        <button onclick="hideBatchImport()" class="hbtn">بىكار قىلىش</button>
+        <button onclick="confirmBatchImport()" class="hbtn p" id="batchbtn" style="display:none">✓ قوشۇش</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Category Manager Modal -->
+<div class="ov" id="catov">
+  <div class="mbox">
+    <div class="mh">
+      <h2>📂 تۈر باشقۇرۇش</h2>
+      <button onclick="hideCatsMgr()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
+    </div>
+    <div class="mc">
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <input id="nci" class="inp" style="flex:1" placeholder="يېڭى تۈر نامى...">
+        <button onclick="addCat()" class="hbtn p" style="white-space:nowrap">+ قوشۇش</button>
+      </div>
+      <div id="catlist"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Stats Modal -->
+<div class="ov" id="statsov">
+  <div class="mbox">
+    <div class="mh">
+      <h2>📊 ئاماللىق سانلار</h2>
+      <button onclick="hideStats()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
+    </div>
+    <div class="mc">
+      <div class="stat-group">
+        <div class="stat-label">ئومۇمىي كىتاب سانى</div>
+        <div class="stat-val" id="statTotal">0</div>
+      </div>
+
+      <div class="stat-group">
+        <div class="stat-label">تۈر بويىچە تەقسىملىنىشى</div>
+        <div id="statCats"></div>
+      </div>
+
+      <div class="stat-group">
+        <div class="stat-label">ھۆججەت شەكلى بويىچە</div>
+        <div id="statFormats"></div>
+      </div>
+
+      <div class="stat-group">
+        <div class="stat-label">ساقلانغان مەزمۇن ھەجمى</div>
+        <div class="stat-val" id="statSize">0 MB</div>
+      </div>
+
+      <div class="fa">
+        <button onclick="hideStats()" class="hbtn p" style="width:100%">تامام</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reader -->
+<div id="rdr">
+  <div id="rh">
+    <button onclick="closeReader()" class="hbtn" style="white-space:nowrap">→ قايتىش</button>
+    <div id="rtitle"></div>
+    <div class="rsc">
+      <span style="font-size:11px;color:var(--text3)">🔍</span>
+      <input type="text" id="rsi" placeholder="كىتاب ئىچىدىن ئىزدەش..." oninput="debounceSearchInBook(this.value)">
+    </div>
+    <span id="matchcount" style="font-size:11px;color:var(--text3);font-family:sans-serif;white-space:nowrap"></span>
+    <button onclick="toggleBookmarks()" class="hbtn" title="خەتكۈش">🔖</button>
+    <button onclick="toggleNotes()" class="hbtn" title="ئىزاھات">📝</button>
+    <button onclick="downloadBook('txt')" class="hbtn" title="TXT ھالىتىدە چۈشۈرۈش">📥 TXT</button>
+    <button onclick="downloadBook('docx')" class="hbtn" title="Word ھالىتىدە چۈشۈرۈش">📥 DOCX</button>
+    <button onclick="downloadBook('pdf')" class="hbtn" title="PDF ھالىتىدە چۈشۈرۈش">📥 PDF</button>
+    <button onclick="chFS(-2)" class="hbtn" title="خەت كىچىكلىتىش (Ctrl+←)">A-</button>
+    <button onclick="chFS(2)" class="hbtn" title="خەت چوڭايتىش (Ctrl+→)">A+</button>
+    <select id="fontSelector" class="font-selector" onchange="changeReaderFont(this.value)" title="خەت نۇسخىسىنى تاللاش">
+      <option value="auto">🔤 ئاپتوماتىك</option>
+      <option value="ukij">UKIJ Ekran</option>
+      <option value="traditional">Traditional Arabic</option>
+      <option value="bahij">Bahij Nazanin</option>
+    </select>
+    <button onclick="jumpToMatch(-1)" class="hbtn" id="prevM" style="display:none">↑</button>
+    <button onclick="jumpToMatch(1)" class="hbtn" id="nextM" style="display:none">↓</button>
+  </div>
+  <div id="rdr-wrapper">
+    <div id="rc"><div class="inner">
+      <div id="rmeta"></div>
+      <div id="rt"></div>
+    </div></div>
+    <div id="rnotes-panel">
+      <div id="rnotes-header">ئىزاھاتلار</div>
+      <div id="rnotes-list"></div>
+      <div id="rnotes-input-area">
+        <textarea id="rnotes-textarea" placeholder="يېڭى ئىزاھات قوشۇش..."></textarea>
+        <button onclick="addNote()">+ قوشۇش</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Rename Category Modal -->
+<div class="ov" id="renov">
+  <div class="mbox" style="max-width:360px">
+    <div class="mh">
+      <h2>✏️ تۈر ئىسمىنى ئۆزگەرتىش</h2>
+      <button onclick="hideRename()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
+    </div>
+    <div class="mc">
+      <div class="fl"><label>يېڭى ئىسىم</label><input id="renInput" class="inp" placeholder="يېڭى تۈر نامى..."></div>
+      <div class="fa">
+        <button onclick="hideRename()" class="hbtn">بىكار قىلىش</button>
+        <button onclick="confirmRename()" class="hbtn p">ساقلاش</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk Export -->
+<div class="ov" id="exportov">
+  <div class="mbox" style="max-width:420px">
+    <div class="mh">
+      <h2>📤 تۈر بويىچە توپلاپ چۈشۈرۈش</h2>
+      <button onclick="hideExport()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text3)">✕</button>
+    </div>
+    <div class="mc">
+      <div class="fl">
+        <label>چۈشۈرمەكچى بولغان تۈرنى تاللاڭ:</label>
+        <select id="exportCat" class="inp" style="margin-top:6px">
+        </select>
+      </div>
+      <div id="exportInfo" style="font-size:12px;color:var(--text2);padding:8px;background:var(--bg2);border-radius:var(--radius2);margin-bottom:12px;display:none"></div>
+      <div class="fa">
+        <button onclick="hideExport()" class="hbtn">بىكار قىلىش</button>
+        <button onclick="doBulkExport()" class="hbtn p">📤 چۈشۈرۈشنى باشلاش</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- About -->
+<div id="about">
+  <div id="abox">
+    <div style="font-size:44px;margin-bottom:10px">📚</div>
+    <h2 style="font-size:20px;font-weight:700;color:var(--am);margin-bottom:6px">بىلىم خەزىنىسى</h2>
+    <p style="font-size:13px;color:var(--at);margin-bottom:4px;font-weight:600">ئۆزىڭىزگە تەۋە رەقەملىك كۇتۇپخانا</p>
+    <p style="font-size:11px;color:var(--text3);font-family:monospace;margin-bottom:12px" id="aver"></p>
+    <div style="font-size:12px;color:var(--text2);line-height:2.2;margin-bottom:14px;text-align:right;padding:0 8px">
+      نەچچە يۈزلىگەن كىتابلارنى ئۆزىگە سىغدۇرالايدىغان، پۈتۈنلەي ھەقسىز ئېلېكتىرونلۇق كۇتۇپخانا دېتالى.<br><br>
+      بۇ دېتال پۈتۈنلەي تورسىز ھالەتتە ئىشلەيدىغان بولۇپ، ئۇيغۇرچە، ئەرەبچە ۋە ئىنگلىزچە PDF، TXT، DOCX ۋە DOC قاتارلىق ئاساسلىق ھۆججەت فورماتلىرىنى تولۇق قوللايدۇ. مەزمۇن بويىچە كىتاب قوشۇش، ئىچىدىن مەزمۇن ئىزدەش، ئوقۇش ئىنتايىن قولايلىق لايىھەلەنگەن.<br><br>
+      <strong style="color:var(--am)">ئىخچام، تېز ۋە ئەتراپلىق — شەخسىي كۇتۇپخانىڭىز ھەر ۋاقىت يېنىڭىزدا!</strong>
+    </div>
+    <button onclick="hideAbout()" class="hbtn p" style="width:100%">تامام</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// Custom menu bar logic
+function toggleMenu(id) {
+  const el = document.getElementById(id);
+  const wasOpen = el.classList.contains('open');
+  closeMenus();
+  if (!wasOpen) el.classList.add('open');
+}
+function closeMenus() {
+  document.querySelectorAll('#menubar .menu-item').forEach(m => m.classList.remove('open'));
+}
+// Close menus when clicking outside
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#menubar')) closeMenus();
+});
+
+const ICONS = {
+  'قۇرئان ۋە تەپسىر':'📖','ھەدىسلەر':'🌙','فىقھى كىتابلار':'⚖️',
+  'تەۋھىد ۋە ئەقىدە':'🕋','تارىخ':'🏛️','ئەدەبىي ئەسەرلەر':'🌹',
+  'تىل-ئەدەبىيات':'✍️','سىيرەت':'🕌','ئۇيغۇرچە ئوقۇشلۇق كىتابلار':'📘',
+  'بالىلار كىتابلىرى':'🧒','لازىملىق كىتابلار':'📌','مۇھىم ئەسەرلەر':'⭐','باشقا':'📚'
+};
+
+const S = {
+  books:[], cats:[], cat:'all', sort:'d', view:'g',
+  srch:false, res:[], nid:1, curB:null, fs:17,
+  tempFile:null, tempExt:'', tempContent:'', matchIdx:0, matches:[],
+  darkMode:null, theme:'light', recent:[], readPos:{}, page:1, pageSize:30,
+  searchDebounceTimer:null, editingBookId:null, batchFiles:[],
+  bookmarks:{}, bookNotes:{}, searchIndex:{}, readerContent:'',
+  readerFont:'auto',
+  mode: 'library',
+  quran: { suras:[], curSura:1, curAya:1, searchResults:null, searchQuery:'', searchLang:'auto', sidebarFilter:'', showTranslation:true },
+  notes: { docs:[], curDoc:null, dirty:false, matches:new Map(), rightTab:'quran', quickSura:null, quickAya:null, quickWithTr:true, refsFilter:null }
+};
+
+// Cache of the library's main-area DOM. Captured once after first render so
+// we can restore it after notes/quran modes destroyed it via innerHTML reset.
+let libraryMainHTML = '';
+
+// Sanitize function for XSS prevention
+function sanitize(str) {
+  if(!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// Init
+async function init() {
+  try {
+    const ver = await window.electron.getVersion();
+    document.getElementById('ver').textContent = 'v' + ver;
+    document.getElementById('aver').textContent = 'نۇسخا ' + ver;
+  } catch(e) {}
+
+  const data = await window.electron.loadLibrary();
+  S.books = data.books || [];
+  S.cats = data.cats || defaultCats();
+  S.nid = data.nid || 1;
+  S.darkMode = data.darkMode !== undefined ? data.darkMode : null;
+  S.theme = data.theme || null;
+  S.recent = data.recent || [];
+  S.readPos = data.readPos || {};
+  S.bookmarks = data.bookmarks || {};
+  S.bookNotes = data.notes || {};
+
+  // Apply dark mode
+  migrateTheme();
+  applyTheme();
+
+  renderSide();
+  renderBooks();
+  setupFileZone();
+  setupKeyboardShortcuts();
+
+  // Show welcome screen for first-time users
+  if (S.books.length === 0) showWelcome();
+
+  // Cache the library main-area HTML so we can restore it after mode switches
+  // overwrote `#main`. Capture happens AFTER renderBooks() so #bd is populated.
+  const _mainEl = document.getElementById('main');
+  if (_mainEl) libraryMainHTML = _mainEl.innerHTML;
+
+  // Ensure mode-tab UI is in a coherent state on first render
+  setMode('library');
+}
+
+function defaultCats() {
+  return ['قۇرئان ۋە تەپسىر','ھەدىسلەر','فىقھى كىتابلار','تەۋھىد ۋە ئەقىدە',
+          'تارىخ','ئەدەبىي ئەسەرلەر','تىل-ئەدەبىيات','سىيرەت',
+          'ئۇيغۇرچە ئوقۇشلۇق كىتابلار','بالىلار كىتابلىرى','لازىملىق كىتابلار','مۇھىم ئەسەرلەر','باشقا'];
+}
+
+function showWelcome() {
+  const bd = document.getElementById('bd');
+  bd.innerHTML = `
+    <div style="text-align:center;padding:50px 20px;max-width:500px;margin:0 auto">
+      <div style="font-size:64px;margin-bottom:16px">📚</div>
+      <h2 style="font-size:20px;font-weight:700;color:var(--am);margin-bottom:10px">بىلىم خەزىنىسىگە خۇش كەلدىڭىز!</h2>
+      <p style="font-size:14px;color:var(--text2);line-height:2.2;margin-bottom:24px">
+        بۇ يەردە ئۆزىڭىزنىڭ شەخسىي رەقەملىك كۇتۇپخانىڭىزنى قۇرالايسىز.<br>
+        PDF، TXT، DOCX ۋە DOC فورماتلىرىدىكى كىتابلارنى قوشۇپ، ئىزدىيەلەيسىز.
+      </p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button onclick="showAdd()" class="hbtn p" style="padding:10px 24px;font-size:14px">📥 بىرىنچى كىتابنى قوشۇش</button>
+        <button onclick="showBatchImport()" class="hbtn" style="padding:10px 24px;font-size:14px">📁 توپلاپ قوشۇش</button>
+      </div>
+      <div style="margin-top:30px;padding:16px;background:var(--bg2);border-radius:var(--radius);text-align:right">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:10px;text-align:center">قىسقىچە قوللانما</div>
+        <div style="font-size:12px;color:var(--text2);line-height:2.4">
+          📥 يۇقىرىدىكى «كىتاب قوشۇش» كۇنۇپكىسىنى بېسىپ كىتاب قوشالايسىز<br>
+          📁 «توپلاپ قوشۇش» ئارقىلىق بىرنەچچە كىتابنى بىراقلا قوشالايسىز<br>
+          🔍 ئىزدەش رامكىسىدىن مەزمۇن ئىچىدىن ئىزدىيەلەيسىز<br>
+          📖 كىتابنى چېكىپ بىۋاسىتە ئوقۇيالايسىز<br>
+          ⌨️ <b>Ctrl+1</b> كىتابلار، <b>Ctrl+2</b> قۇرئان، <b>Ctrl+3</b> خاتىرە — تېز ئالمىشىش
+        </div>
+      </div>
+    </div>`;
+}
+
+async function saveData() {
+  await window.electron.saveLibrary({
+    books: S.books,
+    cats: S.cats,
+    nid: S.nid,
+    darkMode: S.darkMode,
+    theme: S.theme,
+    recent: S.recent,
+    readPos: S.readPos,
+    bookmarks: S.bookmarks,
+    notes: S.bookNotes
+  });
+}
+
+function applyTheme() {
+  const html = document.documentElement;
+  html.classList.remove('dark', 'sepia');
+  const btn = document.getElementById('darkToggle');
+  if (S.theme === 'dark') {
+    html.classList.add('dark');
+    btn.textContent = '☀️';
+    btn.title = 'يورۇق ھالەتكە ئالماشتۇرۇش';
+  } else if (S.theme === 'sepia') {
+    html.classList.add('sepia');
+    btn.textContent = '📜';
+    btn.title = 'قاراڭغۇ ھالەتكە ئالماشتۇرۇش';
+  } else {
+    btn.textContent = '🌙';
+    btn.title = 'سېپيا ھالەتكە ئالماشتۇرۇش';
+  }
+}
+
+// Backward compatibility: migrate darkMode to theme
+function migrateTheme() {
+  if (S.theme) return;
+  if (S.darkMode === true) S.theme = 'dark';
+  else if (S.darkMode === false) S.theme = 'light';
+  else S.theme = 'light';
+}
+
+function toggleDarkMode() {
+  if (S.theme === 'light') S.theme = 'sepia';
+  else if (S.theme === 'sepia') S.theme = 'dark';
+  else S.theme = 'light';
+  applyTheme();
+  saveData();
+}
+
+function addToRecent(bookId) {
+  const now = new Date().toISOString();
+  S.recent = S.recent.filter(r => r.id !== bookId);
+  S.recent.unshift({ id: bookId, time: now });
+  if (S.recent.length > 20) S.recent.pop();
+  saveData();
+}
+
+function renderSide() {
+  let h = `<div class="mode-tabs">
+    <div class="mt ${S.mode==='library'?'on':''}" onclick="setMode('library')" title="كىتابلار كۇتۇپخانىسى (Ctrl+1)">📚 كىتابلار</div>
+    <div class="mt ${S.mode==='quran'?'on':''}" onclick="setMode('quran')" title="قۇرئان كەرىم ئوقۇش (Ctrl+2)">📖 قۇرئان كەرىم</div>
+    <div class="mt ${S.mode==='notes'?'on':''}" onclick="setMode('notes')" title="خاتىرە دەپتىرى (Ctrl+3)">📝 خاتىرە دەپتىرىم</div>
+  </div>`;
+
+  if (S.mode === 'library') {
+    const counts = {};
+    S.books.forEach(b => counts[b.category] = (counts[b.category]||0)+1);
+    h += `<div class="sec">تۈرلەر</div>`;
+    h += `<div class="ci ${S.cat==='all'?'on':''}" onclick="setCat('all')">
+      <span>📚 بارلىق كىتابلار</span><span class="cn">${S.books.length}</span></div>`;
+    S.cats.forEach(c => {
+      const n = counts[c]||0;
+      const ic = ICONS[c]||'📚';
+      h += `<div class="ci ${S.cat===c?'on':''}" onclick="setCat('${sanitize(c).replace(/'/g,"\\'")}')">
+        <span>${ic} ${sanitize(c)}</span><span class="cn">${n}</span></div>`;
+    });
+
+    if (S.recent.length > 0) {
+      h += `<div class="sec" style="margin-top:14px">يېقىندا ئوقۇلغانلار</div>`;
+      S.recent.forEach(r => {
+        const b = S.books.find(x => x.id === r.id);
+        if (b) {
+          const ic = ICONS[b.category] || '📚';
+          h += `<div class="ci" onclick="openReader(${b.id})">
+            <span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ic} ${sanitize(b.title)}</span>
+          </div>`;
+        }
+      });
+    }
+  } else if (S.mode === 'quran') {
+    h += (typeof renderQuranSidebar === 'function') ? renderQuranSidebar() : '<div style="padding:20px;color:var(--text3)">يۈكلىنىۋاتىدۇ...</div>';
+  } else if (S.mode === 'notes') {
+    h += (typeof renderNotesSidebar === 'function') ? renderNotesSidebar() : '<div style="padding:20px;color:var(--text3)">يۈكلىنىۋاتىدۇ...</div>';
+  }
+
+  document.getElementById('side').innerHTML = h;
+}
+
+function setMode(mode) {
+  if (mode === S.mode) return;
+  S.mode = mode;
+  // Hide the library top search bar in non-library modes
+  const hd = document.getElementById('hd');
+  if (hd) hd.style.display = (mode === 'library') ? 'flex' : 'none';
+  renderSide();
+  if (mode === 'library') {
+    // Restore the library's main-area DOM that notes/quran views destroyed
+    const main = document.getElementById('main');
+    if (main && libraryMainHTML) {
+      main.innerHTML = libraryMainHTML;
+    }
+    renderBooks();
+  } else if (mode === 'quran' && typeof renderQuranView === 'function') {
+    renderQuranView();
+  } else if (mode === 'notes' && typeof renderNotesView === 'function') {
+    renderNotesView();
+  }
+}
+
+function getFiltered() {
+  let bs = [...S.books];
+  if (S.cat !== 'all') bs = bs.filter(b => b.category === S.cat);
+  if (S.sort === 't') bs.sort((a,b) => a.title.localeCompare(b.title));
+  else if (S.sort === 'a') bs.sort((a,b) => (a.author||'').localeCompare(b.author||''));
+  else if (S.sort === 'c') bs.sort((a,b) => a.category.localeCompare(b.category));
+  else bs.sort((a,b) => new Date(b.date)-new Date(a.date));
+  return bs;
+}
+
+function renderBooks() {
+  const bd = document.getElementById('bd');
+  if (S.srch) { renderSearch(); return; }
+  const bs = getFiltered();
+  const vt = S.cat === 'all' ? `بارلىق كىتابلار (${bs.length})` : `${sanitize(S.cat)} (${bs.length})`;
+  document.getElementById('vtitle').textContent = vt;
+  if (!bs.length) {
+    bd.innerHTML = `<div class="empty"><div class="ei">📚</div><h3 style="font-size:16px;font-weight:600;margin-bottom:6px">كىتاب يوق</h3><p style="font-size:13px">يۇقىرىدىكى «+ كىتاب قوشۇش» كۇنۇپكىسىنى بېسىپ كىتاب قوشۇڭ</p></div>`;
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+
+  const totalPages = Math.ceil(bs.length / S.pageSize);
+  const start = (S.page - 1) * S.pageSize;
+  const end = start + S.pageSize;
+  const paginated = bs.slice(start, end);
+
+  if (S.view === 'g') {
+    bd.innerHTML = `<div class="grid">${paginated.map(cardHTML).join('')}</div>`;
+  } else {
+    bd.innerHTML = `<div class="rows">${paginated.map(rowHTML).join('')}</div>`;
+  }
+
+  let paginationHtml = '';
+  if (totalPages > 1) {
+    paginationHtml = '<div class="pagination">';
+    if (S.page > 1) {
+      paginationHtml += `<button onclick="S.page--;renderBooks()">← ئالدىنقى بەت</button>`;
+    } else {
+      paginationHtml += `<button disabled>← ئالدىنقى بەت</button>`;
+    }
+    paginationHtml += `<span style="min-width:80px">${S.page} / ${totalPages}</span>`;
+    if (S.page < totalPages) {
+      paginationHtml += `<button onclick="S.page++;renderBooks()">كېيىنكى بەت →</button>`;
+    } else {
+      paginationHtml += `<button disabled>كېيىنكى بەت →</button>`;
+    }
+    paginationHtml += '</div>';
+  }
+  document.getElementById('pagination').innerHTML = paginationHtml;
+}
+
+function esc(t) { return t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+
+function cardHTML(b) {
+  const ic = ICONS[b.category]||'📚';
+  const progress = S.readPos[b.id] || 0;
+  const progressBar = progress > 0 ? `<div class="cprog" style="width:${progress}%"></div>` : '';
+  return `<div class="card">
+    <div class="cico">${ic}<span class="cfmt">${b.format}</span></div>
+    <div class="ct">${sanitize(b.title)}</div>
+    <div class="ca">${sanitize(b.author||'—')}</div>
+    <div class="ccat">${sanitize(b.category)}</div>
+    <div class="cbac">
+      <button onclick="openReader(${b.id})">📖 ئوقۇش</button>
+      <button onclick="showEditBook(${b.id})" title="تەھرىرلەش">✏️</button>
+      <button class="del" onclick="delBook(${b.id},event)" title="ئۆچۈرۈش">🗑</button>
+    </div>
+    ${progressBar}
+  </div>`;
+}
+
+function rowHTML(b) {
+  const ic = ICONS[b.category]||'📚';
+  const progress = S.readPos[b.id] || 0;
+  const progressBar = progress > 0 ? `<div style="position:absolute;bottom:0;left:0;height:2px;background:var(--am);width:${progress}%;border-radius:0 0 5px 5px"></div>` : '';
+  return `<div class="row" onclick="openReader(${b.id})" style="position:relative">
+    <div style="font-size:24px;flex-shrink:0">${ic}</div>
+    <div style="flex:1;min-width:0">
+      <div class="rowt">${sanitize(b.title)}</div>
+      <div class="rowm">${sanitize(b.author||'—')} · ${sanitize(b.category)} · <span style="font-family:monospace;font-size:10px">${b.format}</span></div>
+    </div>
+    <button onclick="showEditBook(${b.id},event)" style="background:none;border:none;font-size:14px;color:var(--text3);cursor:pointer;padding:4px 6px" title="تەھرىرلەش">✏️</button>
+    <button onclick="delBook(${b.id},event)" style="background:none;border:none;font-size:15px;color:var(--text3);cursor:pointer;padding:4px 6px" title="ئۆچۈرۈش">🗑</button>
+    ${progressBar}
+  </div>`;
+}
+
+function setCat(c) {
+  // Always force library mode first — categories only make sense there.
+  // This also restores the top search bar (#hd) and re-renders the books grid.
+  if (S.mode !== 'library') {
+    S.mode = 'library';
+    const hd = document.getElementById('hd');
+    if (hd) hd.style.display = 'flex';
+    // Restore destroyed library DOM (notes/quran views replaced #main innerHTML)
+    const main = document.getElementById('main');
+    if (main && libraryMainHTML) {
+      main.innerHTML = libraryMainHTML;
+    }
+  }
+
+  S.cat = c;
+  S.srch = false;
+  S.page = 1;
+
+  const si = document.getElementById('si');
+  const clr = document.getElementById('clr');
+  if (si) {
+    si.value = '';
+    si.placeholder = (c === 'all')
+      ? 'بارلىق كىتابلاردىن ئىزدەش...'
+      : sanitize(c) + ' ئىچىدىن ئىزدەش...';
+  }
+  if (clr) clr.style.display = 'none';
+
+  renderSide();
+  renderBooks();
+}
+function setView(v) { S.view=v; S.page=1; document.getElementById('gvb').className='vb'+(v==='g'?' on':''); document.getElementById('lvb').className='vb'+(v==='l'?' on':''); renderBooks(); }
+
+async function doSearch() {
+  const q = document.getElementById('si').value.trim();
+  if (!q) { clearSearch(); return; }
+  document.getElementById('clr').style.display='block';
+  S.srch = true; S.res = []; S.page = 1;
+
+  try {
+    // Fast path: use SQLite FTS5 search in the backend (single query, no per-book IPC)
+    const result = await window.electron.dbSearch(q, S.cat);
+    if (!result || !result.success || !Array.isArray(result.results)) {
+      throw new Error(result && result.error ? result.error : 'search failed');
+    }
+
+    S.res = result.results.map(r => {
+      // Strip FTS5 snippet() markers so renderSearch can highlight cleanly
+      const cleanSnip = (r.snip || '')
+        .replace(/<\/?mark>/g, '')
+        .replace(/^\.\.\.\s*/, '')
+        .replace(/\s*\.\.\.$/, '')
+        .trim();
+
+      // Prefer the cached book object so opening the result keeps UI state consistent
+      const bookId = r.book && r.book.id;
+      const cachedBook = (bookId != null) ? S.books.find(b => b.id === bookId) : null;
+      const book = cachedBook || r.book || {};
+
+      return {
+        book: book,
+        snip: cleanSnip,
+        snips: cleanSnip ? [cleanSnip] : [],
+        inT: !!r.inT,
+        inA: !!r.inA,
+        inC: !!r.inC
+      };
+    });
+  } catch(e) {
+    console.error('Backend search failed, using lightweight fallback:', e);
+    // Fallback: search only titles and authors from the cached list (no content load)
+    const lq = q.toLowerCase();
+    const pool = S.cat === 'all' ? S.books : S.books.filter(b => b.category === S.cat);
+    S.res = pool
+      .filter(b => b.title.toLowerCase().includes(lq) || (b.author||'').toLowerCase().includes(lq))
+      .map(b => ({
+        book: b,
+        snip: '',
+        snips: [],
+        inT: b.title.toLowerCase().includes(lq),
+        inA: (b.author||'').toLowerCase().includes(lq),
+        inC: false
+      }));
+    toast('ئارقا ئىزدەش مۇلازىمىتى ئىشلىمىدى، پەقەت ماۋزۇ/ئاپتوردىن ئىزدەلدى','i');
+  }
+
+  renderSearch(q);
+}
+
+function clearSearch() {
+  S.srch=false; document.getElementById('si').value=''; document.getElementById('clr').style.display='none'; S.page=1; renderBooks();
+}
+
+/**
+ * Toggle the "all occurrences" panel on a search result row.
+ * Loads all snippets lazily from the backend the first time it's opened,
+ * then just shows/hides the pre-loaded HTML on subsequent clicks.
+ *
+ * The button element carries:
+ *   data-book  — book id
+ *   data-query — the original search query
+ *   data-loaded — "1" once snippets have been fetched
+ */
+async function toggleSnips(btn) {
+  // Stop the row's click handler (which would open the reader) from firing.
+  const moreDiv = btn.parentElement.querySelector('.sr-more');
+  if (!moreDiv) return;
+
+  // Already loaded → just toggle visibility.
+  if (btn.dataset.loaded === '1') {
+    if (moreDiv.style.display === 'none') {
+      moreDiv.style.display = 'block';
+      btn.innerHTML = btn.innerHTML.replace('+', '−').replace('▸','▾');
+    } else {
+      moreDiv.style.display = 'none';
+      btn.innerHTML = btn.innerHTML.replace('−', '+').replace('▾','▸');
+    }
+    return;
+  }
+
+  // First open → fetch all occurrences from the backend.
+  const bookId = parseInt(btn.dataset.book, 10);
+  const query  = btn.dataset.query || '';
+  if (!bookId || !query) return;
+
+  const originalLabel = btn.innerHTML;
+  btn.innerHTML = '⏳ يۈكلىنىۋاتىدۇ...';
+  btn.disabled = true;
+
+  try {
+    const r = await window.electron.dbGetAllSnippets(bookId, query);
+    if (!r || !r.success || !Array.isArray(r.snippets) || r.snippets.length === 0) {
+      btn.innerHTML = '⚠️ باشقا ئورۇن تېپىلمىدى';
+      btn.disabled = true;
+      return;
+    }
+
+    const total = r.snippets.length;
+    // Each snippet came back with §MARK_OPEN§ … §MARK_CLOSE§ around the hit.
+    // Sanitize first, then swap the markers for real <mark> tags.
+    const queryAttr = String(query).replace(/'/g, "\\'");
+    const html = r.snippets.map((s, i) => {
+      let safe = sanitize(s.snip || '');
+      safe = safe
+        .replace(/§MARK_OPEN§/g, '<mark>')
+        .replace(/§MARK_CLOSE§/g, '</mark>');
+      const pos = (typeof s.pos === 'number' && s.pos >= 0) ? s.pos : 'null';
+      return `<div class="snip sr-snip-row" onclick="event.stopPropagation();openReader(${bookId},'${queryAttr}',${pos})" style="cursor:pointer">
+        <span class="sr-snip-num">${i + 1}.</span> ${safe}
+      </div>`;
+    }).join('');
+
+    moreDiv.innerHTML = html;
+    moreDiv.style.display = 'block';
+    btn.dataset.loaded = '1';
+    btn.disabled = false;
+    btn.innerHTML = `− ${total} ئورۇننى يىغىش`;
+  } catch(e) {
+    console.error('toggleSnips failed:', e);
+    btn.innerHTML = originalLabel;
+    btn.disabled = false;
+    toast('نەتىجىلەرنى يۈكلەشتە خاتالىق كۆرۈلدى', 'e');
+  }
+}
+
+function renderSearch(q) {
+  const sq = q||document.getElementById('si').value.trim();
+  const catLabel = S.cat === 'all' ? 'بارلىق كىتابلار' : sanitize(S.cat);
+  document.getElementById('vtitle').textContent = `ئىزدەش: "${sanitize(sq)}" — ${catLabel} (${S.res.length} نەتىجە)`;
+  if (!S.res.length) {
+    document.getElementById('bd').innerHTML = `<div class="empty"><div class="ei">🔍</div><h3 style="font-size:16px;font-weight:600;margin-bottom:6px">نەتىجە تېپىلمىدى</h3><p style="font-size:13px">باشقا سۆز بىلەن سىناپ كۆرۈڭ</p></div>`;
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+  const re = new RegExp(esc(sq),'gi');
+  const totalPages = Math.ceil(S.res.length / S.pageSize);
+  const start = (S.page - 1) * S.pageSize;
+  const end = start + S.pageSize;
+  const paginated = S.res.slice(start, end);
+
+  const safeQueryAttr = sanitize(sq).replace(/"/g, '&quot;');
+  document.getElementById('bd').innerHTML = paginated.map((r, idx) => {
+    let snipHtml = '';
+    if (r.snip) {
+      snipHtml = `<div class="snip">${sanitize(r.snip).replace(re, m => `<mark>${sanitize(m)}</mark>`)}</div>`;
+    }
+
+    // Show the expand "+" button on every result that has a content match.
+    // Clicking it lazy-loads ALL occurrences of the query inside that book.
+    let expandHtml = '';
+    if (r.inC && r.book && r.book.id != null) {
+      expandHtml = `<div class="sr-expand">
+        <button class="sr-toggle"
+                data-book="${r.book.id}"
+                data-query="${safeQueryAttr}"
+                onclick="event.stopPropagation();toggleSnips(this)"
+                title="بۇ كىتابنىڭ ئىچىدىكى بارلىق ئورۇنلارنى كۆرۈش">+ بۇ كىتابتىكى بارلىق ئورۇنلارنى كۆرۈش</button>
+        <div class="sr-more" style="display:none"></div>
+      </div>`;
+    }
+
+    const posArg = (typeof r.pos === 'number' && r.pos >= 0) ? r.pos : 'null';
+    return `<div class="sr" onclick="openReader(${r.book.id},'${sanitize(sq).replace(/'/g,"\\'")}',${posArg})">
+      <div class="srt2">${sanitize(r.book.title).replace(re, m => `<mark>${sanitize(m)}</mark>`)}</div>
+      <div class="srm">${sanitize(r.book.author || '—')} · ${sanitize(r.book.category)} · ${r.book.format}${r.inC ? ' · <span style="color:var(--am)">مەزمۇن ئىچىدە تېپىلدى</span>' : ''}</div>
+      ${snipHtml}
+      ${expandHtml}
+    </div>`;
+  }).join('');
+
+  let paginationHtml = '';
+  if (totalPages > 1) {
+    paginationHtml = '<div class="pagination">';
+    if (S.page > 1) {
+      paginationHtml += `<button onclick="S.page--;renderBooks()">← ئالدىنقى بەت</button>`;
+    } else {
+      paginationHtml += `<button disabled>← ئالدىنقى بەت</button>`;
+    }
+    paginationHtml += `<span style="min-width:80px">${S.page} / ${totalPages}</span>`;
+    if (S.page < totalPages) {
+      paginationHtml += `<button onclick="S.page++;renderBooks()">كېيىنكى بەت →</button>`;
+    } else {
+      paginationHtml += `<button disabled>كېيىنكى بەت →</button>`;
+    }
+    paginationHtml += '</div>';
+  }
+  document.getElementById('pagination').innerHTML = paginationHtml;
+}
+
+async function openReader(id, hl='', targetPos=null) {
+  const b = S.books.find(x=>x.id===id);
+  if(!b) return;
+  addToRecent(id);
+  S.curB=b; S.matches=[]; S.matchIdx=0;
+  document.getElementById('rtitle').textContent = sanitize(b.title);
+  document.getElementById('rmeta').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:18px">${ICONS[b.category]||'📚'}</span>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--text)">${sanitize(b.title)}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">${sanitize(b.author||'')} · <span style="color:var(--at);background:var(--ab);padding:1px 7px;border-radius:10px;font-size:11px">${sanitize(b.category)}</span> · <span style="font-family:monospace;font-size:10px;color:var(--text3)">${b.format}</span></div>
+      </div>
+    </div>`;
+  const rt = document.getElementById('rt');
+  rt.style.fontSize = S.fs+'px';
+  rt.style.fontFamily = ''; // Reset to default for auto mode
+  document.getElementById('rsi').value = hl||'';
+  document.getElementById('matchcount').textContent='';
+  document.getElementById('fontSelector').value = S.readerFont;
+
+  // Load content from file and cache it
+  const cr = await window.electron.loadBookContent(b.id);
+  const content = (cr && cr.success) ? cr.content : '(مەزمۇن يوق)';
+  S.readerContent = content;
+
+  // Split content into pages for large books
+  const CHARS_PER_PAGE = 3000;
+  S.readerPages = [];
+  if (content.length > CHARS_PER_PAGE) {
+    // Split at paragraph boundaries
+    const paragraphs = content.split('\n');
+    let currentPage = '';
+    for (const para of paragraphs) {
+      if (currentPage.length + para.length + 1 > CHARS_PER_PAGE && currentPage.length > 0) {
+        S.readerPages.push(currentPage);
+        currentPage = para;
+      } else {
+        currentPage += (currentPage ? '\n' : '') + para;
+      }
+    }
+    if (currentPage) S.readerPages.push(currentPage);
+  } else {
+    S.readerPages = [content];
+  }
+
+  // Restore saved page or start from beginning
+  const savedPos = S.readPos[b.id] || 0;
+  S.readerPage = Math.max(1, Math.min(S.readerPages.length, Math.round((savedPos / 100) * S.readerPages.length) || 1));
+
+  if (hl) {
+    // When searching, show all content with highlights (paragraph formatted)
+    const re = new RegExp(esc(hl),'gi');
+    const highlighted = textToParagraphs(content, false).replace(re,m=>`<mark>${m}</mark>`);
+    rt.innerHTML = highlighted;
+    S.readerSearchMode = true;
+  } else {
+    renderReaderPage();
+    hideMatchNav();
+    S.readerSearchMode = false;
+    const rc = document.getElementById('rc');
+    rc.scrollTop = 0;
+  }
+
+  S.activeNotesTab = 'notes';
+  renderNotesPanel();
+  // Show the reader BEFORE running scroll-to-match. scrollIntoView is a no-op
+  // on elements inside display:none ancestors, so the navigation must happen
+  // after the reader is visible AND the browser has laid out its contents.
+  document.getElementById('rdr').classList.add('on');
+  if (hl) {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => updateMatchNav(hl, targetPos));
+    });
+  }
+}
+
+function renderReaderPage() {
+  const rt = document.getElementById('rt');
+  const rc = document.getElementById('rc');
+  if (!S.readerPages || S.readerPages.length === 0) return;
+
+  const page = S.readerPages[S.readerPage - 1] || '';
+  if (S.readerFont === 'auto') {
+    // Smart font rendering: detect Arabic vs Uyghur per line
+    rt.innerHTML = textToParagraphs(page, true);
+  } else {
+    rt.innerHTML = textToParagraphs(page, false);
+  }
+
+  // Save reading position as percentage
+  if (S.curB) {
+    const pct = S.readerPages.length > 1 ? Math.round(((S.readerPage - 1) / (S.readerPages.length - 1)) * 100) : 0;
+    S.readPos[S.curB.id] = pct;
+    saveData();
+  }
+
+  // Render page navigation
+  renderReaderPagination();
+  rc.scrollTop = 0;
+}
+
+function renderReaderPagination() {
+  let nav = document.getElementById('reader-pagination');
+  if (!nav) {
+    nav = document.createElement('div');
+    nav.id = 'reader-pagination';
+    nav.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:10px;padding:16px 0;border-top:0.5px solid var(--border);margin-top:20px;direction:rtl';
+    const inner = document.querySelector('#rc .inner');
+    if (inner) inner.appendChild(nav);
+  }
+
+  if (S.readerPages.length <= 1 || S.readerSearchMode) {
+    nav.style.display = 'none';
+    return;
+  }
+
+  nav.style.display = 'flex';
+  nav.innerHTML = `
+    <button onclick="readerPrevPage()" class="hbtn" ${S.readerPage <= 1 ? 'disabled style="opacity:0.4;cursor:not-allowed"' : ''}>→ ئالدىنقى بەت</button>
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);font-family:sans-serif">
+      <input id="pageJumpInput" type="number" min="1" max="${S.readerPages.length}" value="${S.readerPage}"
+        onkeydown="if(event.key==='Enter')readerJumpToPage()"
+        style="width:52px;text-align:center;padding:4px 2px;border:0.5px solid var(--border2);border-radius:var(--radius2);background:var(--bg);color:var(--text);font-size:12px;font-family:sans-serif;outline:none;-moz-appearance:textfield"
+      />
+      <span>/ ${S.readerPages.length}</span>
+      <button onclick="readerJumpToPage()" class="hbtn" style="padding:4px 8px;font-size:11px">بېرىش</button>
+    </div>
+    <button onclick="readerNextPage()" class="hbtn" ${S.readerPage >= S.readerPages.length ? 'disabled style="opacity:0.4;cursor:not-allowed"' : ''}>كېيىنكى بەت ←</button>
+  `;
+}
+
+function readerNextPage() {
+  if (S.readerPage < S.readerPages.length) {
+    S.readerPage++;
+    renderReaderPage();
+  }
+}
+
+function readerPrevPage() {
+  if (S.readerPage > 1) {
+    S.readerPage--;
+    renderReaderPage();
+  }
+}
+
+function readerJumpToPage() {
+  const input = document.getElementById('pageJumpInput');
+  if (!input) return;
+  let target = parseInt(input.value);
+  if (isNaN(target) || target < 1) target = 1;
+  if (target > S.readerPages.length) target = S.readerPages.length;
+  S.readerPage = target;
+  renderReaderPage();
+}
+
+function closeReader() {
+  document.getElementById('rdr').classList.remove('on');
+  document.getElementById('rnotes-panel').classList.remove('on');
+  if (S.curB) {
+    saveData();
+  }
+  S.curB=null;
+}
+
+async function downloadBook(type) {
+  if(!S.curB) return;
+  const dr = await window.electron.loadBookContent(S.curB.id);
+  const content = (dr && dr.success) ? dr.content : '';
+  const title = S.curB.title || 'كىتاب';
+  const author = S.curB.author || '';
+  if(type==='txt') {
+    const r = await window.electron.saveFileDialog(title+'.txt', content);
+    if(r.success) toast('TXT چۈشۈرۈلدى','s');
+  } else if(type==='docx') {
+    toast('DOCX ھاسىل قىلىنىۋاتىدۇ...','i');
+    const r = await window.electron.exportAsDocx(title, author, content);
+    if(r.success) toast('DOCX چۈشۈرۈلدى','s');
+    else if(r.error) toast(r.error,'e');
+  } else if(type==='pdf') {
+    toast('PDF ھاسىل قىلىنىۋاتىدۇ...','i');
+    const r = await window.electron.exportAsPdf(title, author, content);
+    if(r.success) toast('PDF چۈشۈرۈلدى','s');
+    else if(r.error) toast(r.error,'e');
+  }
+}
+
+let _inBookTimer = null;
+function debounceSearchInBook(q) {
+  clearTimeout(_inBookTimer);
+  _inBookTimer = setTimeout(() => searchInBook(q), 200);
+}
+
+function searchInBook(q) {
+  if(!S.curB) return;
+  const rt=document.getElementById('rt');
+
+  // Use cached content instead of reading from DOM each time
+  const content = S.readerContent || '';
+  if(!q){
+    // Return to paginated view
+    S.readerSearchMode = false;
+    renderReaderPage();
+    document.getElementById('matchcount').textContent='';
+    hideMatchNav();
+    return;
+  }
+  // Show all content with highlights (exit pagination mode for search)
+  S.readerSearchMode = true;
+  const re=new RegExp(esc(q),'gi');
+  rt.innerHTML=textToParagraphs(content, false).replace(re,m=>`<mark>${m}</mark>`);
+  updateMatchNav(q);
+  renderReaderPagination();
+}
+
+function updateMatchNav(q, targetPos) {
+  const marks=document.getElementById('rt').querySelectorAll('mark');
+  S.matches=Array.from(marks);
+  S.matchIdx=0;
+  const mc=document.getElementById('matchcount');
+  if(S.matches.length){
+    mc.textContent=S.matches.length+' دانە';
+    document.getElementById('prevM').style.display='';
+    document.getElementById('nextM').style.display='';
+    // If a specific occurrence was requested (from a snippet click), pick the
+    // match whose offset in the source content matches targetPos. We count
+    // the number of matches that occur before targetPos using the same regex
+    // that produced the highlight tags.
+    if (typeof targetPos === 'number' && targetPos > 0 && q && S.readerContent) {
+      try {
+        const re = new RegExp(esc(q), 'gi');
+        let count = 0, m;
+        while ((m = re.exec(S.readerContent)) !== null) {
+          if (m.index >= targetPos) break;
+          count++;
+        }
+        S.matchIdx = Math.min(count, S.matches.length - 1);
+      } catch(e) { S.matchIdx = 0; }
+    }
+    S.matches[S.matchIdx].scrollIntoView({behavior:'smooth',block:'center'});
+    flashMatch(S.matches[S.matchIdx]);
+    if (S.matches.length > 1) {
+      mc.textContent = (S.matchIdx + 1) + '/' + S.matches.length;
+    }
+  } else {
+    mc.textContent='تېپىلمىدى';
+    hideMatchNav();
+  }
+}
+
+function hideMatchNav(){document.getElementById('prevM').style.display='none';document.getElementById('nextM').style.display='none';}
+
+function jumpToMatch(dir){
+  if(!S.matches.length)return;
+  S.matchIdx=(S.matchIdx+dir+S.matches.length)%S.matches.length;
+  S.matches[S.matchIdx].scrollIntoView({behavior:'smooth',block:'center'});
+  flashMatch(S.matches[S.matchIdx]);
+  document.getElementById('matchcount').textContent=(S.matchIdx+1)+'/'+S.matches.length;
+}
+
+function flashMatch(node) {
+  if (!node) return;
+  node.classList.remove('reader-hit-flash');
+  // Force reflow so re-adding the class restarts the animation
+  void node.offsetWidth;
+  node.classList.add('reader-hit-flash');
+  setTimeout(() => { node.classList.remove('reader-hit-flash'); }, 1600);
+}
+
+function chFS(d){S.fs=Math.max(13,Math.min(26,S.fs+d));if(document.getElementById('rt'))document.getElementById('rt').style.fontSize=S.fs+'px';}
+
+// ========== SMART FONT RENDERING ==========
+
+// Uyghur-specific characters that distinguish Uyghur from standard Arabic
+// These characters exist in Uyghur but NOT in standard Arabic
+const UYGHUR_CHARS = /[\u06D0\u06D5\u06C6\u06C7\u06C8\u06CB\u06AD\u06AF\u067E\u0686\u06A9\u06BE\u06C1\u0649]/;
+// ئ=0626 with specific combos, ې=06D0, ە=06D5, ۆ=06C6, ۇ=06C7, ۈ=06C8, ۋ=06CB, ڭ=06AD, گ=06AF, پ=067E, چ=0686, ك=06A9, ھ=06BE, ہ=06C1, ى=0649
+
+// Pure Arabic range (standard Arabic letters without Uyghur-specific ones)
+const ARABIC_SCRIPT = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+
+/**
+ * Detect whether a line of text is primarily Arabic (not Uyghur)
+ * Returns true if the text contains Arabic script but NO Uyghur-specific characters
+ */
+function isArabicLine(text) {
+  if (!text || text.trim().length < 3) return false;
+  // Must contain Arabic script characters
+  if (!ARABIC_SCRIPT.test(text)) return false;
+  // If it contains Uyghur-specific characters, it's Uyghur
+  if (UYGHUR_CHARS.test(text)) return false;
+  return true;
+}
+
+/**
+ * Convert plain text to <p> tags with proper spacing
+ * Collapses multiple blank lines, applies smart font detection if smartFont=true
+ */
+function textToParagraphs(text, smartFont) {
+  if (!text) return '<p></p>';
+  // Split on one or more newlines to form paragraphs
+  // This collapses multiple blank lines into a single paragraph break
+  const paragraphs = text.split(/\n{2,}/);
+  // Within each paragraph, single newlines become <br>
+  return paragraphs.map(para => {
+    const trimmed = para.trim();
+    if (!trimmed) return '';
+    // Split single newlines within paragraph
+    const lines = trimmed.split('\n');
+    const rendered = lines.map(line => {
+      const escaped = sanitize(line);
+      if (smartFont && isArabicLine(line)) {
+        return '<span class="arabic-text">' + escaped + '</span>';
+      }
+      return escaped;
+    }).join('<br>');
+    return '<p>' + rendered + '</p>';
+  }).filter(p => p).join('');
+}
+
+/**
+ * Change the reader font
+ */
+function changeReaderFont(font) {
+  S.readerFont = font;
+  const rt = document.getElementById('rt');
+  if (!rt) return;
+
+  // Reset inline font-family
+  if (font === 'auto') {
+    rt.style.fontFamily = '';
+    // Re-render with smart detection
+    if (S.readerSearchMode) {
+      // In search mode, re-render with search highlights
+      const q = document.getElementById('rsi').value;
+      if (q) searchInBook(q);
+      else renderReaderPage();
+    } else {
+      renderReaderPage();
+    }
+  } else if (font === 'ukij') {
+    rt.style.fontFamily = "'UKIJ Ekran', serif";
+    renderReaderPagePlain();
+  } else if (font === 'traditional') {
+    rt.style.fontFamily = "'Traditional Arabic', 'trad-arabic', serif";
+    renderReaderPagePlain();
+  } else if (font === 'bahij') {
+    rt.style.fontFamily = "'Bahij Nazanin', serif";
+    renderReaderPagePlain();
+  }
+}
+
+/**
+ * Render reader page without smart font detection (plain text mode for manual font)
+ */
+function renderReaderPagePlain() {
+  const rt = document.getElementById('rt');
+  if (!S.readerPages || S.readerPages.length === 0) return;
+  const page = S.readerPages[S.readerPage - 1] || '';
+  rt.innerHTML = textToParagraphs(page, false);
+  renderReaderPagination();
+}
+
+function toggleBookmarks() {
+  const panel = document.getElementById('rnotes-panel');
+  if (!panel.classList.contains('on')) panel.classList.add('on');
+  // Switch to bookmarks tab
+  switchNotesTab('bookmarks');
+}
+
+function addBookmark() {
+  if (!S.curB) return;
+  const bookId = S.curB.id;
+  if (!S.bookmarks[bookId]) S.bookmarks[bookId] = [];
+  const rc = document.getElementById('rc');
+  const scrollHeight = rc.scrollHeight - rc.clientHeight;
+  const scrollTop = rc.scrollTop;
+  const pos = scrollHeight > 0 ? Math.round((scrollTop / scrollHeight) * 100) : 0;
+
+  // Check if bookmark already exists at similar position (within 2%)
+  const existing = S.bookmarks[bookId].find(bm => Math.abs(bm.pos - pos) < 2);
+  if (existing) {
+    toast('بۇ ئورۇندا خەتكۈش بار','i');
+    return;
+  }
+
+  const name = 'خەتكۈش ' + (S.bookmarks[bookId].length + 1);
+  S.bookmarks[bookId].push({
+    id: Date.now().toString(),
+    name: name,
+    pos: pos,
+    date: new Date().toISOString()
+  });
+  renderNotesPanel();
+  saveData();
+  toast('خەتكۈش قوشۇلدى','s');
+}
+
+function deleteBookmark(bookId, bmId, e) {
+  if (e) e.stopPropagation();
+  if (!S.bookmarks[bookId]) return;
+  S.bookmarks[bookId] = S.bookmarks[bookId].filter(bm => bm.id !== bmId);
+  renderNotesPanel();
+  saveData();
+  toast('خەتكۈش ئۆچۈرۈلدى','i');
+}
+
+function jumpToBookmark(pos) {
+  const rc = document.getElementById('rc');
+  const scrollHeight = rc.scrollHeight - rc.clientHeight;
+  rc.scrollTo({ top: (pos / 100) * scrollHeight, behavior: 'smooth' });
+}
+
+function switchNotesTab(tab) {
+  S.activeNotesTab = tab || 'notes';
+  renderNotesPanel();
+}
+
+function toggleNotes() {
+  const panel = document.getElementById('rnotes-panel');
+  if (!panel.classList.contains('on')) panel.classList.add('on');
+  switchNotesTab('notes');
+}
+
+function renderNotesPanel() {
+  if (!S.curB) return;
+  const bookId = S.curB.id;
+  const notesList = document.getElementById('rnotes-list');
+  const notes = S.bookNotes[bookId] || [];
+  const bookmarks = S.bookmarks[bookId] || [];
+  const tab = S.activeNotesTab || 'notes';
+
+  const header = document.getElementById('rnotes-header');
+  header.innerHTML = `
+    <div style="display:flex;gap:0;border-bottom:0.5px solid var(--border)">
+      <button onclick="switchNotesTab('notes')" style="flex:1;padding:8px;border:none;background:${tab==='notes'?'var(--ab)':'none'};color:${tab==='notes'?'var(--at)':'var(--text2)'};cursor:pointer;font-family:var(--jf);font-size:12px;font-weight:${tab==='notes'?'600':'400'}">📝 ئىزاھاتلار (${notes.length})</button>
+      <button onclick="switchNotesTab('bookmarks')" style="flex:1;padding:8px;border:none;background:${tab==='bookmarks'?'var(--ab)':'none'};color:${tab==='bookmarks'?'var(--at)':'var(--text2)'};cursor:pointer;font-family:var(--jf);font-size:12px;font-weight:${tab==='bookmarks'?'600':'400'}">🔖 خەتكۈشلەر (${bookmarks.length})</button>
+    </div>`;
+
+  const inputArea = document.getElementById('rnotes-input-area');
+
+  if (tab === 'bookmarks') {
+    notesList.innerHTML = bookmarks.length === 0
+      ? '<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px">خەتكۈش يوق<br>تۆۋەندىكى كۇنۇپكىنى بېسىپ خەتكۈش قوشۇڭ</div>'
+      : bookmarks.map(bm => `
+        <div class="rnote" onclick="jumpToBookmark(${bm.pos})">
+          <div class="rnote-text">🔖 ${sanitize(bm.name)}</div>
+          <div class="rnote-date">${bm.pos}% · ${new Date(bm.date).toLocaleDateString('ug-CN')}</div>
+          <button class="rnote-del" onclick="deleteBookmark(${bookId}, '${bm.id}', event)">✕</button>
+        </div>
+      `).join('');
+    inputArea.innerHTML = `<button onclick="addBookmark()" style="width:100%;padding:8px;background:var(--am);color:#fff;border:none;border-radius:var(--radius2);cursor:pointer;font-size:12px;font-family:var(--jf)">🔖 بۇ يەرگە خەتكۈش قوشۇش</button>`;
+  } else {
+    notesList.innerHTML = notes.length === 0
+      ? '<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px">ئىزاھات يوق</div>'
+      : notes.map(note => `
+        <div class="rnote" onclick="jumpToNote(${note.pos})">
+          <div class="rnote-text">${sanitize(note.text)}</div>
+          <div class="rnote-date">${Math.round(note.pos)}% · ${new Date(note.date).toLocaleDateString('ug-CN')}</div>
+          <button class="rnote-del" onclick="deleteNote(${bookId}, '${note.id}', event)">✕</button>
+        </div>
+      `).join('');
+    inputArea.innerHTML = `
+      <textarea id="rnotes-textarea" placeholder="يېڭى ئىزاھات قوشۇش..." style="width:100%;padding:8px;border:0.5px solid var(--border);border-radius:var(--radius2);font-family:var(--jf);font-size:12px;color:var(--text);background:var(--bg);direction:rtl;resize:vertical;min-height:60px"></textarea>
+      <button onclick="addNote()" style="width:100%;margin-top:6px;padding:6px;background:var(--am);color:#fff;border:none;border-radius:var(--radius2);cursor:pointer;font-size:12px;font-family:var(--jf)">+ قوشۇش</button>`;
+  }
+}
+
+function addNote() {
+  if (!S.curB) return;
+  const textarea = document.getElementById('rnotes-textarea');
+  const text = textarea.value.trim();
+  if (!text) {
+    toast('ئىزاھات يازىڭ','e');
+    return;
+  }
+
+  const rc = document.getElementById('rc');
+  const scrollHeight = rc.scrollHeight - rc.clientHeight;
+  const scrollTop = rc.scrollTop;
+  const pos = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+
+  const bookId = S.curB.id;
+  if (!S.bookNotes[bookId]) S.bookNotes[bookId] = [];
+
+  S.bookNotes[bookId].push({
+    id: Date.now().toString(),
+    text: text,
+    pos: pos,
+    date: new Date().toISOString()
+  });
+
+  textarea.value = '';
+  renderNotesPanel();
+  saveData();
+  toast('ئىزاھات قوشۇلدى','s');
+}
+
+function deleteNote(bookId, noteId, e) {
+  e.stopPropagation();
+  if (!S.bookNotes[bookId]) return;
+  S.bookNotes[bookId] = S.bookNotes[bookId].filter(n => n.id !== noteId);
+  renderNotesPanel();
+  saveData();
+  toast('ئىزاھات ئۆچۈرۈلدى','i');
+}
+
+function jumpToNote(pos) {
+  const rc = document.getElementById('rc');
+  const scrollHeight = rc.scrollHeight - rc.clientHeight;
+  rc.scrollTop = (pos / 100) * scrollHeight;
+}
+
+function setupFileZone() {
+  const fz = document.getElementById('fz');
+  fz.addEventListener('click', async () => {
+    const result = await window.electron.openFile();
+    if(result) await handleFileResult(result);
+  });
+  fz.addEventListener('dragover', e => { e.preventDefault(); fz.classList.add('dg'); });
+  fz.addEventListener('dragleave', () => fz.classList.remove('dg'));
+  fz.addEventListener('drop', async e => {
+    e.preventDefault(); fz.classList.remove('dg');
+    const f = e.dataTransfer.files[0];
+    if(f) {
+      const result = { filePath: f.path, fileName: f.name, ext: f.name.split('.').pop().toLowerCase(), size: f.size };
+      await handleFileResult(result);
+    }
+  });
+}
+
+async function handleFileResult(result) {
+  const { filePath, fileName, ext, size } = result;
+  S.tempFile = filePath;
+  S.tempExt = ext.toUpperCase();
+  S.tempContent = '';
+
+  const bt = document.getElementById('btitle');
+  if(!bt.value) bt.value = fileName.replace(/\.[^.]+$/,'');
+
+  const fi = document.getElementById('finfo');
+  const pb = document.getElementById('pb');
+  const pf = document.getElementById('pf');
+
+  fi.style.display='block'; fi.textContent='ھۆججەت ئوقۇلىۋاتىدۇ...';
+  pb.style.display='block'; pf.style.width='20%';
+
+  progress(20);
+
+  if(ext==='txt'){
+    const r = await window.electron.readTxt(filePath);
+    if(r.success){S.tempContent=r.content;fi.textContent='✓ '+fileName+' ('+Math.round(size/1024)+'KB)';pf.style.width='100%';progress(100);toast('TXT ھۆججىتى ئوقۇلدى','s');}
+    else{fi.textContent='خاتالىق: '+r.error;toast('ھۆججەت ئوقۇغىلى بولمىدى','e');}
+  } else if(ext==='pdf'){
+    const r = await window.electron.readPdfBuffer(filePath);
+    if(r.success){
+      try {
+        if(window.pdfjsLib){
+          pdfjsLib.GlobalWorkerOptions.workerSrc='../assets/pdfjs/pdf.worker.min.js';
+          const bin=atob(r.data);const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+          const pdf=await pdfjsLib.getDocument({data:arr}).promise;
+          let text='';const total=Math.min(pdf.numPages,100);
+          for(let i=1;i<=total;i++){const page=await pdf.getPage(i);const tc=await page.getTextContent();text+=tc.items.map(x=>x.str).join(' ')+'\n';pf.style.width=Math.round((i/total)*100)+'%';}
+          S.tempContent=text;fi.textContent='✓ PDF: '+fileName+' ('+pdf.numPages+' بەت)';progress(100);toast('PDF مۇۋەپپەقىيەتلىك ئوقۇلدى','s');
+        }
+      } catch(e){S.tempContent='[PDF: '+fileName+']';fi.textContent='✓ '+fileName;pf.style.width='100%';}
+    }
+  } else if(ext==='docx'){
+    const r = await window.electron.readDocx(filePath);
+    if(r.success){S.tempContent=r.content;fi.textContent='✓ DOCX: '+fileName;pf.style.width='100%';progress(100);toast('DOCX مۇۋەپپەقىيەتلىك ئوقۇلدى','s');}
+    else{S.tempContent='[DOCX: '+fileName+']';fi.textContent='✓ '+fileName;pf.style.width='100%';}
+  } else if(ext==='doc'){
+    const r = await window.electron.readDoc(filePath);
+    if(r.success){S.tempContent=r.content;fi.textContent='✓ DOC: '+fileName;pf.style.width='100%';progress(100);toast('DOC مۇۋەپپەقىيەتلىك ئوقۇلدى','s');}
+    else{S.tempContent='[DOC: '+fileName+']';fi.textContent='✓ '+fileName;pf.style.width='100%';}
+  } else {
+    S.tempContent='['+ext.toUpperCase()+': '+fileName+']';
+    fi.textContent='✓ '+fileName;pf.style.width='100%';progress(100);
+  }
+}
+
+async function addBook() {
+  const title = document.getElementById('btitle').value.trim();
+  if(!title){toast('كىتاب نامىنى كىرگۈزۈڭ','e');return;}
+
+  const author      = document.getElementById('bauth').value.trim();
+  const category    = document.getElementById('bcat').value;
+  const format      = S.tempExt || 'TXT';
+  const date        = new Date().toISOString().slice(0,10);
+  const description = document.getElementById('bdesc').value.trim();
+  const content     = S.tempContent || '';
+
+  // Compute SHA-256 of the file content for duplicate detection
+  let fileHash = '';
+  if (content) {
+    try {
+      fileHash = await window.electron.computeHash(content);
+    } catch(e) {
+      console.warn('Hash computation failed, duplicate detection disabled:', e);
+    }
+  }
+
+  // Use SQLite API: atomic insert + duplicate check + FTS5 indexing
+  let result;
+  try {
+    result = await window.electron.dbAddBook({
+      title, author, category, format, date, description, content, fileHash
+    });
+  } catch(e) {
+    console.error('dbAddBook IPC error:', e);
+    toast('كىتاب قوشۇشتا خاتالىق: ' + e.message, 'e');
+    return;
+  }
+
+  if (!result || !result.success) {
+    if (result && result.error === 'duplicate') {
+      toast('بۇ كىتاب ئاللىقاچان قاچىلانغان!','e');
+      return;
+    }
+    toast('كىتاب قوشۇشتا خاتالىق: ' + ((result && result.error) || 'نامەلۇم'), 'e');
+    return;
+  }
+
+  // SQLite generated the real ID — sync frontend state to match
+  const id = result.id;
+  const b = { id, title, author, category, format, date, desc: description };
+  S.books.unshift(b);
+  if (id >= S.nid) S.nid = id + 1;
+
+  // Clear staged upload so the next "add" starts fresh
+  S.tempContent = '';
+  S.tempExt = '';
+
+  // Keep legacy library.json in sync (categories, bookmarks, etc.)
+  await saveData();
+
+  hideAdd(); renderSide(); renderBooks();
+  toast('كىتاب قوشۇلدى: ' + sanitize(title), 's');
+}
+
+function showEditBook(id, e) {
+  if(e) e.stopPropagation();
+  const b = S.books.find(x => x.id === id);
+  if (!b) return;
+  S.editingBookId = id;
+  document.getElementById('etitle').value = b.title;
+  document.getElementById('eauth').value = b.author || '';
+  document.getElementById('ecat').innerHTML = S.cats.map(c => `<option value="${sanitize(c)}" ${c === b.category ? 'selected' : ''}>${sanitize(c)}</option>`).join('');
+  document.getElementById('edesc').value = b.desc || '';
+  document.getElementById('editov').classList.add('on');
+  setTimeout(() => document.getElementById('etitle').focus(), 100);
+}
+
+function hideEdit() {
+  document.getElementById('editov').classList.remove('on');
+  S.editingBookId = null;
+}
+
+async function saveEditBook() {
+  if (S.editingBookId === null) return;
+  const b = S.books.find(x => x.id === S.editingBookId);
+  if (!b) return;
+  const newTitle = document.getElementById('etitle').value.trim();
+  if (!newTitle) {
+    toast('كىتاب نامىنى كىرگۈزۈڭ','e');
+    return;
+  }
+  b.title = newTitle;
+  b.author = document.getElementById('eauth').value.trim();
+  b.category = document.getElementById('ecat').value;
+  b.desc = document.getElementById('edesc').value.trim();
+  await saveData();
+  hideEdit();
+  renderSide();
+  renderBooks();
+  if (S.curB && S.curB.id === b.id) {
+    S.curB = b;
+    document.getElementById('rtitle').textContent = sanitize(b.title);
+  }
+  toast('كىتاب تەھرىرلەندى: '+sanitize(newTitle),'s');
+}
+
+async function delBook(id, e) {
+  e.stopPropagation();
+  const b=S.books.find(x=>x.id===id);
+  if(!confirm((b?sanitize(b.title):'بۇ كىتاب')+'نى ئۆچۈرمەكچىمۇ؟'))return;
+  S.books=S.books.filter(x=>x.id!==id);
+  delete S.readPos[id];
+  delete S.bookmarks[id];
+  delete S.bookNotes[id];
+  delete S.searchIndex[id];
+  S.recent = S.recent.filter(r => r.id !== id);
+  await saveData();renderSide();renderBooks();if(b)toast(sanitize(b.title)+' ئۆچۈرۈلدى','i');
+}
+
+function showAdd(){
+  S.editingBookId = null;
+  document.getElementById('addTitle').textContent = '📥 يېڭى كىتاب قوشۇش';
+  document.getElementById('bcat').innerHTML=S.cats.map(c=>`<option value="${sanitize(c)}">${sanitize(c)}</option>`).join('');
+  document.getElementById('btitle').value='';document.getElementById('bauth').value='';document.getElementById('bdesc').value='';
+  document.getElementById('finfo').style.display='none';document.getElementById('pb').style.display='none';document.getElementById('pf').style.width='0';
+  S.tempFile=null;S.tempExt='';S.tempContent='';
+  document.getElementById('addov').classList.add('on');
+}
+function hideAdd(){document.getElementById('addov').classList.remove('on');}
+
+function showBatchImport() {
+  S.batchFiles = [];
+  document.getElementById('batchlist').innerHTML = '';
+  document.getElementById('batchlist').style.display = 'none';
+  document.getElementById('batchinfo').style.display = 'none';
+  document.getElementById('batchbtn').style.display = 'none';
+  // Populate category dropdown
+  const sel = document.getElementById('batchcat');
+  sel.innerHTML = S.cats.map(c => `<option value="${sanitize(c)}">${sanitize(c)}</option>`).join('');
+  sel.value = 'باشقا';
+  document.getElementById('batchov').classList.add('on');
+}
+
+function hideBatchImport() {
+  document.getElementById('batchov').classList.remove('on');
+  S.batchFiles = [];
+}
+
+async function selectBatchFolder() {
+  try {
+    const folderPath = await window.electron.openFolder();
+    if (!folderPath) return;
+    const result = await window.electron.readFolder(folderPath);
+    if (result && result.success && result.files && result.files.length > 0) {
+      S.batchFiles = result.files.map(f => f.filePath);
+      displayBatchFiles();
+    } else {
+      toast('PDF · TXT · DOCX · DOC ھۆججىتى تېپىلمىدى','e');
+    }
+  } catch(e) {
+    toast('ھۆججەتخانىنى ئوچۇغىلى بولمىدى: '+e.message,'e');
+  }
+}
+
+function displayBatchFiles() {
+  const list = document.getElementById('batchlist');
+  if (S.batchFiles.length === 0) {
+    document.getElementById('batchlist').style.display = 'none';
+    document.getElementById('batchinfo').style.display = 'none';
+    document.getElementById('batchbtn').style.display = 'none';
+    toast('PDF · TXT · DOCX · DOC ھۆججىتى تېپىلمىدى','e');
+    return;
+  }
+  list.innerHTML = S.batchFiles.map((f, i) => {
+    const name = f.split(/[/\\]/).pop();
+    return `<div style="padding:6px 8px;border-bottom:0.5px solid var(--border);font-size:12px;word-break:break-all">${sanitize(name)}</div>`;
+  }).join('');
+  list.style.display = 'block';
+  document.getElementById('batchinfo').textContent = S.batchFiles.length + ' تاپىلدى';
+  document.getElementById('batchinfo').style.display = 'block';
+  document.getElementById('batchbtn').style.display = '';
+}
+
+async function confirmBatchImport() {
+  if (!S.batchFiles || S.batchFiles.length === 0) {
+    toast('قوشۇلىدىغان كىتاب يوق', 'i');
+    return;
+  }
+
+  const category = document.getElementById('batchcat').value;
+  const total = S.batchFiles.length;
+  const status = document.getElementById('batchStatus');
+  if (status) status.textContent = `0 / ${total} ئوقۇلدى`;
+
+  progress(5);
+
+  // Phase 1: read all files in limited-parallel batches.
+  // Each entry in `prepared` is one of:
+  //   { ok: true, book: {title, author, category, format, content, fileHash, date} }
+  //   { ok: false, fileName, reason }
+  const CONCURRENCY = 4;
+  const prepared = [];
+  let processed = 0;
+
+  async function readOne(filePath) {
+    const fileName = String(filePath).split(/[/\\]/).pop();
+    const ext = (String(filePath).split('.').pop() || 'txt').toLowerCase();
+    try {
+      let content = '';
+
+      if (ext === 'txt') {
+        const r = await window.electron.readTxt(filePath);
+        if (!r.success) throw new Error(r.error || 'TXT read failed');
+        content = r.content || '';
+      } else if (ext === 'pdf') {
+        const r = await window.electron.readPdfBuffer(filePath);
+        if (!r.success) throw new Error(r.error || 'PDF read failed');
+        if (window.pdfjsLib) {
+          const bin = atob(r.data);
+          const arr = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+          const pdf = await pdfjsLib.getDocument({ data: arr }).promise;
+          let text = '';
+          const totalPages = Math.min(pdf.numPages, 200);
+          for (let i = 1; i <= totalPages; i++) {
+            const page = await pdf.getPage(i);
+            const tc = await page.getTextContent();
+            text += tc.items.map(x => x.str).join(' ') + '\n';
+          }
+          content = text;
+        } else {
+          content = '[PDF: ' + fileName + ']';
+        }
+      } else if (ext === 'docx') {
+        const r = await window.electron.readDocx(filePath);
+        if (!r.success) throw new Error(r.error || 'DOCX read failed');
+        content = r.content || '';
+      } else if (ext === 'doc') {
+        const r = await window.electron.readDoc(filePath);
+        if (!r.success) throw new Error(r.error || 'DOC read failed');
+        content = r.content || '';
+      } else {
+        content = '[' + ext.toUpperCase() + ': ' + fileName + ']';
+      }
+
+      // SHA-256 hash for duplicate detection
+      let fileHash = '';
+      if (content) {
+        try {
+          fileHash = await window.electron.computeHash(content);
+        } catch (e) { /* hash optional */ }
+      }
+
+      const titleNoExt = fileName.replace(/\.[^.]+$/, '');
+      return {
+        ok: true,
+        book: {
+          title: titleNoExt,
+          author: '',
+          category,
+          format: ext.toUpperCase(),
+          date: new Date().toISOString().slice(0, 10),
+          description: '',
+          content,
+          fileHash
+        }
+      };
+    } catch (e) {
+      return { ok: false, fileName, reason: e.message };
+    } finally {
+      processed++;
+      if (status) status.textContent = `${processed} / ${total} ئوقۇلدى`;
+      const pct = 5 + Math.round((processed / total) * 70); // 5% → 75%
+      progress(pct);
+    }
+  }
+
+  // Limited-concurrency parallel read
+  let cursor = 0;
+  async function worker() {
+    while (cursor < S.batchFiles.length) {
+      const idx = cursor++;
+      const result = await readOne(S.batchFiles[idx]);
+      prepared.push(result);
+    }
+  }
+  const workers = [];
+  for (let i = 0; i < Math.min(CONCURRENCY, S.batchFiles.length); i++) {
+    workers.push(worker());
+  }
+  await Promise.all(workers);
+
+  if (status) status.textContent = `سانداققا قوشۇلىۋاتىدۇ...`;
+  progress(80);
+
+  // Phase 2: send all successfully-read books in ONE batch IPC
+  const booksToInsert = prepared.filter(p => p.ok).map(p => p.book);
+  const readErrors = prepared.filter(p => !p.ok);
+
+  let added = [];
+  let skipped = [];
+
+  if (booksToInsert.length > 0) {
+    try {
+      const r = await window.electron.dbAddBooksBatch(booksToInsert);
+      if (!r.success) {
+        toast('قوشۇشتا خاتالىق: ' + (r.error || ''), 'e');
+        progress(100);
+        return;
+      }
+      added = r.added || [];
+      skipped = r.skipped || [];
+    } catch (e) {
+      toast('قوشۇشتا خاتالىق: ' + e.message, 'e');
+      progress(100);
+      return;
+    }
+  }
+
+  progress(95);
+
+  // Phase 3: refresh frontend state from backend (so IDs are correct)
+  try {
+    const data = await window.electron.loadLibrary();
+    S.books = data.books || [];
+    S.cats = data.cats || S.cats;
+    S.nid = data.nid || S.nid;
+    S.bookmarks = data.bookmarks || S.bookmarks;
+    S.bookNotes = data.notes || S.bookNotes;
+  } catch (e) {
+    console.warn('Refresh library after batch import failed:', e);
+  }
+
+  progress(100);
+
+  // Phase 4: close dialog and report results
+  hideBatchImport();
+  S.batchFiles = [];
+  renderSide();
+  renderBooks();
+
+  const addedCount = added.length;
+  const dupeCount = skipped.filter(s => s.reason === 'duplicate').length;
+  const errorCount = skipped.length - dupeCount + readErrors.length;
+
+  let msg = `${addedCount} كىتاب قوشۇلدى`;
+  if (dupeCount) msg += `، ${dupeCount} تەكرارلانغان`;
+  if (errorCount) msg += `، ${errorCount} خاتالىق`;
+  toast(msg, addedCount > 0 ? 's' : 'i');
+
+  // Detail report in console for diagnostics
+  if (skipped.length || readErrors.length) {
+    console.log('Batch import details:');
+    if (added.length) console.log('  Added:', added);
+    if (skipped.length) console.log('  Skipped (DB):', skipped);
+    if (readErrors.length) console.log('  Read errors:', readErrors);
+  }
+}
+
+function showCatsMgr(){renderCatList();document.getElementById('catov').classList.add('on');}
+function hideCatsMgr(){document.getElementById('catov').classList.remove('on');}
+
+function renderCatList(){
+  document.getElementById('catlist').innerHTML=S.cats.map((c,i)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border:0.5px solid var(--border);border-radius:var(--radius2);margin-bottom:6px;background:var(--bg2);gap:6px">
+      <span style="font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ICONS[c]||'📚'} ${sanitize(c)}</span>
+      <button onclick="renameCat(${i})" style="background:none;border:none;font-size:12px;color:var(--am);cursor:pointer;padding:2px 6px" title="ئىسىم ئۆزگەرتىش">✏️</button>
+      <button onclick="delCat(${i})" style="background:none;border:none;font-size:14px;color:var(--text3);cursor:pointer;padding:2px 6px" title="ئۆچۈرۈش">✕</button>
+    </div>`).join('');
+}
+
+async function addCat(){
+  const v=document.getElementById('nci').value.trim();
+  if(!v||S.cats.includes(v)){toast('تۈر نامى كىرگۈزۈڭ ياكى بۇ تۈر مەۋجۇت','e');return;}
+  S.cats.push(v);await saveData();renderCatList();renderSide();document.getElementById('nci').value='';toast(sanitize(v)+' تۈرى قوشۇلدى','s');
+}
+
+async function delCat(i){
+  const c=S.cats[i];
+  if(S.books.some(b=>b.category===c)){toast('بۇ تۈردە كىتابلار بار، ئاۋۋال كىتابلارنى باشقا تۈرگە يۆتكەڭ','e');return;}
+  if(!confirm(sanitize(c)+' تۈرىنى ئۆچۈرمەكچىمۇ؟'))return;
+  S.cats.splice(i,1);await saveData();renderCatList();renderSide();
+}
+
+let renameIdx = -1;
+function renameCat(i){
+  renameIdx = i;
+  document.getElementById('renInput').value = S.cats[i];
+  document.getElementById('renov').classList.add('on');
+  setTimeout(()=>document.getElementById('renInput').focus(), 100);
+}
+function hideRename(){ document.getElementById('renov').classList.remove('on'); renameIdx=-1; }
+async function confirmRename(){
+  if(renameIdx<0) return;
+  const oldName=S.cats[renameIdx];
+  const newName=document.getElementById('renInput').value.trim();
+  if(!newName||newName===oldName){hideRename();return;}
+  if(S.cats.includes(newName)){toast('بۇ ئىسىمدىكى تۈر مەۋجۇت','e');return;}
+  S.cats[renameIdx]=newName;
+  S.books.forEach(b=>{if(b.category===oldName)b.category=newName;});
+  if(ICONS[oldName]){ICONS[newName]=ICONS[oldName];delete ICONS[oldName];}
+  await saveData();renderCatList();renderSide();renderBooks();
+  toast(sanitize(oldName)+' → '+sanitize(newName)+' غا ئۆزگەرتىلدى','s');
+  hideRename();
+}
+
+async function showStats() {
+  const stats = await calculateStats();
+  document.getElementById('statTotal').textContent = stats.total;
+  document.getElementById('statCats').innerHTML = stats.catBars.map(cb => `
+    <div class="stat-bar">
+      <div class="stat-bar-name">${sanitize(cb.name)}</div>
+      <div class="stat-bar-track">
+        <div class="stat-bar-fill" style="width:${stats.total > 0 ? (cb.count/stats.total)*100 : 0}%"></div>
+      </div>
+      <div class="stat-bar-val">${cb.count}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('statFormats').innerHTML = stats.formatBars.map(fb => `
+    <div class="stat-bar">
+      <div class="stat-bar-name">${fb.format}</div>
+      <div class="stat-bar-track">
+        <div class="stat-bar-fill" style="width:${stats.total > 0 ? (fb.count/stats.total)*100 : 0}%"></div>
+      </div>
+      <div class="stat-bar-val">${fb.count}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('statSize').textContent = (stats.totalSize / (1024*1024)).toFixed(1) + ' MB';
+  document.getElementById('statsov').classList.add('on');
+}
+
+function hideStats() {
+  document.getElementById('statsov').classList.remove('on');
+}
+
+async function calculateStats() {
+  const catCounts = {};
+  const formatCounts = {};
+  let totalSize = 0;
+
+  S.books.forEach(b => {
+    catCounts[b.category] = (catCounts[b.category] || 0) + 1;
+    formatCounts[b.format] = (formatCounts[b.format] || 0) + 1;
+  });
+
+  const catBars = S.cats.map(c => ({ name: c, count: catCounts[c] || 0 })).filter(cb => cb.count > 0);
+  const formatBars = Object.keys(formatCounts).map(f => ({ format: f, count: formatCounts[f] }));
+
+  // Get real disk size from main process
+  try {
+    const sizeResult = await window.electron.getContentSize();
+    if (sizeResult && sizeResult.success) {
+      totalSize = sizeResult.totalBytes;
+    }
+  } catch(e) {}
+
+  return {
+    total: S.books.length,
+    catBars: catBars,
+    formatBars: formatBars,
+    totalSize: totalSize
+  };
+}
+
+function showAbout(){document.getElementById('about').classList.add('on');}
+function hideAbout(){document.getElementById('about').classList.remove('on');}
+function openDataFolder(){window.electron.openDataFolder();}
+
+// Bulk export by category
+function showBulkExport() {
+  const sel = document.getElementById('exportCat');
+  const counts = {};
+  S.books.forEach(b => counts[b.category] = (counts[b.category]||0)+1);
+  sel.innerHTML = `<option value="all">📚 بارلىق كىتابلار (${S.books.length})</option>` +
+    S.cats.filter(c => counts[c] > 0).map(c =>
+      `<option value="${sanitize(c)}">${sanitize(c)} (${counts[c] || 0})</option>`
+    ).join('');
+  document.getElementById('exportInfo').style.display = 'none';
+  document.getElementById('exportov').classList.add('on');
+}
+function hideExport(){document.getElementById('exportov').classList.remove('on');}
+
+async function doBulkExport() {
+  const cat = document.getElementById('exportCat').value;
+  const infoEl = document.getElementById('exportInfo');
+  infoEl.style.display = 'block';
+  infoEl.textContent = 'چۈشۈرۈلىۋاتىدۇ...';
+  progress(20);
+  try {
+    const r = await window.electron.bulkExport(cat);
+    if (r.canceled) {
+      infoEl.style.display = 'none';
+      progress(100);
+      return;
+    }
+    if (r.success) {
+      progress(100);
+      hideExport();
+      toast(r.exported + ' / ' + r.total + ' كىتاب چۈشۈرۈلدى', 's');
+    } else if (r.error === 'no_books') {
+      infoEl.textContent = 'بۇ تۈردە كىتاب يوق';
+      progress(100);
+    } else {
+      infoEl.textContent = 'خاتالىق: ' + (r.error || 'نامەلۇم');
+      progress(100);
+    }
+  } catch(e) {
+    infoEl.textContent = 'خاتالىق: ' + e.message;
+    progress(100);
+  }
+}
+
+// Cleanup orphaned content files
+async function runCleanup() {
+  if (!confirm('ئۆچۈرۈلگەن كىتابلارنىڭ قالدۇق ھۆججەتلىرىنى تازىلامسىز؟')) return;
+  progress(30);
+  try {
+    const r = await window.electron.cleanupOrphans();
+    progress(100);
+    if (r.success) {
+      if (r.cleaned > 0) {
+        toast(r.cleaned + ' قالدۇق ھۆججەت تازىلاندى', 's');
+      } else {
+        toast('تازىلايدىغان ھۆججەت يوق، ھەممىسى تازا', 'i');
+      }
+    }
+  } catch(e) {
+    progress(100);
+    toast('تازىلاشتا خاتالىق: ' + e.message, 'e');
+  }
+}
+
+// Handle menu actions from native menu
+if (window.electron.onMenuAction) {
+  window.electron.onMenuAction((action) => {
+    if (action === 'new-book') showAdd();
+    else if (action === 'batch-import') showBatchImport();
+    else if (action === 'search') document.getElementById('si').focus();
+    else if (action === 'about') showAbout();
+    else if (action === 'stats') showStats();
+    else if (action === 'cats') showCatsMgr();
+  });
+}
+
+function setupKeyboardShortcuts() {
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+      e.preventDefault();
+      showAdd();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+      e.preventDefault();
+      document.getElementById('si').focus();
+    }
+    // Ctrl+1 / Ctrl+2 / Ctrl+3 — switch between modes
+    if ((e.ctrlKey || e.metaKey) && (e.key === '1' || e.key === '2' || e.key === '3')) {
+      // Only switch if focus is not in an input/textarea/contenteditable
+      const t = e.target;
+      const isEditing = t && (
+        t.tagName === 'INPUT' ||
+        t.tagName === 'TEXTAREA' ||
+        t.isContentEditable
+      );
+      if (isEditing) return; // let the input handle it
+      e.preventDefault();
+      const modeMap = { '1': 'library', '2': 'quran', '3': 'notes' };
+      const target = modeMap[e.key];
+      if (target && target !== S.mode) setMode(target);
+    }
+    if (e.key === 'Escape') {
+      closeReader();
+      hideAdd();
+      hideEdit();
+      hideCatsMgr();
+      hideAbout();
+      hideStats();
+      hideBatchImport();
+      hideRename();
+      hideExport();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'ArrowLeft') {
+      e.preventDefault();
+      chFS(-2);
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'ArrowRight') {
+      e.preventDefault();
+      chFS(2);
+    }
+  });
+}
+
+// Flush any pending Notes save before the window closes
+window.addEventListener('beforeunload', () => {
+  try {
+    if (window.S && window.S.notes && window.S.notes.dirty && window.S.notes.curDoc) {
+      // Use sync IPC via a synchronous-looking pattern:
+      // We can't actually await here, but we can fire-and-forget.
+      // The main process auto-save is no longer necessary, but ensure
+      // the most recent state is at least dispatched.
+      const editorEl = document.getElementById('notes-editor');
+      if (editorEl && window.electron && window.electron.notesUpdate) {
+        const rawHtml = editorEl.innerHTML;
+        const html = (window.SafeHTML && window.SafeHTML.sanitize)
+          ? window.SafeHTML.sanitize(rawHtml)
+          : rawHtml;
+        const text = editorEl.innerText || '';
+        // Don't await — beforeunload can't reliably wait, but the IPC
+        // is queued and the main process will process it.
+        window.electron.notesUpdate(
+          window.S.notes.curDoc.id,
+          window.S.notes.curDoc.title,
+          html,
+          text
+        );
+      }
+    }
+  } catch (e) {
+    // Ignore — best effort save
+  }
+});
+
+// ========== SEARCH HISTORY ==========
+async function loadSearchHistory() {
+  const el = document.getElementById('search-history');
+  if (!el) return;
+  try {
+    const r = await window.electron.dbSearchHistory();
+    if (!r || !r.success || !Array.isArray(r.history) || r.history.length === 0) {
+      el.classList.remove('on');
+      return;
+    }
+    // De-duplicate by query (keep most recent), then take top 10
+    const seen = new Set();
+    const items = [];
+    for (const h of r.history) {
+      const q = (h.query || '').trim();
+      if (!q || seen.has(q)) continue;
+      seen.add(q);
+      items.push(h);
+      if (items.length >= 10) break;
+    }
+    if (items.length === 0) { el.classList.remove('on'); return; }
+
+    const rows = items.map(h => {
+      const safeQ = sanitize(h.query);
+      // Safely encode the query for the onclick attribute
+      const attrQ = safeQ.replace(/"/g, '&quot;');
+      const count = Number(h.result_count) || 0;
+      return `<div class="sh-item" onmousedown="event.preventDefault()" onclick="useSearchHistory(&quot;${attrQ}&quot;)">
+        <span class="sh-query">${safeQ}</span>
+        <span class="sh-count">${count} نەتىجە</span>
+      </div>`;
+    }).join('');
+
+    el.innerHTML = `<div class="sh-header">يېقىنقى ئىزدەشلەر</div>${rows}`;
+    el.classList.add('on');
+  } catch(e) {
+    console.warn('loadSearchHistory failed:', e);
+    el.classList.remove('on');
+  }
+}
+
+function useSearchHistory(query) {
+  const input = document.getElementById('si');
+  if (!input) return;
+  input.value = query;
+  hideSearchHistory(true);
+  doSearch();
+}
+
+function hideSearchHistory(immediate) {
+  const el = document.getElementById('search-history');
+  if (!el) return;
+  if (immediate) {
+    el.classList.remove('on');
+  } else {
+    // Small delay so click events on dropdown items can still register
+    setTimeout(() => el.classList.remove('on'), 200);
+  }
+}
+
+let searchTimeout;
+document.getElementById('si').addEventListener('input', e => {
+  clearTimeout(searchTimeout);
+  // Typing hides the history dropdown
+  hideSearchHistory(true);
+  if (!e.target.value) {
+    clearSearch();
+  } else {
+    searchTimeout = setTimeout(() => {
+      doSearch();
+    }, 300);
+  }
+});
+
+function progress(val) {
+  const p = document.getElementById('progress');
+  if (!p) return;
+  p.style.width = val + '%';
+  p.style.opacity = '1';
+  if (val >= 100) {
+    setTimeout(() => {
+      p.style.opacity = '0';
+      setTimeout(() => { p.style.width = '0'; }, 300);
+    }, 600);
+  }
+}
+
+function toast(msg,type='i'){
+  const tc=document.getElementById('toast');const tk=document.createElement('div');
+  tk.className='tk '+type;tk.textContent=msg;tc.appendChild(tk);setTimeout(()=>tk.remove(),3000);
+}
+
+init();
+</script>
+<link rel="stylesheet" href="quran.css">
+<link rel="stylesheet" href="notes.css">
+<script src="../assets/vendor/purify.min.js"></script>
+<script src="sanitize.js"></script>
+<script src="ngram.js"></script>
+<script src="symspell.js"></script>
+<script src="spellcheck.js"></script>
+<script src="quran.js"></script>
+<script src="notes.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+# Dependencies (re-created by `npm install`)
+node_modules/
+
+# Build output (the .exe / installer that electron-builder produces)
+dist/
+out/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Machine-local Claude permissions (not shared between computers)
+.claude/settings.local.json
+
+# Mobile-app source copied in only as a reference for the AI port (not shipped)
+_mobile-ai-reference/

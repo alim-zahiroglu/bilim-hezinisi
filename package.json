@@ -1,0 +1,126 @@
+{
+  "name": "bilim-hezinisi",
+  "version": "2.5.0",
+  "description": "بىلىم خەزىنىسى - Uyghur Digital Library",
+  "main": "main.js",
+  "scripts": {
+    "setup": "node setup-pdfjs.js",
+    "postinstall": "electron-rebuild -f -w better-sqlite3 && node scripts/copy-dompurify.js",
+    "fetch-quran": "node scripts/fetch-quran-data.js",
+    "build-spelldict": "node scripts/build-spelldict.js",
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "dist-win": "electron-builder --win --x64",
+    "dist-mac": "electron-builder --mac",
+    "dist-linux": "electron-builder --linux",
+    "dist": "electron-builder --win --x64"
+  },
+  "build": {
+    "appId": "com.bilim.hezinisi",
+    "productName": "Bilim Hezinisi",
+    "directories": {
+      "output": "dist"
+    },
+    "asar": true,
+    "compression": "maximum",
+    "removePackageScripts": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "بىلىم خەزىنىسى",
+      "allowElevation": false,
+      "perMachine": false,
+      "runAfterFinish": true,
+      "installerIcon": "assets/installer-icon.ico",
+      "uninstallerIcon": "assets/installer-icon.ico",
+      "installerHeaderIcon": "assets/installer-icon.ico"
+    },
+    "portable": {
+      "artifactName": "BilimHezinisi-Portable-${version}.exe"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.png"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "database.js",
+      "src/**/*",
+      "assets/ukijekran.ttf",
+      "assets/trad-arabic.ttf",
+      "assets/trad-arabic-bold.ttf",
+      "assets/Bahij_Nazanin-Regular.ttf",
+      "assets/icon.*",
+      "assets/installer-icon.ico",
+      "assets/pdfjs/**/*",
+      "assets/fonts/**/*",
+      "assets/seed/**/*",
+      "src/quran.js",
+      "src/quran.css",
+      "src/notes.js",
+      "src/notes.css",
+      "src/ngram.js",
+      "src/spellcheck.js",
+      "assets/spellcheck/uyghur_words.txt",
+      "assets/spellcheck/uyghur_corrections.json",
+      "assets/vendor/**/*",
+      "scripts/**/*",
+      "!scripts/build-spelldict.js",
+      "!assets/spellcheck/raw/**/*"
+    ],
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**/*"
+    ],
+    "nodeGypRebuild": false
+  },
+  "keywords": [
+    "uyghur",
+    "library",
+    "kutupxana",
+    "arabic",
+    "islamic"
+  ],
+  "author": "Jamiy Kutupxana",
+  "license": "MIT",
+  "devDependencies": {
+    "@electron/rebuild": "^4.0.4",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.0.0"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.10.0",
+    "docx": "^8.5.0",
+    "dompurify": "^3.4.1",
+    "electron-window-state": "^5.0.3",
+    "mammoth": "^1.6.0",
+    "node-html-parser": "^6.1.13",
+    "sql.js": "^1.10.0",
+    "tesseract.js": "^5.0.0",
+    "word-extractor": "^1.0.4"
+  }
+}
