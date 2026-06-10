@@ -652,10 +652,12 @@ ipcMain.handle('open-file', async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openFile'],
     filters: [
-      { name: 'كىتاب ھۆججەتلىرى (PDF, TXT, DOCX, DOC)', extensions: ['pdf', 'txt', 'docx', 'doc'] },
+      { name: 'كىتاب ھۆججەتلىرى (PDF, TXT, DOCX, DOC, HTML, MD)', extensions: ['pdf', 'txt', 'docx', 'doc', 'html', 'htm', 'md', 'markdown'] },
       { name: 'PDF ھۆججىتى', extensions: ['pdf'] },
       { name: 'تېكىست ھۆججىتى (TXT)', extensions: ['txt'] },
       { name: 'Word ھۆججىتى (DOCX, DOC)', extensions: ['docx', 'doc'] },
+      { name: 'تور بەت ھۆججىتى (HTML)', extensions: ['html', 'htm'] },
+      { name: 'Markdown ھۆججىتى (MD)', extensions: ['md', 'markdown'] },
       { name: 'بارلىق ھۆججەتلەر', extensions: ['*'] }
     ]
   });
@@ -701,6 +703,42 @@ ipcMain.handle('read-doc', async (event, filePath) => {
     const extractor = new WordExtractor();
     const doc = await extractor.extract(filePath);
     return { success: true, content: doc.getBody() };
+  } catch(e) {
+    return { success: false, error: e.message };
+  }
+});
+
+// Markdown: read the raw .md/.markdown text. We store the markdown source as the
+// book content (same plain-text storage path as TXT/DOCX) so it stays fully
+// searchable (FTS), paginated and exportable. Markdown is human-readable as-is.
+ipcMain.handle('read-md', (event, filePath) => {
+  try {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    return { success: true, content };
+  } catch(e) {
+    return { success: false, error: e.message };
+  }
+});
+
+// HTML: extract clean, readable text from an .html/.htm file. We strip the
+// non-content elements (scripts, styles, nav/header/footer, forms…) so their
+// JS/CSS/menu text never leaks in, then take the body's structured text. The
+// result is plain text — it flows through the existing reader exactly like a
+// TXT/DOCX book, so there is no new rendering path and no HTML reaches innerHTML.
+ipcMain.handle('read-html', (event, filePath) => {
+  try {
+    const raw = fs.readFileSync(filePath, 'utf-8');
+    const { parse } = require('node-html-parser');
+    const root = parse(raw);
+    root.querySelectorAll('script,style,noscript,iframe,svg,nav,header,footer,aside,form,button,input,select,textarea')
+        .forEach(el => el.set_content(''));
+    const body = root.querySelector('body') || root;
+    const content = (body.structuredText || '')
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .join('\n\n');
+    return { success: true, content };
   } catch(e) {
     return { success: false, error: e.message };
   }
@@ -806,7 +844,7 @@ ipcMain.handle('open-folder', async () => {
 
 ipcMain.handle('read-folder', (event, folderPath) => {
   try {
-    const supported = ['.pdf', '.txt', '.docx', '.doc'];
+    const supported = ['.pdf', '.txt', '.docx', '.doc', '.html', '.htm', '.md', '.markdown'];
     const files = [];
     const items = fs.readdirSync(folderPath);
     items.forEach(item => {

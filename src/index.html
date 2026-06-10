@@ -369,7 +369,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
         <div class="fz" id="fz">
           <div class="file-icon">📄</div>
           <div class="fz-t">ھۆججەتنى سۆرەپ تاشلاڭ ياكى چېكىڭ</div>
-          <div class="fz-s">PDF · TXT · DOCX · DOC</div>
+          <div class="fz-s">PDF · TXT · DOCX · DOC · HTML · MD</div>
         </div>
         <div class="finfo" id="finfo"></div>
         <div class="pb" id="pb"><div class="pf" id="pf"></div></div>
@@ -414,7 +414,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
       <button onclick="hideBatchImport()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
     </div>
     <div class="mc">
-      <p style="font-size:12px;color:var(--text2);margin-bottom:12px">ئىچىدە PDF · TXT · DOCX · DOC ھۆججەتلىرى بار ھۆججەتخانىنى تاللاڭ:</p>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:12px">ئىچىدە PDF · TXT · DOCX · DOC · HTML · MD ھۆججەتلىرى بار ھۆججەتخانىنى تاللاڭ:</p>
       <div class="fl"><label>تۈرى</label><select id="batchcat" class="inp" style="cursor:pointer"></select></div>
       <button onclick="selectBatchFolder()" class="hbtn p" style="width:100%;margin-bottom:12px">📁 ھۆججەتخانا تاللاش</button>
       <div id="batchlist" style="max-height:300px;overflow-y:auto;border:0.5px solid var(--border);border-radius:var(--radius2);padding:8px;display:none;margin-bottom:12px">
@@ -1711,6 +1711,14 @@ async function handleFileResult(result) {
     const r = await window.electron.readDoc(filePath);
     if(r.success){S.tempContent=r.content;fi.textContent='✓ DOC: '+fileName;pf.style.width='100%';progress(100);toast('DOC مۇۋەپپەقىيەتلىك ئوقۇلدى','s');}
     else{S.tempContent='[DOC: '+fileName+']';fi.textContent='✓ '+fileName;pf.style.width='100%';}
+  } else if(ext==='md'||ext==='markdown'){
+    const r = await window.electron.readMd(filePath);
+    if(r.success){S.tempContent=r.content;fi.textContent='✓ Markdown: '+fileName;pf.style.width='100%';progress(100);toast('Markdown ھۆججىتى ئوقۇلدى','s');}
+    else{fi.textContent='خاتالىق: '+r.error;toast('ھۆججەت ئوقۇغىلى بولمىدى','e');}
+  } else if(ext==='html'||ext==='htm'){
+    const r = await window.electron.readHtml(filePath);
+    if(r.success){S.tempContent=r.content;fi.textContent='✓ HTML: '+fileName;pf.style.width='100%';progress(100);toast('HTML ھۆججىتى ئوقۇلدى','s');}
+    else{fi.textContent='خاتالىق: '+r.error;toast('ھۆججەت ئوقۇغىلى بولمىدى','e');}
   } else {
     S.tempContent='['+ext.toUpperCase()+': '+fileName+']';
     fi.textContent='✓ '+fileName;pf.style.width='100%';progress(100);
@@ -1869,7 +1877,7 @@ async function selectBatchFolder() {
       S.batchFiles = result.files.map(f => f.filePath);
       displayBatchFiles();
     } else {
-      toast('PDF · TXT · DOCX · DOC ھۆججىتى تېپىلمىدى','e');
+      toast('PDF · TXT · DOCX · DOC · HTML · MD ھۆججىتى تېپىلمىدى','e');
     }
   } catch(e) {
     toast('ھۆججەتخانىنى ئوچۇغىلى بولمىدى: '+e.message,'e');
@@ -1952,6 +1960,14 @@ async function confirmBatchImport() {
       } else if (ext === 'doc') {
         const r = await window.electron.readDoc(filePath);
         if (!r.success) throw new Error(r.error || 'DOC read failed');
+        content = r.content || '';
+      } else if (ext === 'md' || ext === 'markdown') {
+        const r = await window.electron.readMd(filePath);
+        if (!r.success) throw new Error(r.error || 'Markdown read failed');
+        content = r.content || '';
+      } else if (ext === 'html' || ext === 'htm') {
+        const r = await window.electron.readHtml(filePath);
+        if (!r.success) throw new Error(r.error || 'HTML read failed');
         content = r.content || '';
       } else {
         content = '[' + ext.toUpperCase() + ': ' + fileName + ']';

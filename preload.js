@@ -44,6 +44,8 @@ contextBridge.exposeInMainWorld('electron', {
   readPdfBuffer: (filePath) => ipcRenderer.invoke('read-pdf-buffer', filePath),
   readDocx: (filePath) => ipcRenderer.invoke('read-docx', filePath),
   readDoc: (filePath) => ipcRenderer.invoke('read-doc', filePath),
+  readMd: (filePath) => ipcRenderer.invoke('read-md', filePath),
+  readHtml: (filePath) => ipcRenderer.invoke('read-html', filePath),
   saveFileDialog: (name, content) => ipcRenderer.invoke('save-file-dialog', name, content),
   exportAsDocx: (title, author, content) => ipcRenderer.invoke('export-as-docx', title, author, content),
   exportAsPdf: (title, author, content) => ipcRenderer.invoke('export-as-pdf', title, author, content),
