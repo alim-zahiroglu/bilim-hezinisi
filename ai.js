@@ -795,7 +795,9 @@ async function test() {
         const text = extractText(json);
         if (text) {
           setModel(m);
-          return { ok: true, message: text + ' (مودېل: ' + m + ')', model: m };
+          // Plain reply only — the settings UI appends the resolved model
+          // itself (appending it here too printed the model twice).
+          return { ok: true, message: text, model: m };
         }
       } catch (_) {}
     }

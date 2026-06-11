@@ -473,9 +473,9 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
 
       <div class="fl">
         <label>Gemini API ئاچقۇچى</label>
-        <input type="password" id="aiKey" class="inp" dir="ltr" placeholder="AIza..." autocomplete="off" spellcheck="false">
+        <input type="password" id="aiKey" class="inp" dir="ltr" placeholder="AIza... / AQ..." autocomplete="off" spellcheck="false">
       </div>
-      <p style="font-size:11px;color:var(--text3);margin-bottom:10px">ھەقسىز API ئاچقۇچىنى <b>aistudio.google.com</b> تور بېتىنىڭ <b>«Get API key»</b> بۆلىكىدىن ھاسىل قىلىپ كۆچۈرۈپ، بۇ يەرگە چاپلاڭ.</p>
+      <p style="font-size:11px;color:var(--text3);margin-bottom:10px">ھەقسىز API ئاچقۇچىنى <b>aistudio.google.com</b> تور بېتىنىڭ <b>«Get API key»</b> بۆلىكىدىن ھاسىل قىلىپ كۆچۈرۈپ، بۇ يەرگە چاپلاڭ. (كونا ئاچقۇچلار «AIza» بىلەن، يېڭىلىرى «AQ.» بىلەن باشلىنىدۇ)</p>
       <div style="display:flex;gap:8px;margin-bottom:10px">
         <button onclick="aiSaveKey()" class="hbtn p">ساقلاش</button>
         <button onclick="aiTestConnection()" class="hbtn" id="aiTestBtn">باغلىنىشنى سىناش</button>
@@ -1947,8 +1947,8 @@ async function showSettings() {
     document.getElementById('aiEnabled').checked = await window.AI.isEnabled();
     const ki = document.getElementById('aiKey');
     ki.value = '';
-    const masked = await window.AI.getApiKey();   // masked form (AIza…last4)
-    ki.placeholder = masked || 'AIza...';
+    const masked = await window.AI.getApiKey();   // masked form (first4…last4)
+    ki.placeholder = masked || 'AIza... / AQ...';
     const sel = document.getElementById('aiModel');
     const cur = await window.AI.getModel();
     const models = (window.AI.MODEL_FALLBACKS || []).slice();
@@ -1981,16 +1981,18 @@ async function aiSaveKey() {
   const ki = document.getElementById('aiKey');
   const v = (ki.value || '').trim();
   if (!v) { toast('ئاچقۇچ كىرگۈزۈلمىدى', 'e'); return; }
-  // Gemini keys start with AIza. Warn but allow save anyway (the real
-  // validation happens on the first request).
-  if (!/^AIza[0-9A-Za-z_-]{10,}$/.test(v)) {
+  // Google issues several key formats (classic AIza…, newer AQ.…). Only warn
+  // when the value is clearly not key-shaped (whitespace / too short /
+  // non-key characters) — and even then the user may save anyway; the real
+  // validation happens on the first request.
+  if (!/^[A-Za-z0-9._-]{20,}$/.test(v)) {
     if (!confirm('ئاچقۇچنىڭ شەكلى ئادەتتىكى Gemini ئاچقۇچىغا ئوخشىمايدۇ. شۇنداقتىمۇ ساقلامسىز؟')) return;
   }
   try {
     await window.AI.setApiKey(v);
-    // Mask in the field after save: clear the plaintext, show AIza…last4.
+    // Mask in the field after save: clear the plaintext, show first4…last4.
     ki.value = '';
-    ki.placeholder = (await window.AI.getApiKey()) || 'AIza...';
+    ki.placeholder = (await window.AI.getApiKey()) || 'AIza... / AQ...';
     toast('API ئاچقۇچ ساقلاندى', 's');
   } catch (e) {
     console.warn('[settings] AI key save failed:', e);
@@ -2007,10 +2009,11 @@ async function aiTestConnection() {
   try {
     const r = await window.AI.test();
     if (r && r.ok) {
-      const model = r.model || (await window.AI.getModel());
+      // The PERSISTED model is the source of truth — test() saves whatever
+      // model actually answered (auto-fallback), so re-read it.
+      const model = (await window.AI.getModel()) || r.model;
       out.textContent = '✓ ' + r.message + ' (مودېل: ' + model + ')';
       toast('باغلىنىش ئىشلىدى', 's');
-      // Refresh model + usage in case test() auto-fell-back / bumped usage.
       const sel = document.getElementById('aiModel');
       if (sel && model) {
         if (![...sel.options].some(o => o.value === model)) {
