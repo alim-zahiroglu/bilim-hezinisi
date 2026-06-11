@@ -652,11 +652,10 @@ ipcMain.handle('open-file', async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openFile'],
     filters: [
-      { name: 'كىتاب ھۆججەتلىرى (PDF, TXT, DOCX, DOC, HTML, MD)', extensions: ['pdf', 'txt', 'docx', 'doc', 'html', 'htm', 'md', 'markdown'] },
+      { name: 'كىتاب ھۆججەتلىرى (PDF, TXT, DOCX, DOC, MD)', extensions: ['pdf', 'txt', 'docx', 'doc', 'md', 'markdown'] },
       { name: 'PDF ھۆججىتى', extensions: ['pdf'] },
       { name: 'تېكىست ھۆججىتى (TXT)', extensions: ['txt'] },
       { name: 'Word ھۆججىتى (DOCX, DOC)', extensions: ['docx', 'doc'] },
-      { name: 'تور بەت ھۆججىتى (HTML)', extensions: ['html', 'htm'] },
       { name: 'Markdown ھۆججىتى (MD)', extensions: ['md', 'markdown'] },
       { name: 'بارلىق ھۆججەتلەر', extensions: ['*'] }
     ]

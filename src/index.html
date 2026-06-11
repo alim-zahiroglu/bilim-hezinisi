@@ -371,7 +371,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
         <div class="fz" id="fz">
           <div class="file-icon">📄</div>
           <div class="fz-t">ھۆججەتنى سۆرەپ تاشلاڭ ياكى چېكىڭ</div>
-          <div class="fz-s">PDF · TXT · DOCX · DOC · HTML · MD</div>
+          <div class="fz-s">PDF · TXT · DOCX · DOC · MD</div>
         </div>
         <div class="finfo" id="finfo"></div>
         <div class="pb" id="pb"><div class="pf" id="pf"></div></div>
@@ -416,7 +416,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
       <button onclick="hideBatchImport()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
     </div>
     <div class="mc">
-      <p style="font-size:12px;color:var(--text2);margin-bottom:12px">ئىچىدە PDF · TXT · DOCX · DOC · HTML · MD ھۆججەتلىرى بار ھۆججەتخانىنى تاللاڭ:</p>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:12px">ئىچىدە PDF · TXT · DOCX · DOC · MD ھۆججەتلىرى بار ھۆججەتخانىنى تاللاڭ:</p>
       <div class="fl"><label>تۈرى</label><select id="batchcat" class="inp" style="cursor:pointer"></select></div>
       <button onclick="selectBatchFolder()" class="hbtn p" style="width:100%;margin-bottom:12px">📁 ھۆججەتخانا تاللاش</button>
       <div id="batchlist" style="max-height:300px;overflow-y:auto;border:0.5px solid var(--border);border-radius:var(--radius2);padding:8px;display:none;margin-bottom:12px">
@@ -444,6 +444,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
         <label>تور ئادرېسى (URL)</label>
         <input type="text" id="weburl" class="inp" dir="ltr" placeholder="https://..." onkeydown="if(event.key==='Enter')importWebPage()">
       </div>
+      <div class="fl"><label>تۈرى</label><select id="webcat" class="inp" style="cursor:pointer"></select></div>
       <div id="webStatus" style="font-size:12px;color:var(--text2);margin:8px 0;text-align:center;font-family:sans-serif"></div>
       <div class="fa">
         <button onclick="hideWebImport()" class="hbtn">بىكار قىلىش</button>
@@ -1815,6 +1816,9 @@ function showWebImport() {
   document.getElementById('weburl').value = '';
   document.getElementById('webStatus').textContent = '';
   document.getElementById('webbtn').disabled = false;
+  const sel = document.getElementById('webcat');
+  sel.innerHTML = S.cats.map(c => `<option value="${sanitize(c)}">${sanitize(c)}</option>`).join('');
+  sel.value = S.cats.includes('باشقا') ? 'باشقا' : (S.cats[0] || '');
   document.getElementById('webov').classList.add('on');
   setTimeout(() => document.getElementById('weburl').focus(), 100);
 }
@@ -1855,7 +1859,7 @@ async function importWebPage() {
     let fileHash = '';
     try { fileHash = await window.electron.computeHash(art.text); } catch (e) {}
 
-    const category = S.cats.includes('باشقا') ? 'باشقا' : (S.cats[0] || 'باشقا');
+    const category = document.getElementById('webcat').value || 'باشقا';
     const result = await window.electron.dbAddBook({
       title,
       author: art.author,
@@ -2130,7 +2134,7 @@ async function selectBatchFolder() {
       S.batchFiles = result.files.map(f => f.filePath);
       displayBatchFiles();
     } else {
-      toast('PDF · TXT · DOCX · DOC · HTML · MD ھۆججىتى تېپىلمىدى','e');
+      toast('PDF · TXT · DOCX · DOC · MD ھۆججىتى تېپىلمىدى','e');
     }
   } catch(e) {
     toast('ھۆججەتخانىنى ئوچۇغىلى بولمىدى: '+e.message,'e');
