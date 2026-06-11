@@ -97,13 +97,15 @@ contextBridge.exposeInMainWorld('electron', {
   aiCancel: (requestId) => ipcRenderer.invoke('ai-cancel', requestId)
 });
 
-// window.AI — convenience bridge matching the mobile app's window.AI shape,
-// so renderer code ported from mobile (settings, reader AI panel) stays
-// close to its source. getApiKey deliberately returns the MASKED key — the
-// real key lives only in the main process. detectType / typeLabel /
-// MAX_CONTEXT_CHARS are pure helpers that arrive with src/ai-client.js in
-// Phase 3 (no IPC needed for them).
-contextBridge.exposeInMainWorld('AI', {
+// window.AIBridge — the IPC half of the mobile app's window.AI shape.
+// contextBridge-exposed objects are frozen (non-writable, non-configurable),
+// so the renderer cannot attach the pure helpers (detectType / typeLabel /
+// MAX_CONTEXT_CHARS / example chips) onto this object directly. Instead,
+// src/ai-client.js composes the final window.AI = bridge methods + pure
+// helpers, giving ported mobile code the exact window.AI surface it expects.
+// getApiKey deliberately returns the MASKED key — the real key lives only
+// in the main process.
+contextBridge.exposeInMainWorld('AIBridge', {
   hasApiKey: () => ipcRenderer.invoke('ai-has-key'),
   getApiKey: () => ipcRenderer.invoke('ai-get-key-masked'),
   setApiKey: (key) => ipcRenderer.invoke('ai-set-key', key),

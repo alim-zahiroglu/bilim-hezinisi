@@ -318,6 +318,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
   <span class="logo">📚 بىلىم خەزىنىسى</span>
   <span class="ver" id="ver">v1.0.0</span>
   <div style="flex:1"></div>
+  <button class="hbtn" onclick="showSettings()" style="font-size:11px;-webkit-app-region:no-drag" title="تەڭشەكلەر">⚙️</button>
   <button class="hbtn" onclick="toggleDarkMode()" style="font-size:11px;-webkit-app-region:no-drag" id="darkToggle" title="قاراڭغۇ / يورۇق ھالەت">🌙</button>
 </div>
 
@@ -449,6 +450,46 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
       <div class="fa">
         <button onclick="hideWebImport()" class="hbtn">بىكار قىلىش</button>
         <button onclick="importWebPage()" class="hbtn p" id="webbtn">✓ قوشۇش</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="ov" id="setov">
+  <div class="mbox" style="max-width: 520px;">
+    <div class="mh">
+      <h2>⚙️ تەڭشەكلەر</h2>
+      <button onclick="hideSettings()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
+    </div>
+    <div class="mc">
+      <h3 style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px">سۈنئىي ئىدراك (Gemini)</h3>
+
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:4px">
+        <input type="checkbox" id="aiEnabled" onchange="aiToggleEnabled()" style="cursor:pointer">
+        <span style="font-size:13px;color:var(--text)">سۈنئىي ئىدراكنى ئىشلىتىش</span>
+      </label>
+      <p style="font-size:11px;color:var(--text3);margin:0 22px 14px 0">قوزغاتسىڭىز ئوقۇغۇچتا AI كۇنۇپكىسى كۆرۈنىدۇ</p>
+
+      <div class="fl">
+        <label>Gemini API ئاچقۇچى</label>
+        <input type="password" id="aiKey" class="inp" dir="ltr" placeholder="AIza..." autocomplete="off" spellcheck="false">
+      </div>
+      <p style="font-size:11px;color:var(--text3);margin-bottom:10px">ھەقسىز API ئاچقۇچىنى <b>aistudio.google.com</b> تور بېتىنىڭ <b>«Get API key»</b> بۆلىكىدىن ھاسىل قىلىپ كۆچۈرۈپ، بۇ يەرگە چاپلاڭ.</p>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button onclick="aiSaveKey()" class="hbtn p">ساقلاش</button>
+        <button onclick="aiTestConnection()" class="hbtn" id="aiTestBtn">باغلىنىشنى سىناش</button>
+      </div>
+      <div id="aiTestResult" style="font-size:12px;color:var(--text2);min-height:18px;margin-bottom:10px"></div>
+
+      <div class="fl">
+        <label>مودېل</label>
+        <select id="aiModel" class="inp" style="cursor:pointer;direction:ltr" onchange="aiChangeModel()"></select>
+      </div>
+      <div id="aiUsage" style="font-size:11px;color:var(--text3);margin-bottom:12px">بۈگۈن ئىشلىتىلگەن: 0</div>
+
+      <div class="fa">
+        <button onclick="hideSettings()" class="hbtn">تاقاش</button>
       </div>
     </div>
   </div>
@@ -1895,6 +1936,113 @@ async function importWebPage() {
   }
 }
 
+// ===== Settings modal (AI / Gemini) =====
+// Mirrors the mobile app's settings.js AI section, adapted to the desktop
+// modal pattern. All persistence goes through the Part-B IPC bridge — the
+// real API key never enters the renderer; the field shows a masked
+// placeholder after save.
+
+async function showSettings() {
+  try {
+    document.getElementById('aiEnabled').checked = await window.AI.isEnabled();
+    const ki = document.getElementById('aiKey');
+    ki.value = '';
+    const masked = await window.AI.getApiKey();   // masked form (AIza…last4)
+    ki.placeholder = masked || 'AIza...';
+    const sel = document.getElementById('aiModel');
+    const cur = await window.AI.getModel();
+    const models = (window.AI.MODEL_FALLBACKS || []).slice();
+    if (cur && models.indexOf(cur) === -1) models.unshift(cur);
+    sel.innerHTML = models.map(m => `<option value="${sanitize(m)}" ${m === cur ? 'selected' : ''}>${sanitize(m)}</option>`).join('');
+    document.getElementById('aiUsage').textContent = 'بۈگۈن ئىشلىتىلگەن: ' + (await window.AI.getTodayUsage());
+    document.getElementById('aiTestResult').textContent = '';
+  } catch (e) {
+    console.warn('[settings] load failed:', e);
+  }
+  document.getElementById('setov').classList.add('on');
+}
+
+function hideSettings() {
+  document.getElementById('setov').classList.remove('on');
+}
+
+async function aiToggleEnabled() {
+  const on = document.getElementById('aiEnabled').checked;
+  try {
+    await window.AI.setEnabled(on);
+    toast(on ? 'AI قوزغىتىلدى' : 'AI ئېتىلدى', on ? 's' : 'i');
+  } catch (e) {
+    console.warn('[settings] setEnabled failed:', e);
+    toast('ساقلاشتا خاتالىق', 'e');
+  }
+}
+
+async function aiSaveKey() {
+  const ki = document.getElementById('aiKey');
+  const v = (ki.value || '').trim();
+  if (!v) { toast('ئاچقۇچ كىرگۈزۈلمىدى', 'e'); return; }
+  // Gemini keys start with AIza. Warn but allow save anyway (the real
+  // validation happens on the first request).
+  if (!/^AIza[0-9A-Za-z_-]{10,}$/.test(v)) {
+    if (!confirm('ئاچقۇچنىڭ شەكلى ئادەتتىكى Gemini ئاچقۇچىغا ئوخشىمايدۇ. شۇنداقتىمۇ ساقلامسىز؟')) return;
+  }
+  try {
+    await window.AI.setApiKey(v);
+    // Mask in the field after save: clear the plaintext, show AIza…last4.
+    ki.value = '';
+    ki.placeholder = (await window.AI.getApiKey()) || 'AIza...';
+    toast('API ئاچقۇچ ساقلاندى', 's');
+  } catch (e) {
+    console.warn('[settings] AI key save failed:', e);
+    toast('ساقلاشتا خاتالىق', 'e');
+  }
+}
+
+async function aiTestConnection() {
+  const btn = document.getElementById('aiTestBtn');
+  const out = document.getElementById('aiTestResult');
+  if (!(await window.AI.hasApiKey())) { toast('ئالدى بىلەن ئاچقۇچ ساقلاڭ', 'e'); return; }
+  btn.disabled = true;
+  out.textContent = 'سىنىلىۋاتىدۇ...';
+  try {
+    const r = await window.AI.test();
+    if (r && r.ok) {
+      const model = r.model || (await window.AI.getModel());
+      out.textContent = '✓ ' + r.message + ' (مودېل: ' + model + ')';
+      toast('باغلىنىش ئىشلىدى', 's');
+      // Refresh model + usage in case test() auto-fell-back / bumped usage.
+      const sel = document.getElementById('aiModel');
+      if (sel && model) {
+        if (![...sel.options].some(o => o.value === model)) {
+          const opt = document.createElement('option');
+          opt.value = model; opt.textContent = model;
+          sel.appendChild(opt);
+        }
+        sel.value = model;
+      }
+      document.getElementById('aiUsage').textContent = 'بۈگۈن ئىشلىتىلگەن: ' + (await window.AI.getTodayUsage());
+    } else {
+      out.textContent = '✗ ' + ((r && r.message) || 'سىناش مەغلۇپ بولدى');
+      toast('سىناش مەغلۇپ بولدى', 'e');
+    }
+  } catch (e) {
+    out.textContent = '✗ ' + ((e && e.message) || '؟');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function aiChangeModel() {
+  const m = document.getElementById('aiModel').value;
+  try {
+    await window.AI.setModel(m);
+    toast('مودېل: ' + m, 'i');
+  } catch (e) {
+    console.warn('[settings] setModel failed:', e);
+    toast('ساقلاشتا خاتالىق', 'e');
+  }
+}
+
 function setupFileZone() {
   const fz = document.getElementById('fz');
   fz.addEventListener('click', async () => {
@@ -2574,6 +2722,7 @@ function setupKeyboardShortcuts() {
       hideStats();
       hideBatchImport();
       hideWebImport();
+      hideSettings();
       hideRename();
       hideExport();
     }
@@ -2718,6 +2867,8 @@ init();
 <!-- Web/HTML article import: Readability (article extraction) + Turndown (HTML→MD). Vendored, offline. -->
 <script src="../assets/vendor/Readability.js"></script>
 <script src="../assets/vendor/turndown.js"></script>
+<!-- AI: pure renderer helpers + final window.AI composition (no network here) -->
+<script src="ai-client.js"></script>
 <script src="sanitize.js"></script>
 <script src="ngram.js"></script>
 <script src="symspell.js"></script>
