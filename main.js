@@ -744,6 +744,49 @@ ipcMain.handle('read-html', (event, filePath) => {
   }
 });
 
+// Web-page fetch for "تور بەت قوشۇش" (import article by URL). Runs in the MAIN
+// process so the renderer CSP (connect-src 'self') stays intact — the renderer
+// never touches the network. Returns { ok, html, finalUrl, status } on success,
+// { ok:false, status?, error } with a calm Uyghur message on any failure.
+// Never throws to the renderer.
+ipcMain.handle('fetch-url-html', async (event, url) => {
+  let target = String(url || '').trim();
+  if (!target) return { ok: false, error: 'تور ئادرېسى قۇرۇق' };
+  if (!/^https?:\/\//i.test(target)) target = 'https://' + target;
+  try { new URL(target); } catch (e) {
+    return { ok: false, error: 'تور ئادرېسى خاتا — ئادرېسنى تەكشۈرۈڭ' };
+  }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 30000);
+  try {
+    const res = await fetch(target, {
+      signal: controller.signal,
+      redirect: 'follow',
+      headers: {
+        // Some publishers refuse requests without a browser-like UA.
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+      }
+    });
+    if (!res.ok) {
+      return { ok: false, status: res.status, error: 'تور بەت قايتۇردى: HTTP ' + res.status + ' — ئادرېسنى تەكشۈرۈڭ' };
+    }
+    const html = await res.text();
+    if (!html || !html.trim()) {
+      return { ok: false, status: res.status, error: 'تور بەت قۇرۇق مەزمۇن قايتۇردى' };
+    }
+    return { ok: true, html, finalUrl: res.url || target, status: res.status };
+  } catch (e) {
+    const aborted = e && (e.name === 'AbortError' || /abort/i.test(String(e.message || '')));
+    if (aborted) {
+      return { ok: false, error: 'ۋاقىت ھالقىپ كەتتى (30s) — تور ئاستا ياكى بەت ئېچىلمايدۇ' };
+    }
+    return { ok: false, error: 'تورغا ئۇلىنىش مەغلۇپ بولدى — تور ئۇلىنىشى ۋە ئادرېسنى تەكشۈرۈڭ' };
+  } finally {
+    clearTimeout(timer);
+  }
+});
+
 ipcMain.handle('save-file-dialog', async (event, defaultName, content) => {
   try {
     const result = await dialog.showSaveDialog(mainWindow, {
