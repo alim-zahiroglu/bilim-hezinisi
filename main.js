@@ -4,6 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const crypto = require('crypto');
 const database = require('./database');
+const ai = require('./ai');
 const { seedQuran } = require('./scripts/seed-quran');
 const windowStateKeeper = require('electron-window-state');
 
@@ -1090,4 +1091,98 @@ ipcMain.handle('load-spell-corrections', () => {
     if (fs.existsSync(p)) return fs.readFileSync(p, 'utf-8');
     return null;
   } catch(e) { return null; }
+});
+
+// ========== AI (GEMINI) — see ai.js ==========
+// All Gemini network traffic happens in THIS process (the renderer CSP is
+// connect-src 'self' and stays that way). Every handler returns a plain
+// result object and never throws to the renderer.
+
+ipcMain.handle('ai-has-key', () => {
+  try { return ai.hasApiKey(); } catch (e) { return false; }
+});
+
+ipcMain.handle('ai-get-key-masked', () => {
+  try { return ai.getApiKeyMasked(); } catch (e) { return ''; }
+});
+
+ipcMain.handle('ai-set-key', (event, key) => {
+  try { ai.setApiKey(key); return { ok: true }; }
+  catch (e) { return { ok: false, error: e.message }; }
+});
+
+ipcMain.handle('ai-get-model', () => {
+  try { return ai.getModel(); } catch (e) { return ai.DEFAULT_MODEL; }
+});
+
+ipcMain.handle('ai-set-model', (event, name) => {
+  try { ai.setModel(name); return { ok: true }; }
+  catch (e) { return { ok: false, error: e.message }; }
+});
+
+ipcMain.handle('ai-is-enabled', () => {
+  try { return ai.isEnabled(); } catch (e) { return false; }
+});
+
+ipcMain.handle('ai-set-enabled', (event, on) => {
+  try { ai.setEnabled(!!on); return { ok: true }; }
+  catch (e) { return { ok: false, error: e.message }; }
+});
+
+ipcMain.handle('ai-get-usage', () => {
+  try { return ai.getTodayUsage(); } catch (e) { return 0; }
+});
+
+ipcMain.handle('ai-test', async () => {
+  try { return await ai.test(); }
+  catch (e) { return { ok: false, message: (e && e.message) || 'سىناشتا خاتالىق' }; }
+});
+
+ipcMain.handle('ai-ask', async (event, opts) => {
+  try { return await ai.ask(opts || {}); }
+  catch (e) { return { ok: false, error: (e && e.message) || 'نامەلۇم خاتالىق' }; }
+});
+
+// Streaming: the renderer invokes 'ai-ask-stream' with a requestId it made
+// up; chunks flow back over 'ai-chunk-<id>' / 'ai-done-<id>' / 'ai-error-<id>'
+// on the SAME webContents, and 'ai-cancel' aborts mid-stream. The invoke
+// resolves immediately ({started:true}) — delivery is event-based.
+const activeAiStreams = new Map();
+
+ipcMain.handle('ai-ask-stream', (event, requestId, opts) => {
+  const id = String(requestId || '');
+  if (!id) return { ok: false, error: 'requestId يوق' };
+  const wc = event.sender;
+  const safeSend = (channel, payload) => {
+    try { if (!wc.isDestroyed()) wc.send(channel, payload); } catch (_) {}
+  };
+  try {
+    const handle = ai.askStream(opts || {},
+      (delta) => safeSend('ai-chunk-' + id, delta),
+      (fullText, model, usage) => {
+        activeAiStreams.delete(id);
+        safeSend('ai-done-' + id, { text: fullText, model: model, usage: usage || null });
+      },
+      (err) => {
+        activeAiStreams.delete(id);
+        safeSend('ai-error-' + id, err || { ok: false, error: 'نامەلۇم خاتالىق' });
+      }
+    );
+    activeAiStreams.set(id, handle);
+    return { ok: true, started: true };
+  } catch (e) {
+    activeAiStreams.delete(id);
+    return { ok: false, error: (e && e.message) || 'نامەلۇم خاتالىق' };
+  }
+});
+
+ipcMain.handle('ai-cancel', (event, requestId) => {
+  const id = String(requestId || '');
+  const handle = activeAiStreams.get(id);
+  if (handle) {
+    try { handle.abort(); } catch (_) {}
+    activeAiStreams.delete(id);
+    return { ok: true, cancelled: true };
+  }
+  return { ok: true, cancelled: false };
 });

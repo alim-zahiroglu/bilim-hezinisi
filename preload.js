@@ -80,5 +80,83 @@ contextBridge.exposeInMainWorld('electron', {
   quranContentSnippet: (needle, max, ctx) => ipcRenderer.invoke('quran-content-snippet', needle, max, ctx),
   // Spell-check dictionary
   loadSpellDict: () => ipcRenderer.invoke('load-spell-dict'),
-  loadSpellCorrections: () => ipcRenderer.invoke('load-spell-corrections')
+  loadSpellCorrections: () => ipcRenderer.invoke('load-spell-corrections'),
+
+  // AI (Gemini) — all network happens in the main process (see ai.js).
+  // The real API key never crosses into the renderer; only a masked form.
+  aiHasKey: () => ipcRenderer.invoke('ai-has-key'),
+  aiGetKeyMasked: () => ipcRenderer.invoke('ai-get-key-masked'),
+  aiSetKey: (key) => ipcRenderer.invoke('ai-set-key', key),
+  aiGetModel: () => ipcRenderer.invoke('ai-get-model'),
+  aiSetModel: (name) => ipcRenderer.invoke('ai-set-model', name),
+  aiIsEnabled: () => ipcRenderer.invoke('ai-is-enabled'),
+  aiSetEnabled: (on) => ipcRenderer.invoke('ai-set-enabled', on),
+  aiGetUsage: () => ipcRenderer.invoke('ai-get-usage'),
+  aiTest: () => ipcRenderer.invoke('ai-test'),
+  aiAsk: (opts) => ipcRenderer.invoke('ai-ask', opts),
+  aiCancel: (requestId) => ipcRenderer.invoke('ai-cancel', requestId)
+});
+
+// window.AI — convenience bridge matching the mobile app's window.AI shape,
+// so renderer code ported from mobile (settings, reader AI panel) stays
+// close to its source. getApiKey deliberately returns the MASKED key — the
+// real key lives only in the main process. detectType / typeLabel /
+// MAX_CONTEXT_CHARS are pure helpers that arrive with src/ai-client.js in
+// Phase 3 (no IPC needed for them).
+contextBridge.exposeInMainWorld('AI', {
+  hasApiKey: () => ipcRenderer.invoke('ai-has-key'),
+  getApiKey: () => ipcRenderer.invoke('ai-get-key-masked'),
+  setApiKey: (key) => ipcRenderer.invoke('ai-set-key', key),
+  getModel: () => ipcRenderer.invoke('ai-get-model'),
+  setModel: (name) => ipcRenderer.invoke('ai-set-model', name),
+  isEnabled: () => ipcRenderer.invoke('ai-is-enabled'),
+  setEnabled: (on) => ipcRenderer.invoke('ai-set-enabled', on),
+  getTodayUsage: () => ipcRenderer.invoke('ai-get-usage'),
+  test: () => ipcRenderer.invoke('ai-test'),
+  ask: (opts) => ipcRenderer.invoke('ai-ask', opts),
+
+  // Streaming ask with the mobile callback contract:
+  //   onChunk(delta), onDone(fullText, model, usage), onError(resultObj)
+  // Returns { abort } just like mobile. The requestId + per-request channels
+  // ('ai-chunk-<id>' / 'ai-done-<id>' / 'ai-error-<id>') are wired here so
+  // the renderer never needs raw ipcRenderer access.
+  askStream: (opts, onChunk, onDone, onError) => {
+    const requestId = 'ai' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    const chunkCh = 'ai-chunk-' + requestId;
+    const doneCh = 'ai-done-' + requestId;
+    const errCh = 'ai-error-' + requestId;
+
+    const onChunkWrap = (event, delta) => {
+      try { if (onChunk) onChunk(delta); } catch (_) {}
+    };
+    const cleanup = () => {
+      ipcRenderer.removeListener(chunkCh, onChunkWrap);
+      ipcRenderer.removeAllListeners(doneCh);
+      ipcRenderer.removeAllListeners(errCh);
+    };
+    ipcRenderer.on(chunkCh, onChunkWrap);
+    ipcRenderer.once(doneCh, (event, result) => {
+      cleanup();
+      try { if (onDone) onDone(result && result.text, result && result.model, result && result.usage); } catch (_) {}
+    });
+    ipcRenderer.once(errCh, (event, err) => {
+      cleanup();
+      try { if (onError) onError(err); } catch (_) {}
+    });
+
+    ipcRenderer.invoke('ai-ask-stream', requestId, opts).then((res) => {
+      // The handler refused to start (e.g. bad requestId) — surface it.
+      if (res && res.ok === false) {
+        cleanup();
+        try { if (onError) onError(res); } catch (_) {}
+      }
+    }).catch((err) => {
+      cleanup();
+      try { if (onError) onError({ ok: false, error: String((err && err.message) || err) }); } catch (_) {}
+    });
+
+    return {
+      abort: () => { ipcRenderer.invoke('ai-cancel', requestId).catch(() => {}); }
+    };
+  }
 });
