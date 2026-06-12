@@ -1,6 +1,6 @@
 {
   "name": "bilim-hezinisi",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "description": "بىلىم خەزىنىسى - Uyghur Digital Library",
   "main": "main.js",
   "scripts": {
