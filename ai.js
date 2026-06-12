@@ -45,6 +45,19 @@ const MODEL_FALLBACKS = [
   'gemini-3.5-flash',
   'gemini-3.1-flash-lite'
 ];
+// Models offered in the Settings selector. gemini-3.1-pro-preview is the
+// expensive high-quality tier: selectable ONLY — deliberately NOT part of
+// MODEL_FALLBACKS, so the automatic chain never escalates to it. If the
+// user explicitly picks Pro and it errors, ask()/askStream() fall back to
+// the flash tiers as usual (requested model first, then MODEL_FALLBACKS).
+// NOTE: model IDs change over time — if 'gemini-3.1-pro-preview' stops
+// matching a live ID, adjust it HERE and in src/ai-client.js
+// (SELECTABLE_MODELS); Test/selfHealModel degrade gracefully meanwhile.
+const SELECTABLE_MODELS = [
+  'gemini-3.5-flash',
+  'gemini-3.1-pro-preview',
+  'gemini-3.1-flash-lite'
+];
 const API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 
 const PREF_API_KEY = 'ai_gemini_api_key';
@@ -1161,5 +1174,6 @@ module.exports = {
   test: test,
   DEFAULT_MODEL: DEFAULT_MODEL,
   MODEL_FALLBACKS: MODEL_FALLBACKS,
+  SELECTABLE_MODELS: SELECTABLE_MODELS,
   MAX_CONTEXT_CHARS: MAX_CONTEXT_CHARS
 };

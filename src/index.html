@@ -515,6 +515,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
         <label>مودېل</label>
         <select id="aiModel" class="inp" style="cursor:pointer;direction:ltr" onchange="aiChangeModel()"></select>
       </div>
+      <div id="aiModelDesc" style="font-size:10.5px;color:var(--text3);line-height:1.9;margin:2px 0 8px;direction:rtl"></div>
       <div id="aiUsage" style="font-size:11px;color:var(--text3);margin-bottom:12px">بۈگۈن ئىشلىتىلگەن: 0</div>
 
       <div class="fa">
@@ -2042,9 +2043,14 @@ async function showSettings() {
     ki.placeholder = masked || 'AIza... / AQ...';
     const sel = document.getElementById('aiModel');
     const cur = await window.AI.getModel();
-    const models = (window.AI.MODEL_FALLBACKS || []).slice();
+    const models = (window.AI.SELECTABLE_MODELS || window.AI.MODEL_FALLBACKS || []).slice();
     if (cur && models.indexOf(cur) === -1) models.unshift(cur);
     sel.innerHTML = models.map(m => `<option value="${sanitize(m)}" ${m === cur ? 'selected' : ''}>${sanitize(m)}</option>`).join('');
+    // Short Uyghur description per model, always visible under the selector.
+    const info = window.AI.MODEL_INFO || {};
+    document.getElementById('aiModelDesc').innerHTML = models
+      .map(m => `<div><b style="font-family:monospace;font-size:10px;color:var(--text2)">${sanitize(m)}</b> — ${sanitize(info[m] || '')}</div>`)
+      .join('');
     document.getElementById('aiUsage').textContent = 'بۈگۈن ئىشلىتىلگەن: ' + (await window.AI.getTodayUsage());
     document.getElementById('aiTestResult').textContent = '';
   } catch (e) {

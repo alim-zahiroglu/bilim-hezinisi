@@ -16,13 +16,27 @@
   // with this budget.
   const MAX_CONTEXT_CHARS = 1000000;
 
-  // Mirrors DEFAULT_MODEL / MODEL_FALLBACKS in ai.js — used by the settings
-  // model selector. The authoritative copy lives in the main process.
+  // Mirrors DEFAULT_MODEL / MODEL_FALLBACKS / SELECTABLE_MODELS in ai.js.
+  // The authoritative copies live in the main process.
   const DEFAULT_MODEL = 'gemini-3.5-flash';
   const MODEL_FALLBACKS = [
     'gemini-3.5-flash',
     'gemini-3.1-flash-lite'
   ];
+  // Offered in the settings selector. gemini-3.1-pro-preview is selectable
+  // ONLY (never part of the automatic fallback chain — it's the expensive
+  // model). If its ID changes upstream, adjust here AND in ai.js.
+  const SELECTABLE_MODELS = [
+    'gemini-3.5-flash',
+    'gemini-3.1-pro-preview',
+    'gemini-3.1-flash-lite'
+  ];
+  // Short Uyghur descriptions shown under the settings model selector.
+  const MODEL_INFO = {
+    'gemini-3.5-flash':       'تەۋسىيە · ئۈنۈمى ياخشى · سۈرئىتى تېز · باھاسى مۇۋاپىق',
+    'gemini-3.1-pro-preview': 'ئۈنۈمى ناھايىتى سۈپەتلىك · سۈرئىتى ئاستا · قىممەت',
+    'gemini-3.1-flash-lite':  'ئۈنۈمى ئادەتتىكىدەك · سۈرئىتى تېز · ئىنتايىن ئەرزان'
+  };
 
   // ----------------------------------------------------------------
   // Content-type detection (ported verbatim from mobile js/ai.js)
@@ -118,6 +132,8 @@
     MAX_CONTEXT_CHARS: MAX_CONTEXT_CHARS,
     DEFAULT_MODEL: DEFAULT_MODEL,
     MODEL_FALLBACKS: MODEL_FALLBACKS,
+    SELECTABLE_MODELS: SELECTABLE_MODELS,
+    MODEL_INFO: MODEL_INFO,
     EXAMPLE_QUESTIONS: EXAMPLE_QUESTIONS
   });
 
