@@ -2045,9 +2045,17 @@ async function showSettings() {
     const cur = await window.AI.getModel();
     const models = (window.AI.SELECTABLE_MODELS || window.AI.MODEL_FALLBACKS || []).slice();
     if (cur && models.indexOf(cur) === -1) models.unshift(cur);
-    sel.innerHTML = models.map(m => `<option value="${sanitize(m)}" ${m === cur ? 'selected' : ''}>${sanitize(m)}</option>`).join('');
-    // Short Uyghur description per model, always visible under the selector.
     const info = window.AI.MODEL_INFO || {};
+    // Free/paid tag on each option, derived from the MODEL_INFO line so the
+    // selector and the description below can never disagree.
+    const feeTag = m => {
+      const d = String(info[m] || '');
+      if (d.indexOf('پۇللۇق') !== -1) return ' — پۇللۇق';
+      if (d.indexOf('ھەقسىز') !== -1) return ' — ھەقسىز';
+      return '';
+    };
+    sel.innerHTML = models.map(m => `<option value="${sanitize(m)}" ${m === cur ? 'selected' : ''}>${sanitize(m + feeTag(m))}</option>`).join('');
+    // Short Uyghur description per model, always visible under the selector.
     document.getElementById('aiModelDesc').innerHTML = models
       .map(m => `<div><b style="font-family:monospace;font-size:10px;color:var(--text2)">${sanitize(m)}</b> — ${sanitize(info[m] || '')}</div>`)
       .join('');
@@ -2109,9 +2117,9 @@ async function aiTestConnection() {
   try {
     const r = await window.AI.test();
     if (r && r.ok) {
-      // The PERSISTED model is the source of truth — test() saves whatever
-      // model actually answered (auto-fallback), so re-read it.
-      const model = (await window.AI.getModel()) || r.model;
+      // Strict model selection: test() probes ONLY the selected model, so
+      // r.model IS the model that answered (no auto-fallback re-read).
+      const model = r.model || (await window.AI.getModel());
       out.textContent = '✓ ' + r.message + ' (مودېل: ' + model + ')';
       toast('باغلىنىش ئىشلىدى', 's');
       const sel = document.getElementById('aiModel');

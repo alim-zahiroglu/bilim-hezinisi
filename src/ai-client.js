@@ -17,25 +17,31 @@
   const MAX_CONTEXT_CHARS = 1000000;
 
   // Mirrors DEFAULT_MODEL / MODEL_FALLBACKS / SELECTABLE_MODELS in ai.js.
-  // The authoritative copies live in the main process.
+  // The authoritative copies live in the main process. STRICT model
+  // selection: the main process only ever calls the model the user picked —
+  // MODEL_FALLBACKS is kept as mirrored data only and is never used to
+  // substitute another model.
   const DEFAULT_MODEL = 'gemini-3.5-flash';
   const MODEL_FALLBACKS = [
     'gemini-3.5-flash',
     'gemini-3.1-flash-lite'
   ];
-  // Offered in the settings selector. gemini-3.1-pro-preview is selectable
-  // ONLY (never part of the automatic fallback chain — it's the expensive
-  // model). If its ID changes upstream, adjust here AND in ai.js.
+  // Offered in the settings selector. The two flash tiers run on the free
+  // quota; gemini-3.1-pro-preview is the PAID tier (needs billing — a free
+  // key gets a clear error, never a silent model switch). If an ID changes
+  // upstream, adjust here AND in ai.js.
   const SELECTABLE_MODELS = [
     'gemini-3.5-flash',
     'gemini-3.1-pro-preview',
     'gemini-3.1-flash-lite'
   ];
   // Short Uyghur descriptions shown under the settings model selector.
+  // Each line ends with the free/paid label — (ھەقسىز) = free,
+  // (پۇللۇق …) = paid; the selector derives its option tags from these.
   const MODEL_INFO = {
-    'gemini-3.5-flash':       'تەۋسىيە · ئۈنۈمى ياخشى · سۈرئىتى تېز · باھاسى مۇۋاپىق',
-    'gemini-3.1-pro-preview': 'ئۈنۈمى ناھايىتى سۈپەتلىك · سۈرئىتى ئاستا · قىممەت',
-    'gemini-3.1-flash-lite':  'ئۈنۈمى ئادەتتىكىدەك · سۈرئىتى تېز · ئىنتايىن ئەرزان'
+    'gemini-3.5-flash':       'تەۋسىيە · ئۈنۈمى ياخشى · سۈرئىتى تېز · باھاسى مۇۋاپىق · (ھەقسىز)',
+    'gemini-3.1-pro-preview': 'ئۈنۈمى ناھايىتى سۈپەتلىك · سۈرئىتى ئاستا · (پۇللۇق · سېتىۋېلىشىڭىز كېرەك)',
+    'gemini-3.1-flash-lite':  'ئۈنۈمى ئادەتتىكىدەك · سۈرئىتى تېز · ئىنتايىن ئەرزان · (ھەقسىز)'
   };
 
   // ----------------------------------------------------------------
