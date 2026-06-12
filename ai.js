@@ -35,24 +35,29 @@ const database = require('./database');
 // model — frontier reasoning quality with the speed we need for an
 // inline Q&A flow. The user can override the choice in Settings.
 //
-// Older Gemini models (1.5, 2.0, 2.5) are intentionally EXCLUDED from
-// the fallback list because their Uyghur quality is too low to be
-// useful for this app's classical-religious-text userbase. Better to
-// surface a clear "model unavailable" error than silently degrade to a
-// model whose Uyghur output the user can't trust.
+// Older Gemini models (1.5, 2.0, 2.5) are intentionally EXCLUDED
+// because their Uyghur quality is too low to be useful for this app's
+// classical-religious-text userbase.
+//
+// STRICT MODEL SELECTION: the model the user picked in Settings is the
+// ONLY model ask()/askStream()/test() ever call. Nothing substitutes a
+// different model and nothing rewrites the stored preference behind the
+// user's back — if the chosen model fails (retired ID, paid tier on a
+// free key, quota), a clear Uyghur error is surfaced and the USER decides
+// whether to switch models or enable billing. MODEL_FALLBACKS and
+// selfHealModel below are retained for reference/diagnostics only; they
+// must NEVER be used to change the model the user picked.
 const DEFAULT_MODEL  = 'gemini-3.5-flash';
 const MODEL_FALLBACKS = [
   'gemini-3.5-flash',
   'gemini-3.1-flash-lite'
 ];
-// Models offered in the Settings selector. gemini-3.1-pro-preview is the
-// expensive high-quality tier: selectable ONLY — deliberately NOT part of
-// MODEL_FALLBACKS, so the automatic chain never escalates to it. If the
-// user explicitly picks Pro and it errors, ask()/askStream() fall back to
-// the flash tiers as usual (requested model first, then MODEL_FALLBACKS).
+// Models offered in the Settings selector. The two flash tiers run on the
+// free quota; gemini-3.1-pro-preview is the expensive PAID tier (needs
+// billing — on a free key it gets a clear error, never a silent switch).
 // NOTE: model IDs change over time — if 'gemini-3.1-pro-preview' stops
 // matching a live ID, adjust it HERE and in src/ai-client.js
-// (SELECTABLE_MODELS); Test/selfHealModel degrade gracefully meanwhile.
+// (SELECTABLE_MODELS + MODEL_INFO).
 const SELECTABLE_MODELS = [
   'gemini-3.5-flash',
   'gemini-3.1-pro-preview',
@@ -605,18 +610,42 @@ function buildBody(opts) {
   };
 }
 
-// User-chosen model first, then the safety-net fallbacks; de-duplicated.
+// STRICT: the user's selected model is the ONLY model we try. We
+// deliberately do NOT append MODEL_FALLBACKS — a silent substitution would
+// run a model the user didn't choose (different quality AND different
+// price). Kept list-shaped so the ask()/askStream() loops stay unchanged.
 function modelListFor(requestedModel) {
-  const models = [];
-  [requestedModel].concat(MODEL_FALLBACKS).forEach(function (m) {
-    if (m && models.indexOf(m) === -1) models.push(m);
-  });
-  return models;
+  return [requestedModel || DEFAULT_MODEL];
 }
 
 function isQuotaError(err) {
   return !!(err && (err.status === 429 ||
     /\b429\b|quota|resource has been exhausted|rate.?limit/i.test(String(err.message || ''))));
+}
+
+// Did the request fail because the SELECTED model itself is unavailable to
+// this key? Covers: retired/wrong model ID (404), permission/billing gate
+// (403 / PERMISSION_DENIED), and a paid-only model called with a free key —
+// Gemini reports that last case as a 429 whose message says the model has
+// no free quota tier (limit: 0), so it must be tested BEFORE isQuotaError.
+// Strict model selection maps all of these to a "pick another model"
+// message instead of silently substituting a different model.
+function isModelUnavailableError(err) {
+  if (!err) return false;
+  if (err.notFound) return true;
+  if (err.status === 403 || err.status === 404) return true;
+  const msg = String(err.message || '');
+  if (/\bHTTP 40[34]\b/.test(msg)) return true;
+  if (/PERMISSION_DENIED|permission denied|is not found|was not found|not supported|doesn'?t have access|does not have access/i.test(msg)) return true;
+  if (/free quota tier|limit:\s*0\b/i.test(msg)) return true;
+  return false;
+}
+
+// Uyghur error for an unavailable selected model — names the exact model so
+// the user knows which choice failed and what to do (switch model in
+// Settings, or enable Google billing for the paid tier).
+function modelUnavailableMessage(model) {
+  return '«' + model + '» مودېلى ئىشلىمىدى. ئۇ ھەقسىز ئاچقۇچتا يوق بولۇشى مۇمكىن (مەسىلەن Pro مودېلى billing تەلەپ قىلىدۇ). باشقا مودېل تاللاڭ ياكى Google billing نى ئېچىڭ.';
 }
 
 // Did Gemini reject the request because the INPUT was too large (token/size
@@ -642,13 +671,12 @@ function logTokenUsage(model, usageMetadata, deepThink) {
   } catch (_) {}
 }
 
-// Defensive model self-heal. Called ONLY after a request 404s on every entry
-// of MODEL_FALLBACKS — never proactively, because the defaults are correct
-// and a probe costs a round-trip. Probes ListModels, picks the best available
-// generateContent-capable "*-flash" model, and persists it. Returns true if
-// it changed the stored model. The defaults are never replaced in code —
-// only the user's stored preference is updated, and only when the API tells
-// us those names no longer exist.
+// Defensive model self-heal — RETIRED from the automatic path. STRICT model
+// selection means nothing may rewrite the user's chosen model behind their
+// back, so ask()/askStream()/test() no longer invoke this. Kept only for
+// diagnostics / a possible future explicit "find available models" button
+// in Settings. NOTE: it persists a different model via setModel() — never
+// wire it back into an automatic error path.
 async function selfHealModel(key) {
   try {
     const url = API_BASE + '/models?key=' + encodeURIComponent(key);
@@ -711,41 +739,29 @@ async function ask(opts) {
                      JSON.stringify(json).slice(0, 400));
         return { ok: false, error: 'جاۋاب چىقمىدى — سەۋەب: ' + reason };
       }
-      // Auto-save the working model so we don't have to fall through next time.
-      if (m !== requestedModel) {
-        try { setModel(m); } catch (_) {}
-      }
       bumpUsage();
       logTokenUsage(m, json.usageMetadata, !!thinkingBudget);
       return { ok: true, text: text, model: m };
     } catch (e) {
+      // STRICT: the selected model failed — no fallback to another model
+      // and no selfHealModel. The error is mapped to a clear message below
+      // and the USER decides what to do (switch model / enable billing).
       lastErr = e;
-      if (e && e.notFound) {
-        console.warn('[ai] model not found, falling back:', m);
-        continue;
-      }
-      // For non-404 errors, don't keep trying other models — same key
-      // problem will affect them all.
       break;
     }
-  }
-
-  // If EVERY model 404'd, the server-side model catalog may have rolled
-  // over. Probe ListModels once, persist the best available *-flash, and
-  // retry the whole request a single time.
-  if (lastErr && lastErr.notFound && !opts._selfHealed) {
-    const healed = await selfHealModel(key);
-    if (healed) {
-      opts._selfHealed = true;
-      return await ask(opts);
-    }
-    return { ok: false, error: 'مودېلغا ئېرىشكىلى بولمىدى — دېتالنى يېڭىلاڭ.' };
   }
 
   // The API rejected the input on size. Signal the UI to offer the
   // in-book-search fallback instead of dumping a raw 400.
   if (isSizeError(lastErr)) {
     return { ok: false, tooLargeFallback: true, error: 'بۇ كىتاب بەك چوڭ بولۇپ، API نى بىراقلا قوبۇل قىلمىدى.' };
+  }
+
+  // The SELECTED model itself is unavailable to this key (retired ID, or a
+  // paid tier without billing). Checked BEFORE the quota mapping because a
+  // paid-only model on a free key surfaces as a zero-quota 429.
+  if (isModelUnavailableError(lastErr)) {
+    return { ok: false, error: modelUnavailableMessage(requestedModel) };
   }
 
   // Map 429 ("quota exhausted" or "rate limited") onto a friendly Uyghur
@@ -771,6 +787,8 @@ async function ask(opts) {
 // Lightweight connectivity probe — sends a one-token prompt, returns ok=true
 // if anything comes back. Used by the Settings "test connection" button so
 // the user knows their key actually works before opening a book.
+// STRICT: probes ONLY the currently-selected model — a ✓ here means THIS
+// model works, not that some other model answered in its place.
 async function test() {
   const key = loadKey();
   if (!key) return { ok: false, message: 'ئاچقۇچ يوق' };
@@ -793,29 +811,13 @@ async function test() {
                 || 'unknown';
     return { ok: false, message: 'جاۋاب بوش (سەۋەب: ' + reason + ')' };
   } catch (e) {
-    // Try model fallbacks before giving up.
-    for (const m of MODEL_FALLBACKS) {
-      if (m === model) continue;
-      try {
-        const json = await callGemini(m, key, {
-          contents: [{ role: 'user', parts: [{ text: 'سالام دەپ بىر سۆزلا جاۋاب بەر.' }] }],
-          generationConfig: {
-            temperature: 0.2,
-            thinkingConfig: { thinkingBudget: 0 },
-            maxOutputTokens: 128
-          }
-        });
-        const text = extractText(json);
-        if (text) {
-          setModel(m);
-          // Plain reply only — the settings UI appends the resolved model
-          // itself (appending it here too printed the model twice).
-          return { ok: true, message: text, model: m };
-        }
-      } catch (_) {}
+    // STRICT: no fallback probes — the user asked whether THIS model works.
+    // Unavailable model (404/403/paid-only) gets the explicit Uyghur
+    // explanation; a genuine 429 keeps the friendly quota message.
+    if (isModelUnavailableError(e)) {
+      return { ok: false, message: modelUnavailableMessage(model) };
     }
-    // If the surviving error is a 429, emit the friendly Uyghur version.
-    if (e && (e.status === 429 || /\b429\b|quota|resource has been exhausted|rate.?limit/i.test(String(e.message || '')))) {
+    if (isQuotaError(e)) {
       return { ok: false, message: 'ھەقسىز ئىشلىتىش ھەققىڭىز توشۇپ قالدى. بىردەمدىن كېيىن قايتا سىناڭ.' };
     }
     return { ok: false, message: (e && e.message) || 'سىناشتا خاتالىق' };
@@ -825,10 +827,11 @@ async function test() {
 // ----------------------------------------------------------------
 // Streaming variant of ask() — Server-Sent Events
 //
-// Builds the request EXACTLY like ask() (same buildPrompt / model fallback
-// list / generationConfig incl. thinkingConfig / safetySettings / usage
-// counter / 429→friendly mapping / multi-turn history) but hits the SSE
-// endpoint and feeds the answer to the caller as it arrives:
+// Builds the request EXACTLY like ask() (same buildPrompt / STRICT
+// single-model list / generationConfig incl. thinkingConfig /
+// safetySettings / usage counter / 429→friendly mapping / multi-turn
+// history) but hits the SSE endpoint and feeds the answer to the caller
+// as it arrives:
 //   onChunk(textDelta)            — called as each delta arrives
 //   onDone(fullText, model, usage)— called once the stream completes
 //   onError({ok:false, error, …}) — called on failure (same shape as ask())
@@ -890,7 +893,7 @@ function askStream(opts, onChunk, onDone, onError) {
 
         if (resp.status === 404) {
           const e = new Error('Model not found: ' + m); e.notFound = true;
-          lastErr = e; continue;   // try the next model
+          lastErr = e; break;   // STRICT: no other model to try — mapped below
         }
         if (!resp.ok) {
           let detail = '';
@@ -934,16 +937,15 @@ function askStream(opts, onChunk, onDone, onError) {
         if (aborted) return;
         if (!streamed) { lastErr = new Error('EMPTY_STREAM'); break; }
 
-        if (m !== requestedModel) { try { setModel(m); } catch (_) {} }
         bumpUsage();
         logTokenUsage(m, usage, !!opts.deepThink);
         onDone(streamed, m, usage);
         return;
       } catch (e) {
         if (aborted) return;
-        if (e && e.notFound) { lastErr = e; continue; }
+        // STRICT: never retry on a different model — record and map below.
         lastErr = e;
-        break;   // network error / NO_STREAM → fall back to ask()
+        break;   // network error / NO_STREAM → fall back to ask() (same model)
       }
     }
 
@@ -964,7 +966,16 @@ function askStream(opts, onChunk, onDone, onError) {
       return;
     }
 
-    // Otherwise fall back to the proven non-stream path so nothing breaks.
+    // STRICT: the selected model itself is unavailable (404/403/paid-only).
+    // Re-sending via ask() would just fail the same way on the same model —
+    // surface the explicit Uyghur message now.
+    if (isModelUnavailableError(lastErr)) {
+      onError({ ok: false, error: modelUnavailableMessage(requestedModel) });
+      return;
+    }
+
+    // Otherwise fall back to the proven non-stream path (SAME model,
+    // non-streaming transport) so nothing breaks.
     try {
       const res = await ask(opts);
       if (aborted) return;
