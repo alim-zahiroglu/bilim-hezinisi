@@ -169,6 +169,35 @@ mark.reader-hit-flash { animation: readerHitFlash 1.5s ease-out 1; }
 #rdr-wrapper { display: flex; flex: 1; overflow: hidden; }
 #rnotes-panel { width: 250px; background: var(--bg2); border-left: 0.5px solid var(--border); overflow-y: auto; flex-shrink: 0; display: none; flex-direction: column; }
 #rnotes-panel.on { display: flex; }
+/* Reader AI panel (سۈنئىي ئىدراك ياردەمچىسى) — right-side drawer, gated on AI enabled + key */
+#rai-panel { width: 330px; background: var(--bg2); border-left: 0.5px solid var(--border); overflow-y: auto; flex-shrink: 0; display: none; flex-direction: column; }
+#rai-panel.on { display: flex; }
+#rai-header { padding: 12px; border-bottom: 0.5px solid var(--border); font-size: 13px; font-weight: 600; color: var(--text); display: flex; align-items: center; justify-content: space-between; }
+#rai-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+#rai-scope-row { display: flex; gap: 4px; background: var(--bg3); border-radius: var(--radius2); padding: 3px; }
+.rai-scope-btn { flex: 1; padding: 5px 4px; border: none; background: none; border-radius: 5px; font-size: 11px; font-family: var(--jf); color: var(--text2); cursor: pointer; white-space: nowrap; }
+.rai-scope-btn.active { background: var(--bg); color: var(--am); font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+#rai-meta { font-size: 11px; color: var(--text3); min-height: 14px; }
+#rai-quick { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.rai-quick-btn { padding: 8px 6px; border: 0.5px solid var(--border2); background: var(--bg); border-radius: var(--radius2); font-size: 12px; font-family: var(--jf); color: var(--text); cursor: pointer; transition: all .12s; }
+.rai-quick-btn:hover { border-color: var(--am); background: var(--ab); color: var(--at); }
+#rai-tr-menu { display: none; flex-wrap: wrap; gap: 5px; padding: 8px; border: 0.5px solid var(--border); border-radius: var(--radius2); background: var(--bg); }
+.rai-tr-opt { padding: 5px 9px; border: 0.5px solid var(--border2); background: var(--bg2); border-radius: 12px; font-size: 11px; font-family: var(--jf); color: var(--text); cursor: pointer; }
+.rai-tr-opt:hover { border-color: var(--am); color: var(--at); background: var(--ab); }
+#rai-question { width: 100%; padding: 8px; border: 0.5px solid var(--border); border-radius: var(--radius2); font-family: var(--jf); font-size: 12px; color: var(--text); background: var(--bg); direction: rtl; resize: vertical; min-height: 56px; outline: none; }
+#rai-question:focus { border-color: var(--am); }
+#rai-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.rai-chip { padding: 4px 9px; border: 0.5px solid var(--border2); background: var(--bg); border-radius: 12px; font-size: 11px; font-family: var(--jf); color: var(--text2); cursor: pointer; }
+.rai-chip:hover { border-color: var(--am); color: var(--at); background: var(--ab); }
+#rai-status { font-size: 11px; color: var(--text2); min-height: 16px; display: flex; align-items: center; gap: 8px; }
+#rai-answer { font-family: var(--jf); font-size: 13px; line-height: 1.9; color: var(--text); direction: rtl; }
+#rai-answer h1, #rai-answer h2, #rai-answer h3, #rai-answer h4 { font-size: 13.5px; font-weight: 700; color: var(--at); margin: 8px 0 4px; }
+#rai-answer p { margin-bottom: 6px; }
+#rai-answer ul, #rai-answer ol { margin: 4px 18px 6px 0; padding: 0; }
+#rai-answer li { margin-bottom: 3px; }
+#rai-answer code { font-family: monospace; font-size: 11px; background: var(--bg3); padding: 1px 4px; border-radius: 3px; }
+#rai-answer-actions { display: none; gap: 6px; padding-top: 6px; border-top: 0.5px solid var(--border); }
+#aiSelChip { display: none; position: fixed; z-index: 300; padding: 5px 12px; background: var(--am); color: #fff; border: none; border-radius: 14px; font-size: 12px; font-family: var(--jf); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
 #rnotes-header { padding: 12px; border-bottom: 0.5px solid var(--border); font-size: 13px; font-weight: 600; color: var(--text); }
 #rnotes-list { flex: 1; overflow-y: auto; padding: 8px; }
 .rnote { padding: 10px; border: 0.5px solid var(--border); border-radius: var(--radius2); margin-bottom: 6px; background: var(--bg); cursor: pointer; transition: all .12s; }
@@ -559,6 +588,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
     <span id="matchcount" style="font-size:11px;color:var(--text3);font-family:sans-serif;white-space:nowrap"></span>
     <button onclick="toggleBookmarks()" class="hbtn" title="خەتكۈش">🔖</button>
     <button onclick="toggleNotes()" class="hbtn" title="ئىزاھات">📝</button>
+    <button onclick="toggleAiPanel()" class="hbtn" id="aiReaderBtn" style="display:none" title="سۈنئىي ئىدراك ياردەمچىسى">✨ AI</button>
     <button onclick="downloadBook('txt')" class="hbtn" title="TXT ھالىتىدە چۈشۈرۈش">📥 TXT</button>
     <button onclick="downloadBook('docx')" class="hbtn" title="Word ھالىتىدە چۈشۈرۈش">📥 DOCX</button>
     <button onclick="downloadBook('pdf')" class="hbtn" title="PDF ھالىتىدە چۈشۈرۈش">📥 PDF</button>
@@ -586,7 +616,66 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
         <button onclick="addNote()">+ قوشۇش</button>
       </div>
     </div>
+    <div id="rai-panel">
+      <div id="rai-header">
+        <span>✨ سۈنئىي ئىدراك ياردەمچىسى</span>
+        <button onclick="closeAiPanel()" style="background:none;border:none;font-size:16px;color:var(--text2);cursor:pointer">✕</button>
+      </div>
+      <div id="rai-body">
+        <div id="rai-scope-row">
+          <button type="button" class="rai-scope-btn" data-scope="selection" onclick="raiSetScope('selection')">تاللانغان</button>
+          <button type="button" class="rai-scope-btn" data-scope="page" onclick="raiSetScope('page')">بۇ بەت</button>
+          <button type="button" class="rai-scope-btn" data-scope="all" onclick="raiSetScope('all')">پۈتۈن كىتاب</button>
+        </div>
+        <div id="rai-meta"></div>
+        <div class="fl" style="margin-bottom:0">
+          <label>تېكىست تۈرى</label>
+          <select id="rai-type" class="inp" style="cursor:pointer" onchange="RAI.typeUserSet=true;raiRenderChips()">
+            <option value="hadith">ھەدىس</option>
+            <option value="tafsir">تەپسىر</option>
+            <option value="fiqh">فىقھ</option>
+            <option value="poetry">شېئىر</option>
+            <option value="political">سىياسىي</option>
+            <option value="literary">ئەدەبىي</option>
+            <option value="translation">تەرجىمە</option>
+            <option value="term_explain">چۈشەندۈرۈش</option>
+            <option value="general" selected>ئادەتتىكى</option>
+          </select>
+        </div>
+        <div id="rai-quick">
+          <button type="button" class="rai-quick-btn" onclick="raiQuick('summary')">خۇلاسىلەش</button>
+          <button type="button" class="rai-quick-btn" onclick="raiQuick('explain')">ئاددىي چۈشەندۈرۈش</button>
+          <button type="button" class="rai-quick-btn" onclick="raiQuick('translation')">تەرجىمە ▾</button>
+          <button type="button" class="rai-quick-btn" onclick="raiQuick('term_explain')">ئاتالغۇ چۈشەندۈرۈش</button>
+        </div>
+        <div id="rai-tr-menu">
+          <button type="button" class="rai-tr-opt" onclick="raiTranslate('uy','ar')">ئۇيغۇرچىدىن ئەرەبچىگە</button>
+          <button type="button" class="rai-tr-opt" onclick="raiTranslate('ar','uy')">ئەرەبچىدىن ئۇيغۇرچىگە</button>
+          <button type="button" class="rai-tr-opt" onclick="raiTranslate('uy','en')">ئۇيغۇرچىدىن ئىنگلىزچىگە</button>
+          <button type="button" class="rai-tr-opt" onclick="raiTranslate('en','uy')">ئىنگلىزچىدىن ئۇيغۇرچىگە</button>
+          <button type="button" class="rai-tr-opt" onclick="raiTranslate('uy','tr')">ئۇيغۇرچىدىن تۈركچىگە</button>
+          <button type="button" class="rai-tr-opt" onclick="raiTranslate('tr','uy')">تۈركچىدىن ئۇيغۇرچىگە</button>
+          <button type="button" class="rai-tr-opt" onclick="raiHideTranslateMenu()">يېپىش</button>
+        </div>
+        <textarea id="rai-question" rows="3" placeholder="تېكىست مەزمۇنى ھەققىدە سۈنئىي ئىدراكتىن سوراڭ" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();raiAsk();}"></textarea>
+        <div id="rai-chips"></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <button id="rai-ask" class="hbtn p" onclick="raiAsk()">سوراش</button>
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;color:var(--text2)">
+            <input type="checkbox" id="rai-deep" style="cursor:pointer">
+            چوڭقۇر مۇلاھىزە <span style="color:var(--text3)">(سۈپەتلىك، ئاستىراق)</span>
+          </label>
+        </div>
+        <div id="rai-status"></div>
+        <div id="rai-answer"></div>
+        <div id="rai-answer-actions">
+          <button class="hbtn" onclick="raiCopy()">كۆچۈرۈش</button>
+          <button class="hbtn" onclick="raiSaveNote()">خاتىرىگە ساقلاش</button>
+        </div>
+      </div>
+    </div>
   </div>
+  <button id="aiSelChip" type="button">✨ AI</button>
 </div>
 
 <!-- Rename Category Modal -->
@@ -1272,6 +1361,7 @@ async function openReader(id, hl='', targetPos=null) {
   // on elements inside display:none ancestors, so the navigation must happen
   // after the reader is visible AND the browser has laid out its contents.
   document.getElementById('rdr').classList.add('on');
+  raiOnReaderOpen();
   if (hl) {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => updateMatchNav(hl, targetPos));
@@ -1361,6 +1451,7 @@ function readerJumpToPage() {
 function closeReader() {
   document.getElementById('rdr').classList.remove('on');
   document.getElementById('rnotes-panel').classList.remove('on');
+  raiOnReaderClose();
   if (S.curB) {
     saveData();
   }
@@ -1964,6 +2055,9 @@ async function showSettings() {
 
 function hideSettings() {
   document.getElementById('setov').classList.remove('on');
+  // AI may have just been enabled/disabled or the key changed — refresh the
+  // reader's AI button/panel gating if a book is open.
+  if (document.getElementById('rdr').classList.contains('on')) refreshAiReaderUI();
 }
 
 async function aiToggleEnabled() {
@@ -2045,6 +2139,411 @@ async function aiChangeModel() {
     toast('ساقلاشتا خاتالىق', 'e');
   }
 }
+
+// ===== Reader AI panel (سۈنئىي ئىدراك ياردەمچىسى) =====
+// Desktop port of the mobile #ai-sheet (reference: _mobile-ai-reference/js/
+// reader.js), as a right-side drawer next to the notes panel. Gated: the AI
+// button/panel/selection-chip exist only when AI is enabled AND a key is
+// saved — gated off, the reader is identical to the baseline. All network
+// goes through window.AI.askStream → the main process (CSP unchanged).
+
+const RAI = {
+  available: false,     // gate: enabled && hasKey (refreshed on reader open / settings close)
+  scope: 'selection',   // selection | page | all
+  context: '',
+  kind: '',
+  selStash: '',         // last captured in-reader selection (survives focus loss)
+  typeUserSet: false,   // an explicit type pick wins over auto-detect
+  streamHandle: null,   // { abort } of the in-flight stream
+  answerText: '',
+  lastReq: null
+};
+
+async function refreshAiReaderUI() {
+  let on = false;
+  try {
+    on = !!(window.AI && window.AI.isEnabled && (await window.AI.isEnabled()) && (await window.AI.hasApiKey()));
+  } catch (e) { on = false; }
+  RAI.available = on;
+  const btn = document.getElementById('aiReaderBtn');
+  if (btn) btn.style.display = on ? '' : 'none';
+  if (!on) { closeAiPanel(); hideAiSelChip(); }
+}
+
+function raiOnReaderOpen() {
+  // New book: drop the previous panel state, then re-evaluate the gate.
+  raiAbort();
+  closeAiPanel();
+  hideAiSelChip();
+  RAI.selStash = ''; RAI.context = ''; RAI.answerText = ''; RAI.lastReq = null; RAI.typeUserSet = false;
+  const qa = document.getElementById('rai-question'); if (qa) qa.value = '';
+  const ans = document.getElementById('rai-answer'); if (ans) ans.innerHTML = '';
+  const st = document.getElementById('rai-status'); if (st) st.innerHTML = '';
+  const acts = document.getElementById('rai-answer-actions'); if (acts) acts.style.display = 'none';
+  refreshAiReaderUI();
+}
+
+function raiOnReaderClose() {
+  raiAbort();
+  closeAiPanel();
+  hideAiSelChip();
+}
+
+function toggleAiPanel() {
+  const p = document.getElementById('rai-panel');
+  if (p.classList.contains('on')) closeAiPanel();
+  else openAiPanel();
+}
+
+function openAiPanel(scope, forcedText) {
+  if (!RAI.available) return;
+  document.getElementById('rai-panel').classList.add('on');
+  RAI.typeUserSet = false;
+  raiSetScope(scope || (raiLiveSelection() ? 'selection' : 'page'), forcedText);
+}
+
+function closeAiPanel() {
+  const p = document.getElementById('rai-panel');
+  if (p) p.classList.remove('on');
+  raiHideTranslateMenu();
+}
+
+function raiAbort() {
+  if (RAI.streamHandle) { try { RAI.streamHandle.abort(); } catch (e) {} RAI.streamHandle = null; }
+}
+
+// --- context gathering -----------------------------------------------------
+
+function raiLiveSelection() {
+  try {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return '';
+    const rc = document.getElementById('rc');
+    if (!rc || !sel.anchorNode || !rc.contains(sel.anchorNode)) return '';
+    return String(sel.toString() || '').trim();
+  } catch (e) { return ''; }
+}
+
+function raiGatherContext(scope, forcedText) {
+  const cap = (window.AI && window.AI.MAX_CONTEXT_CHARS) || 1000000;
+  if (scope === 'selection') {
+    // A live selection wins; else the last captured one (selecting text and
+    // then clicking panel buttons clears the native selection).
+    const live = (typeof forcedText === 'string' && forcedText.trim().length >= 3)
+      ? forcedText.trim()
+      : (raiLiveSelection() || RAI.selStash);
+    if (live && live.trim().length >= 3) return { text: live.trim().slice(0, 12000), kind: 'selection' };
+    return { text: '', kind: 'needSelection' };
+  }
+  if (scope === 'page') {
+    const page = (S.readerPages && S.readerPages[S.readerPage - 1]) || S.readerContent || '';
+    return { text: String(page).slice(0, cap), kind: 'page' };
+  }
+  const full = String(S.readerContent || '').trim();
+  if (!full) return { text: '', kind: 'empty' };
+  return { text: full.slice(0, cap), kind: 'all' };
+}
+
+function raiSetScope(scope, forcedText) {
+  RAI.scope = scope;
+  document.querySelectorAll('#rai-scope-row .rai-scope-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.scope === scope);
+  });
+  const ctx = raiGatherContext(scope, forcedText);
+  RAI.context = ctx.text;
+  RAI.kind = ctx.kind;
+  if (scope === 'selection' && ctx.text) RAI.selStash = ctx.text;
+
+  const meta = document.getElementById('rai-meta');
+  if (meta) {
+    meta.textContent = ({
+      selection: 'تاللانغان: ' + ctx.text.length + ' ھەرپ',
+      page: 'بۇ بەت: ' + ctx.text.length + ' ھەرپ',
+      all: 'پۈتۈن كىتاب: ' + ctx.text.length + ' ھەرپ',
+      needSelection: 'ئالدى بىلەن ئوقۇغۇچتىكى تېكىستنى تاللاڭ',
+      empty: '(تېكىست تېپىلمىدى)'
+    })[ctx.kind] || '';
+  }
+
+  // Auto type via detectType; an explicit user pick (since the panel opened) wins.
+  if (!RAI.typeUserSet && ctx.text && window.AI && window.AI.detectType) {
+    const sel = document.getElementById('rai-type');
+    if (sel) sel.value = window.AI.detectType(ctx.text);
+  }
+  raiRenderChips();
+}
+
+// --- quick actions + translate submenu --------------------------------------
+
+function raiQuick(kind) {
+  if (kind === 'translation') { raiToggleTranslateMenu(); return; }
+  raiHideTranslateMenu();
+  const sel = document.getElementById('rai-type');
+  const qa = document.getElementById('rai-question');
+  if (kind === 'summary') {
+    sel.value = 'general';
+    qa.value = 'بۇ تېكىستنىڭ خۇلاسىسىنى تۈزۈپ بەرگىن';
+  } else if (kind === 'explain') {
+    sel.value = 'general';
+    qa.value = 'بۇ تېكىستنى ئاددىي قىلىپ چۈشەندۈرۈپ بەرگىن';
+  } else if (kind === 'term_explain') {
+    sel.value = 'term_explain';
+  }
+  RAI.typeUserSet = true;
+  raiAsk();
+}
+
+function raiToggleTranslateMenu() {
+  const m = document.getElementById('rai-tr-menu');
+  m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
+}
+
+function raiHideTranslateMenu() {
+  const m = document.getElementById('rai-tr-menu');
+  if (m) m.style.display = 'none';
+}
+
+function raiTranslate(from, to) {
+  raiHideTranslateMenu();
+  raiSetScope(RAI.scope);   // re-gather the active scope
+  if (!RAI.context) {
+    raiStatus(RAI.scope === 'selection' ? 'ئالدى بىلەن تەرجىمە قىلىدىغان تېكىستنى تاللاڭ.' : 'تېكىست تېپىلمىدى.');
+    return;
+  }
+  raiExecute({ type: 'translation', translateFrom: from, translateTo: to, context: RAI.context, question: '', deepThink: false });
+}
+
+// --- ask + streaming ---------------------------------------------------------
+
+function raiAsk() {
+  raiSetScope(RAI.scope);   // refresh context from the live reader state
+  const qa = document.getElementById('rai-question');
+  const question = (qa.value || '').trim();
+  const type = document.getElementById('rai-type').value || 'general';
+  if (RAI.scope === 'selection' && !RAI.context) { raiStatus('ئالدى بىلەن ئوقۇغۇچتىكى تېكىستنى تاللاڭ.'); return; }
+  if (!RAI.context && !question) { raiStatus('تېكىست ياكى سوئال يوق.'); return; }
+  const deepThink = !!document.getElementById('rai-deep').checked;
+  raiExecute({ type: type, context: RAI.context, question: question, deepThink: deepThink });
+}
+
+// Stream a resolved request into #rai-answer (rAF-debounced re-render) with a
+// live Stop button. Ported from mobile executeAiRequest.
+function raiExecute(req) {
+  if (!window.AI || !RAI.available || !req) return;
+  raiAbort();   // cancel any in-flight stream before starting a new one
+  RAI.lastReq = req;
+
+  const ans = document.getElementById('rai-answer');
+  const acts = document.getElementById('rai-answer-actions');
+  acts.style.display = 'none';
+  ans.innerHTML = '';
+  RAI.answerText = '';
+
+  let buffer = '';
+  let rafPending = false;
+  const renderTick = () => {
+    rafPending = false;
+    const panel = document.getElementById('rai-panel');
+    const stick = panel ? (panel.scrollHeight - panel.scrollTop - panel.clientHeight < 120) : false;
+    ans.innerHTML = raiMdToHtml(buffer);
+    if (panel && stick) panel.scrollTop = panel.scrollHeight;   // follow the stream
+  };
+  const schedule = () => { if (!rafPending) { rafPending = true; requestAnimationFrame(renderTick); } };
+
+  let finished = false;
+  const finalize = (full) => {
+    if (finished) return;
+    finished = true;
+    RAI.streamHandle = null;
+    RAI.answerText = String(full || '');
+    ans.innerHTML = raiMdToHtml(RAI.answerText);
+    if (RAI.answerText) acts.style.display = 'flex';
+  };
+
+  raiAskBusy(true);
+  raiBusy(() => {           // Stop pressed — keep any partial text + actions
+    raiAbort();
+    raiAskBusy(false);
+    raiStatus('توختىتىلدى');
+    if (buffer) finalize(buffer);
+  });
+
+  RAI.streamHandle = window.AI.askStream(req,
+    (delta) => { buffer += delta; schedule(); },
+    (full, model) => {
+      finalize(full);
+      raiStatus(model ? ('مودېل: ' + model) : '');
+      raiAskBusy(false);
+    },
+    (res) => {
+      RAI.streamHandle = null;
+      finished = true;
+      raiAskBusy(false);
+      raiStatus('');
+      raiRenderError(res);
+    }
+  );
+}
+
+// --- status / answer rendering ----------------------------------------------
+
+function raiStatus(msg) {
+  const s = document.getElementById('rai-status');
+  if (s) { s.innerHTML = ''; s.textContent = msg || ''; }
+}
+
+function raiAskBusy(b) {
+  const btn = document.getElementById('rai-ask');
+  if (btn) btn.disabled = !!b;
+}
+
+function raiBusy(onStop) {
+  const s = document.getElementById('rai-status');
+  if (!s) return;
+  s.innerHTML = '';
+  const txt = document.createElement('span');
+  txt.textContent = 'جاۋاب يېزىلىۋاتىدۇ…';
+  const stop = document.createElement('button');
+  stop.type = 'button';
+  stop.className = 'hbtn';
+  stop.style.cssText = 'padding:2px 10px;font-size:11px';
+  stop.textContent = 'توختىتىش';
+  stop.addEventListener('click', () => { if (typeof onStop === 'function') onStop(); });
+  s.appendChild(txt);
+  s.appendChild(stop);
+}
+
+// Calm error with a retry button (port of mobile renderAiError, simplified).
+function raiRenderError(res) {
+  const ans = document.getElementById('rai-answer');
+  if (!ans) return;
+  ans.innerHTML = '';
+  const raw = (res && res.error) || 'سوراش مەغلۇپ بولدى. قايتا سىناڭ.';
+  const p = document.createElement('p');
+  p.style.cssText = 'color:var(--text2);font-size:12px;margin-bottom:8px';
+  p.textContent = raw.replace(/^HTTP\s+\d+\s*—\s*/, '');
+  ans.appendChild(p);
+  const retry = document.createElement('button');
+  retry.type = 'button';
+  retry.className = 'hbtn';
+  retry.textContent = 'قايتا سىناش';
+  retry.addEventListener('click', () => { if (RAI.lastReq) raiExecute(RAI.lastReq); });
+  ans.appendChild(retry);
+}
+
+// Minimal markdown → HTML for AI answers (the prompts ask for Markdown with
+// ## headings). Escape first, transform the small md subset, then pass the
+// result through the existing DOMPurify wrapper — defense in depth.
+function raiMdToHtml(text) {
+  let h = sanitize(String(text || ''));
+  h = h.replace(/^#{1,6}[ \t]+(.+)$/gm, '<h4>$1</h4>');
+  h = h.replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>');
+  h = h.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<i>$2</i>');
+  h = h.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  // consecutive "- item" lines → <ul>, "1. item" lines → <ol>
+  h = h.replace(/(^|\n)((?:[-*][ \t]+.+(?:\n|$))+)/g, (m, pre, block) => {
+    const items = block.trim().split('\n').map(l => '<li>' + l.replace(/^[-*][ \t]+/, '') + '</li>').join('');
+    return pre + '<ul>' + items + '</ul>\n';
+  });
+  h = h.replace(/(^|\n)((?:\d+[.)][ \t]+.+(?:\n|$))+)/g, (m, pre, block) => {
+    const items = block.trim().split('\n').map(l => '<li>' + l.replace(/^\d+[.)][ \t]+/, '') + '</li>').join('');
+    return pre + '<ol>' + items + '</ol>\n';
+  });
+  h = h.split(/\n{2,}/).map(part => {
+    const t = part.trim();
+    if (!t) return '';
+    if (/^<(h\d|ul|ol)/.test(t)) return t;
+    return '<p>' + t.replace(/\n/g, '<br>') + '</p>';
+  }).join('');
+  return window.SafeHTML ? SafeHTML.sanitize(h) : h;
+}
+
+// --- example chips / answer actions ------------------------------------------
+
+function raiRenderChips() {
+  const box = document.getElementById('rai-chips');
+  if (!box) return;
+  const type = (document.getElementById('rai-type') || {}).value || 'general';
+  const qs = (((window.AI || {}).EXAMPLE_QUESTIONS || {})[type] || []).slice(0, 2);
+  box.innerHTML = '';
+  qs.forEach(q => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'rai-chip';
+    b.textContent = q;
+    b.addEventListener('click', () => {
+      const qa = document.getElementById('rai-question');
+      if (qa) { qa.value = q; qa.focus(); }
+    });
+    box.appendChild(b);
+  });
+}
+
+async function raiCopy() {
+  if (!RAI.answerText) return;
+  try {
+    await navigator.clipboard.writeText(RAI.answerText);
+    toast('كۆچۈرۈلدى', 's');
+  } catch (e) {
+    toast('كۆچۈرۈشتە خاتالىق', 'e');
+  }
+}
+
+// Save question + answer as a normal book note (same path as addNote()).
+function raiSaveNote() {
+  if (!S.curB || !RAI.answerText) return;
+  const q = (RAI.lastReq && RAI.lastReq.question) ? RAI.lastReq.question : '';
+  const text = (q ? ('سوئال: ' + q + '\n\n') : '') + 'AI جاۋابى:\n' + RAI.answerText;
+  const rc = document.getElementById('rc');
+  const sh = rc.scrollHeight - rc.clientHeight;
+  const pos = sh > 0 ? (rc.scrollTop / sh) * 100 : 0;
+  const bookId = S.curB.id;
+  if (!S.bookNotes[bookId]) S.bookNotes[bookId] = [];
+  S.bookNotes[bookId].push({
+    id: Date.now().toString(),
+    text: text,
+    pos: pos,
+    date: new Date().toISOString()
+  });
+  renderNotesPanel();
+  saveData();
+  toast('ئىزاھات قوشۇلدى', 's');
+}
+
+// --- floating selection chip ---------------------------------------------------
+
+function hideAiSelChip() {
+  const c = document.getElementById('aiSelChip');
+  if (c) c.style.display = 'none';
+}
+
+(function bindAiSelection() {
+  const rc = document.getElementById('rc');
+  const chip = document.getElementById('aiSelChip');
+  if (!rc || !chip) return;
+  rc.addEventListener('mouseup', (e) => {
+    // Let the browser finalize the selection before reading it.
+    setTimeout(() => {
+      if (!RAI.available) return;
+      const sel = raiLiveSelection();
+      if (sel && sel.length >= 3) {
+        RAI.selStash = sel.slice(0, 12000);
+        chip.style.display = 'block';
+        chip.style.left = Math.min(window.innerWidth - 90, Math.max(8, e.clientX - 30)) + 'px';
+        chip.style.top = Math.max(8, e.clientY - 44) + 'px';
+      } else {
+        hideAiSelChip();
+      }
+    }, 10);
+  });
+  document.addEventListener('mousedown', (e) => {
+    if (!chip.contains(e.target)) hideAiSelChip();
+  });
+  chip.addEventListener('click', () => {
+    hideAiSelChip();
+    openAiPanel('selection', RAI.selStash);
+  });
+})();
 
 function setupFileZone() {
   const fz = document.getElementById('fz');
@@ -2717,6 +3216,12 @@ function setupKeyboardShortcuts() {
       if (target && target !== S.mode) setMode(target);
     }
     if (e.key === 'Escape') {
+      // If the reader AI panel is open, Escape closes IT first (not the reader).
+      const raip = document.getElementById('rai-panel');
+      if (raip && raip.classList.contains('on') && document.getElementById('rdr').classList.contains('on')) {
+        closeAiPanel();
+        return;
+      }
       closeReader();
       hideAdd();
       hideEdit();

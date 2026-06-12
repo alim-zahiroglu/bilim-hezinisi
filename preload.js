@@ -158,7 +158,12 @@ contextBridge.exposeInMainWorld('AIBridge', {
     });
 
     return {
-      abort: () => { ipcRenderer.invoke('ai-cancel', requestId).catch(() => {}); }
+      // Abort fires no callback (mobile contract) — clean the per-request
+      // listeners here so cancelled streams don't leave them registered.
+      abort: () => {
+        cleanup();
+        ipcRenderer.invoke('ai-cancel', requestId).catch(() => {});
+      }
     };
   }
 });
