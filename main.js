@@ -4,6 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const crypto = require('crypto');
 const database = require('./database');
+const ai = require('./ai');
 const { seedQuran } = require('./scripts/seed-quran');
 const windowStateKeeper = require('electron-window-state');
 
@@ -652,10 +653,11 @@ ipcMain.handle('open-file', async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openFile'],
     filters: [
-      { name: 'كىتاب ھۆججەتلىرى (PDF, TXT, DOCX, DOC)', extensions: ['pdf', 'txt', 'docx', 'doc'] },
+      { name: 'كىتاب ھۆججەتلىرى (PDF, TXT, DOCX, DOC, MD)', extensions: ['pdf', 'txt', 'docx', 'doc', 'md', 'markdown'] },
       { name: 'PDF ھۆججىتى', extensions: ['pdf'] },
       { name: 'تېكىست ھۆججىتى (TXT)', extensions: ['txt'] },
       { name: 'Word ھۆججىتى (DOCX, DOC)', extensions: ['docx', 'doc'] },
+      { name: 'Markdown ھۆججىتى (MD)', extensions: ['md', 'markdown'] },
       { name: 'بارلىق ھۆججەتلەر', extensions: ['*'] }
     ]
   });
@@ -703,6 +705,85 @@ ipcMain.handle('read-doc', async (event, filePath) => {
     return { success: true, content: doc.getBody() };
   } catch(e) {
     return { success: false, error: e.message };
+  }
+});
+
+// Markdown: read the raw .md/.markdown text. We store the markdown source as the
+// book content (same plain-text storage path as TXT/DOCX) so it stays fully
+// searchable (FTS), paginated and exportable. Markdown is human-readable as-is.
+ipcMain.handle('read-md', (event, filePath) => {
+  try {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    return { success: true, content };
+  } catch(e) {
+    return { success: false, error: e.message };
+  }
+});
+
+// HTML: extract clean, readable text from an .html/.htm file. We strip the
+// non-content elements (scripts, styles, nav/header/footer, forms…) so their
+// JS/CSS/menu text never leaks in, then take the body's structured text. The
+// result is plain text — it flows through the existing reader exactly like a
+// TXT/DOCX book, so there is no new rendering path and no HTML reaches innerHTML.
+ipcMain.handle('read-html', (event, filePath) => {
+  try {
+    const raw = fs.readFileSync(filePath, 'utf-8');
+    const { parse } = require('node-html-parser');
+    const root = parse(raw);
+    root.querySelectorAll('script,style,noscript,iframe,svg,nav,header,footer,aside,form,button,input,select,textarea')
+        .forEach(el => el.set_content(''));
+    const body = root.querySelector('body') || root;
+    const content = (body.structuredText || '')
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .join('\n\n');
+    return { success: true, content };
+  } catch(e) {
+    return { success: false, error: e.message };
+  }
+});
+
+// Web-page fetch for "تور بەت قوشۇش" (import article by URL). Runs in the MAIN
+// process so the renderer CSP (connect-src 'self') stays intact — the renderer
+// never touches the network. Returns { ok, html, finalUrl, status } on success,
+// { ok:false, status?, error } with a calm Uyghur message on any failure.
+// Never throws to the renderer.
+ipcMain.handle('fetch-url-html', async (event, url) => {
+  let target = String(url || '').trim();
+  if (!target) return { ok: false, error: 'تور ئادرېسى قۇرۇق' };
+  if (!/^https?:\/\//i.test(target)) target = 'https://' + target;
+  try { new URL(target); } catch (e) {
+    return { ok: false, error: 'تور ئادرېسى خاتا — ئادرېسنى تەكشۈرۈڭ' };
+  }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 30000);
+  try {
+    const res = await fetch(target, {
+      signal: controller.signal,
+      redirect: 'follow',
+      headers: {
+        // Some publishers refuse requests without a browser-like UA.
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+      }
+    });
+    if (!res.ok) {
+      return { ok: false, status: res.status, error: 'تور بەت قايتۇردى: HTTP ' + res.status + ' — ئادرېسنى تەكشۈرۈڭ' };
+    }
+    const html = await res.text();
+    if (!html || !html.trim()) {
+      return { ok: false, status: res.status, error: 'تور بەت قۇرۇق مەزمۇن قايتۇردى' };
+    }
+    return { ok: true, html, finalUrl: res.url || target, status: res.status };
+  } catch (e) {
+    const aborted = e && (e.name === 'AbortError' || /abort/i.test(String(e.message || '')));
+    if (aborted) {
+      return { ok: false, error: 'ۋاقىت ھالقىپ كەتتى (30s) — تور ئاستا ياكى بەت ئېچىلمايدۇ' };
+    }
+    return { ok: false, error: 'تورغا ئۇلىنىش مەغلۇپ بولدى — تور ئۇلىنىشى ۋە ئادرېسنى تەكشۈرۈڭ' };
+  } finally {
+    clearTimeout(timer);
   }
 });
 
@@ -806,7 +887,7 @@ ipcMain.handle('open-folder', async () => {
 
 ipcMain.handle('read-folder', (event, folderPath) => {
   try {
-    const supported = ['.pdf', '.txt', '.docx', '.doc'];
+    const supported = ['.pdf', '.txt', '.docx', '.doc', '.html', '.htm', '.md', '.markdown'];
     const files = [];
     const items = fs.readdirSync(folderPath);
     items.forEach(item => {
@@ -1010,4 +1091,98 @@ ipcMain.handle('load-spell-corrections', () => {
     if (fs.existsSync(p)) return fs.readFileSync(p, 'utf-8');
     return null;
   } catch(e) { return null; }
+});
+
+// ========== AI (GEMINI) — see ai.js ==========
+// All Gemini network traffic happens in THIS process (the renderer CSP is
+// connect-src 'self' and stays that way). Every handler returns a plain
+// result object and never throws to the renderer.
+
+ipcMain.handle('ai-has-key', () => {
+  try { return ai.hasApiKey(); } catch (e) { return false; }
+});
+
+ipcMain.handle('ai-get-key-masked', () => {
+  try { return ai.getApiKeyMasked(); } catch (e) { return ''; }
+});
+
+ipcMain.handle('ai-set-key', (event, key) => {
+  try { ai.setApiKey(key); return { ok: true }; }
+  catch (e) { return { ok: false, error: e.message }; }
+});
+
+ipcMain.handle('ai-get-model', () => {
+  try { return ai.getModel(); } catch (e) { return ai.DEFAULT_MODEL; }
+});
+
+ipcMain.handle('ai-set-model', (event, name) => {
+  try { ai.setModel(name); return { ok: true }; }
+  catch (e) { return { ok: false, error: e.message }; }
+});
+
+ipcMain.handle('ai-is-enabled', () => {
+  try { return ai.isEnabled(); } catch (e) { return false; }
+});
+
+ipcMain.handle('ai-set-enabled', (event, on) => {
+  try { ai.setEnabled(!!on); return { ok: true }; }
+  catch (e) { return { ok: false, error: e.message }; }
+});
+
+ipcMain.handle('ai-get-usage', () => {
+  try { return ai.getTodayUsage(); } catch (e) { return 0; }
+});
+
+ipcMain.handle('ai-test', async () => {
+  try { return await ai.test(); }
+  catch (e) { return { ok: false, message: (e && e.message) || 'سىناشتا خاتالىق' }; }
+});
+
+ipcMain.handle('ai-ask', async (event, opts) => {
+  try { return await ai.ask(opts || {}); }
+  catch (e) { return { ok: false, error: (e && e.message) || 'نامەلۇم خاتالىق' }; }
+});
+
+// Streaming: the renderer invokes 'ai-ask-stream' with a requestId it made
+// up; chunks flow back over 'ai-chunk-<id>' / 'ai-done-<id>' / 'ai-error-<id>'
+// on the SAME webContents, and 'ai-cancel' aborts mid-stream. The invoke
+// resolves immediately ({started:true}) — delivery is event-based.
+const activeAiStreams = new Map();
+
+ipcMain.handle('ai-ask-stream', (event, requestId, opts) => {
+  const id = String(requestId || '');
+  if (!id) return { ok: false, error: 'requestId يوق' };
+  const wc = event.sender;
+  const safeSend = (channel, payload) => {
+    try { if (!wc.isDestroyed()) wc.send(channel, payload); } catch (_) {}
+  };
+  try {
+    const handle = ai.askStream(opts || {},
+      (delta) => safeSend('ai-chunk-' + id, delta),
+      (fullText, model, usage) => {
+        activeAiStreams.delete(id);
+        safeSend('ai-done-' + id, { text: fullText, model: model, usage: usage || null });
+      },
+      (err) => {
+        activeAiStreams.delete(id);
+        safeSend('ai-error-' + id, err || { ok: false, error: 'نامەلۇم خاتالىق' });
+      }
+    );
+    activeAiStreams.set(id, handle);
+    return { ok: true, started: true };
+  } catch (e) {
+    activeAiStreams.delete(id);
+    return { ok: false, error: (e && e.message) || 'نامەلۇم خاتالىق' };
+  }
+});
+
+ipcMain.handle('ai-cancel', (event, requestId) => {
+  const id = String(requestId || '');
+  const handle = activeAiStreams.get(id);
+  if (handle) {
+    try { handle.abort(); } catch (_) {}
+    activeAiStreams.delete(id);
+    return { ok: true, cancelled: true };
+  }
+  return { ok: true, cancelled: false };
 });

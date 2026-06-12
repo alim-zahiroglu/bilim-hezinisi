@@ -169,6 +169,35 @@ mark.reader-hit-flash { animation: readerHitFlash 1.5s ease-out 1; }
 #rdr-wrapper { display: flex; flex: 1; overflow: hidden; }
 #rnotes-panel { width: 250px; background: var(--bg2); border-left: 0.5px solid var(--border); overflow-y: auto; flex-shrink: 0; display: none; flex-direction: column; }
 #rnotes-panel.on { display: flex; }
+/* Reader AI panel (سۈنئىي ئىدراك ياردەمچىسى) — right-side drawer, gated on AI enabled + key */
+#rai-panel { width: 330px; background: var(--bg2); border-left: 0.5px solid var(--border); overflow-y: auto; flex-shrink: 0; display: none; flex-direction: column; }
+#rai-panel.on { display: flex; }
+#rai-header { padding: 12px; border-bottom: 0.5px solid var(--border); font-size: 13px; font-weight: 600; color: var(--text); display: flex; align-items: center; justify-content: space-between; }
+#rai-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+#rai-scope-row { display: flex; gap: 4px; background: var(--bg3); border-radius: var(--radius2); padding: 3px; }
+.rai-scope-btn { flex: 1; padding: 5px 4px; border: none; background: none; border-radius: 5px; font-size: 11px; font-family: var(--jf); color: var(--text2); cursor: pointer; white-space: nowrap; }
+.rai-scope-btn.active { background: var(--bg); color: var(--am); font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+#rai-meta { font-size: 11px; color: var(--text3); min-height: 14px; }
+#rai-quick { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.rai-quick-btn { padding: 8px 6px; border: 0.5px solid var(--border2); background: var(--bg); border-radius: var(--radius2); font-size: 12px; font-family: var(--jf); color: var(--text); cursor: pointer; transition: all .12s; }
+.rai-quick-btn:hover { border-color: var(--am); background: var(--ab); color: var(--at); }
+#rai-tr-menu { display: none; flex-wrap: wrap; gap: 5px; padding: 8px; border: 0.5px solid var(--border); border-radius: var(--radius2); background: var(--bg); }
+.rai-tr-opt { padding: 5px 9px; border: 0.5px solid var(--border2); background: var(--bg2); border-radius: 12px; font-size: 11px; font-family: var(--jf); color: var(--text); cursor: pointer; }
+.rai-tr-opt:hover { border-color: var(--am); color: var(--at); background: var(--ab); }
+#rai-question { width: 100%; padding: 8px; border: 0.5px solid var(--border); border-radius: var(--radius2); font-family: var(--jf); font-size: 12px; color: var(--text); background: var(--bg); direction: rtl; resize: vertical; min-height: 56px; outline: none; }
+#rai-question:focus { border-color: var(--am); }
+#rai-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.rai-chip { padding: 4px 9px; border: 0.5px solid var(--border2); background: var(--bg); border-radius: 12px; font-size: 11px; font-family: var(--jf); color: var(--text2); cursor: pointer; }
+.rai-chip:hover { border-color: var(--am); color: var(--at); background: var(--ab); }
+#rai-status { font-size: 11px; color: var(--text2); min-height: 16px; display: flex; align-items: center; gap: 8px; }
+#rai-answer { font-family: var(--jf); font-size: 13px; line-height: 1.9; color: var(--text); direction: rtl; }
+#rai-answer h1, #rai-answer h2, #rai-answer h3, #rai-answer h4 { font-size: 13.5px; font-weight: 700; color: var(--at); margin: 8px 0 4px; }
+#rai-answer p { margin-bottom: 6px; }
+#rai-answer ul, #rai-answer ol { margin: 4px 18px 6px 0; padding: 0; }
+#rai-answer li { margin-bottom: 3px; }
+#rai-answer code { font-family: monospace; font-size: 11px; background: var(--bg3); padding: 1px 4px; border-radius: 3px; }
+#rai-answer-actions { display: none; gap: 6px; padding-top: 6px; border-top: 0.5px solid var(--border); }
+#aiSelChip { display: none; position: fixed; z-index: 300; padding: 5px 12px; background: var(--am); color: #fff; border: none; border-radius: 14px; font-size: 12px; font-family: var(--jf); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
 #rnotes-header { padding: 12px; border-bottom: 0.5px solid var(--border); font-size: 13px; font-weight: 600; color: var(--text); }
 #rnotes-list { flex: 1; overflow-y: auto; padding: 8px; }
 .rnote { padding: 10px; border: 0.5px solid var(--border); border-radius: var(--radius2); margin-bottom: 6px; background: var(--bg); cursor: pointer; transition: all .12s; }
@@ -263,6 +292,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
       <div class="submenu">
         <button onclick="closeMenus();showAdd()">يېڭى كىتاب قوشۇش <span class="shortcut">Ctrl+N</span></button>
         <button onclick="closeMenus();showBatchImport()">توپلاپ كىتاب قوشۇش</button>
+        <button onclick="closeMenus();showWebImport()">تور بەت قوشۇش (URL)</button>
         <div class="sep"></div>
         <button onclick="closeMenus();showBulkExport()">📤 تۈر بويىچە توپلاپ چۈشۈرۈش</button>
         <div class="sep"></div>
@@ -317,6 +347,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
   <span class="logo">📚 بىلىم خەزىنىسى</span>
   <span class="ver" id="ver">v1.0.0</span>
   <div style="flex:1"></div>
+  <button class="hbtn" onclick="showSettings()" style="font-size:11px;-webkit-app-region:no-drag" title="تەڭشەكلەر">⚙️</button>
   <button class="hbtn" onclick="toggleDarkMode()" style="font-size:11px;-webkit-app-region:no-drag" id="darkToggle" title="قاراڭغۇ / يورۇق ھالەت">🌙</button>
 </div>
 
@@ -331,6 +362,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
   </div>
   <button class="hbtn" onclick="showCatsMgr()" title="تۈرلەرنى باشقۇرۇش">📂 تۈرلەر</button>
   <button class="hbtn" onclick="showBatchImport()" title="بىرنەچچە كىتابنى بىراقلا قوشۇش">📁 توپلاپ قوشۇش</button>
+  <button class="hbtn" onclick="showWebImport()" title="تور بەتتىكى ماقالىنى كىتاب سۈپىتىدە قوشۇش">🌐 تور بەت قوشۇش</button>
   <button class="hbtn p" onclick="showAdd()" title="يېڭى كىتاب قوشۇشۇش (Ctrl+N)">+ كىتاب قوشۇش</button>
 </div>
 
@@ -369,7 +401,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
         <div class="fz" id="fz">
           <div class="file-icon">📄</div>
           <div class="fz-t">ھۆججەتنى سۆرەپ تاشلاڭ ياكى چېكىڭ</div>
-          <div class="fz-s">PDF · TXT · DOCX · DOC</div>
+          <div class="fz-s">PDF · TXT · DOCX · DOC · MD</div>
         </div>
         <div class="finfo" id="finfo"></div>
         <div class="pb" id="pb"><div class="pf" id="pf"></div></div>
@@ -414,7 +446,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
       <button onclick="hideBatchImport()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
     </div>
     <div class="mc">
-      <p style="font-size:12px;color:var(--text2);margin-bottom:12px">ئىچىدە PDF · TXT · DOCX · DOC ھۆججەتلىرى بار ھۆججەتخانىنى تاللاڭ:</p>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:12px">ئىچىدە PDF · TXT · DOCX · DOC · MD ھۆججەتلىرى بار ھۆججەتخانىنى تاللاڭ:</p>
       <div class="fl"><label>تۈرى</label><select id="batchcat" class="inp" style="cursor:pointer"></select></div>
       <button onclick="selectBatchFolder()" class="hbtn p" style="width:100%;margin-bottom:12px">📁 ھۆججەتخانا تاللاش</button>
       <div id="batchlist" style="max-height:300px;overflow-y:auto;border:0.5px solid var(--border);border-radius:var(--radius2);padding:8px;display:none;margin-bottom:12px">
@@ -424,6 +456,70 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
       <div class="fa">
         <button onclick="hideBatchImport()" class="hbtn">بىكار قىلىش</button>
         <button onclick="confirmBatchImport()" class="hbtn p" id="batchbtn" style="display:none">✓ قوشۇش</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Web Page Import Modal -->
+<div class="ov" id="webov">
+  <div class="mbox" style="max-width: 480px;">
+    <div class="mh">
+      <h2>🌐 تور بەت قوشۇش</h2>
+      <button onclick="hideWebImport()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
+    </div>
+    <div class="mc">
+      <p style="font-size:12px;color:var(--text2);margin-bottom:12px">ماقالە ئادرېسىنى كىرگۈزسىڭىز، بەتنىڭ ئاساسىي مەزمۇنى (ئىزدەش بالدىقى، ئۇلانما، ئېلانلارسىز) ساپ تېكىست ھالىتىدە كىتاب بولۇپ ساقلىنىدۇ:</p>
+      <div class="fl">
+        <label>تور ئادرېسى (URL)</label>
+        <input type="text" id="weburl" class="inp" dir="ltr" placeholder="https://..." onkeydown="if(event.key==='Enter')importWebPage()">
+      </div>
+      <div class="fl"><label>تۈرى</label><select id="webcat" class="inp" style="cursor:pointer"></select></div>
+      <div id="webStatus" style="font-size:12px;color:var(--text2);margin:8px 0;text-align:center;font-family:sans-serif"></div>
+      <div class="fa">
+        <button onclick="hideWebImport()" class="hbtn">بىكار قىلىش</button>
+        <button onclick="importWebPage()" class="hbtn p" id="webbtn">✓ قوشۇش</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="ov" id="setov">
+  <div class="mbox" style="max-width: 520px;">
+    <div class="mh">
+      <h2>⚙️ تەڭشەكلەر</h2>
+      <button onclick="hideSettings()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
+    </div>
+    <div class="mc">
+      <h3 style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px">سۈنئىي ئىدراك (Gemini)</h3>
+
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:4px">
+        <input type="checkbox" id="aiEnabled" onchange="aiToggleEnabled()" style="cursor:pointer">
+        <span style="font-size:13px;color:var(--text)">سۈنئىي ئىدراكنى ئىشلىتىش</span>
+      </label>
+      <p style="font-size:11px;color:var(--text3);margin:0 22px 14px 0">قوزغاتسىڭىز ئوقۇغۇچتا AI كۇنۇپكىسى كۆرۈنىدۇ</p>
+
+      <div class="fl">
+        <label>Gemini API ئاچقۇچى</label>
+        <input type="password" id="aiKey" class="inp" dir="ltr" placeholder="AIza... / AQ..." autocomplete="off" spellcheck="false">
+      </div>
+      <p style="font-size:11px;color:var(--text3);margin-bottom:10px">ھەقسىز API ئاچقۇچىنى <b>aistudio.google.com</b> تور بېتىنىڭ <b>«Get API key»</b> بۆلىكىدىن ھاسىل قىلىپ كۆچۈرۈپ، بۇ يەرگە چاپلاڭ. (كونا ئاچقۇچلار «AIza» بىلەن، يېڭىلىرى «AQ.» بىلەن باشلىنىدۇ)</p>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button onclick="aiSaveKey()" class="hbtn p">ساقلاش</button>
+        <button onclick="aiTestConnection()" class="hbtn" id="aiTestBtn">باغلىنىشنى سىناش</button>
+      </div>
+      <div id="aiTestResult" style="font-size:12px;color:var(--text2);min-height:18px;margin-bottom:10px"></div>
+
+      <div class="fl">
+        <label>مودېل</label>
+        <select id="aiModel" class="inp" style="cursor:pointer;direction:ltr" onchange="aiChangeModel()"></select>
+      </div>
+      <div id="aiModelDesc" style="font-size:10.5px;color:var(--text3);line-height:1.9;margin:2px 0 8px;direction:rtl"></div>
+      <div id="aiUsage" style="font-size:11px;color:var(--text3);margin-bottom:12px">بۈگۈن ئىشلىتىلگەن: 0</div>
+
+      <div class="fa">
+        <button onclick="hideSettings()" class="hbtn">تاقاش</button>
       </div>
     </div>
   </div>
@@ -493,6 +589,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
     <span id="matchcount" style="font-size:11px;color:var(--text3);font-family:sans-serif;white-space:nowrap"></span>
     <button onclick="toggleBookmarks()" class="hbtn" title="خەتكۈش">🔖</button>
     <button onclick="toggleNotes()" class="hbtn" title="ئىزاھات">📝</button>
+    <button onclick="toggleAiPanel()" class="hbtn" id="aiReaderBtn" style="display:none" title="سۈنئىي ئىدراك ياردەمچىسى">✨ AI</button>
     <button onclick="downloadBook('txt')" class="hbtn" title="TXT ھالىتىدە چۈشۈرۈش">📥 TXT</button>
     <button onclick="downloadBook('docx')" class="hbtn" title="Word ھالىتىدە چۈشۈرۈش">📥 DOCX</button>
     <button onclick="downloadBook('pdf')" class="hbtn" title="PDF ھالىتىدە چۈشۈرۈش">📥 PDF</button>
@@ -520,7 +617,66 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
         <button onclick="addNote()">+ قوشۇش</button>
       </div>
     </div>
+    <div id="rai-panel">
+      <div id="rai-header">
+        <span>✨ سۈنئىي ئىدراك ياردەمچىسى</span>
+        <button onclick="closeAiPanel()" style="background:none;border:none;font-size:16px;color:var(--text2);cursor:pointer">✕</button>
+      </div>
+      <div id="rai-body">
+        <div id="rai-scope-row">
+          <button type="button" class="rai-scope-btn" data-scope="selection" onclick="raiSetScope('selection')">تاللانغان</button>
+          <button type="button" class="rai-scope-btn" data-scope="page" onclick="raiSetScope('page')">بۇ بەت</button>
+          <button type="button" class="rai-scope-btn" data-scope="all" onclick="raiSetScope('all')">پۈتۈن كىتاب</button>
+        </div>
+        <div id="rai-meta"></div>
+        <div class="fl" style="margin-bottom:0">
+          <label>تېكىست تۈرى</label>
+          <select id="rai-type" class="inp" style="cursor:pointer" onchange="RAI.typeUserSet=true;raiRenderChips()">
+            <option value="hadith">ھەدىس</option>
+            <option value="tafsir">تەپسىر</option>
+            <option value="fiqh">فىقھ</option>
+            <option value="poetry">شېئىر</option>
+            <option value="political">سىياسىي</option>
+            <option value="literary">ئەدەبىي</option>
+            <option value="translation">تەرجىمە</option>
+            <option value="term_explain">چۈشەندۈرۈش</option>
+            <option value="general" selected>ئادەتتىكى</option>
+          </select>
+        </div>
+        <div id="rai-quick">
+          <button type="button" class="rai-quick-btn" onclick="raiQuick('summary')">خۇلاسىلەش</button>
+          <button type="button" class="rai-quick-btn" onclick="raiQuick('explain')">ئاددىي چۈشەندۈرۈش</button>
+          <button type="button" class="rai-quick-btn" onclick="raiQuick('translation')">تەرجىمە ▾</button>
+          <button type="button" class="rai-quick-btn" onclick="raiQuick('term_explain')">ئاتالغۇ چۈشەندۈرۈش</button>
+        </div>
+        <div id="rai-tr-menu">
+          <button type="button" class="rai-tr-opt" onclick="raiTranslate('uy','ar')">ئۇيغۇرچىدىن ئەرەبچىگە</button>
+          <button type="button" class="rai-tr-opt" onclick="raiTranslate('ar','uy')">ئەرەبچىدىن ئۇيغۇرچىگە</button>
+          <button type="button" class="rai-tr-opt" onclick="raiTranslate('uy','en')">ئۇيغۇرچىدىن ئىنگلىزچىگە</button>
+          <button type="button" class="rai-tr-opt" onclick="raiTranslate('en','uy')">ئىنگلىزچىدىن ئۇيغۇرچىگە</button>
+          <button type="button" class="rai-tr-opt" onclick="raiTranslate('uy','tr')">ئۇيغۇرچىدىن تۈركچىگە</button>
+          <button type="button" class="rai-tr-opt" onclick="raiTranslate('tr','uy')">تۈركچىدىن ئۇيغۇرچىگە</button>
+          <button type="button" class="rai-tr-opt" onclick="raiHideTranslateMenu()">يېپىش</button>
+        </div>
+        <textarea id="rai-question" rows="3" placeholder="تېكىست مەزمۇنى ھەققىدە سۈنئىي ئىدراكتىن سوراڭ" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();raiAsk();}"></textarea>
+        <div id="rai-chips"></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <button id="rai-ask" class="hbtn p" onclick="raiAsk()">سوراش</button>
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;color:var(--text2)">
+            <input type="checkbox" id="rai-deep" style="cursor:pointer">
+            چوڭقۇر مۇلاھىزە <span style="color:var(--text3)">(سۈپەتلىك، ئاستىراق)</span>
+          </label>
+        </div>
+        <div id="rai-status"></div>
+        <div id="rai-answer"></div>
+        <div id="rai-answer-actions">
+          <button class="hbtn" onclick="raiCopy()">كۆچۈرۈش</button>
+          <button class="hbtn" onclick="raiSaveNote()">خاتىرىگە ساقلاش</button>
+        </div>
+      </div>
+    </div>
   </div>
+  <button id="aiSelChip" type="button">✨ AI</button>
 </div>
 
 <!-- Rename Category Modal -->
@@ -1206,6 +1362,7 @@ async function openReader(id, hl='', targetPos=null) {
   // on elements inside display:none ancestors, so the navigation must happen
   // after the reader is visible AND the browser has laid out its contents.
   document.getElementById('rdr').classList.add('on');
+  raiOnReaderOpen();
   if (hl) {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => updateMatchNav(hl, targetPos));
@@ -1295,6 +1452,7 @@ function readerJumpToPage() {
 function closeReader() {
   document.getElementById('rdr').classList.remove('on');
   document.getElementById('rnotes-panel').classList.remove('on');
+  raiOnReaderClose();
   if (S.curB) {
     saveData();
   }
@@ -1649,6 +1807,750 @@ function jumpToNote(pos) {
   rc.scrollTop = (pos / 100) * scrollHeight;
 }
 
+// ===== Web page / HTML article import =====
+
+// Option-B markdown cleanup: turn markdown SOURCE into clean plain prose.
+// Strips #, *, _, **, __, backticks, >, list markers and horizontal rules;
+// [text](url) becomes text with the url DROPPED; bare URLs are dropped too.
+// Paragraph structure is preserved. Used for .md file imports and as the last
+// step of the web/HTML article pipeline, so stored content stays in the same
+// safe plain-text path as TXT/DOCX books.
+function markdownToPlainText(md) {
+  if (!md) return '';
+  let t = String(md).replace(/\r\n/g, '\n');
+  // fenced code blocks: drop the ``` / ~~~ fence lines, keep the inner text
+  t = t.replace(/^[ \t]*(```|~~~)[^\n]*$/gm, '');
+  // images: ![alt](url) → alt ; links: [text](url) → text (url dropped)
+  t = t.replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1');
+  t = t.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');
+  // reference-style links: definition lines dropped, [text][id] → text
+  t = t.replace(/^[ \t]*\[[^\]]+\]:[ \t]+\S.*$/gm, '');
+  t = t.replace(/\[([^\]]*)\]\[[^\]]*\]/g, '$1');
+  // autolinks <https://…> and bare URLs → dropped entirely
+  t = t.replace(/<https?:\/\/[^>\s]+>/g, '');
+  t = t.replace(/https?:\/\/\S+/g, '');
+  // headings, blockquotes, list markers, horizontal rules
+  t = t.replace(/^[ \t]{0,3}#{1,6}[ \t]+/gm, '');
+  t = t.replace(/^[ \t]{0,3}>[ \t]?/gm, '');
+  t = t.replace(/^[ \t]*[-*+][ \t]+/gm, '');
+  t = t.replace(/^[ \t]*\d+[.)][ \t]+/gm, '');
+  t = t.replace(/^[ \t]*([-*_][ \t]*){3,}$/gm, '');
+  // emphasis and inline code: keep the text, drop the markers
+  t = t.replace(/(\*\*\*|___)([\s\S]*?)\1/g, '$2');
+  t = t.replace(/(\*\*|__)([\s\S]*?)\1/g, '$2');
+  t = t.replace(/(\*|_)([^*_\n]+)\1/g, '$2');
+  t = t.replace(/`([^`\n]*)`/g, '$1');
+  // markdown backslash-escapes: \* → *
+  t = t.replace(/\\([\\`*_{}\[\]()#+\-.!>])/g, '$1');
+  // collapse 3+ blank lines into one paragraph break
+  t = t.replace(/\n{3,}/g, '\n\n');
+  return t.trim();
+}
+
+// Trim WordPress-style post-footer noise Readability can leave at the very END
+// (reaction widget «ياقتۇردىڭىزمۇ؟», author byline, related-post links).
+// Conservative: only ever cuts from the TAIL and stops at the first line of
+// real content, so article prose is never touched. (Ported from the mobile app.)
+function cleanArticleTail(md) {
+  if (!md) return md;
+  let text = String(md);
+
+  // (a) If a strong "footer starts here" marker appears in the LAST 40% of the
+  //     text, cut from there (the position guard avoids cutting body prose
+  //     that merely mentions the word earlier).
+  const CUT_MARKERS = [
+    'ياقتۇردىڭىز', 'ياقتۇرامسىز', 'بۇ يازمىنى ھەمبەھر', 'بۇ ماقالىنى ھەمبەھر',
+    'مۇناسىۋەتلىك يازما', 'مۇناسىۋەتلىك ماقالە', 'ئىنكاس قالدۇر', 'ئىنكاس يېزىش',
+    'باھا يېزىش', 'داۋاملىق ئوقۇش', 'Related', 'Leave a Reply', 'Leave a comment',
+    'Share this', 'Post navigation'
+  ];
+  const minPos = Math.floor(text.length * 0.6);
+  let cutAt = -1;
+  for (const m of CUT_MARKERS) {
+    const idx = text.lastIndexOf(m);
+    if (idx >= minPos && (cutAt === -1 || idx < cutAt)) cutAt = idx;
+  }
+  if (cutAt > 0) text = text.slice(0, cutAt);
+
+  // (b) Drop trailing junk lines (empty / author / read-more / nav / share /
+  //     bare link or image), stopping at the first real content line.
+  const JUNK = [
+    /^administrator$/i, /^admin$/i, /^باشقۇرغۇچى$/, /^ئاپتور\b/, /^يازغۇچى\b/,
+    /^تەھرىر\b/, /داۋاملىق ئوقۇش/, /^تېخىمۇ كۆپ/, /كېيىنكى يازما/, /ئالدىنقى يازما/,
+    /^next post/i, /^previous post/i, /^share\b/i, /^ھەمبەھر/, /^تارقات/, /^خەتكۈچ/,
+    /^كاتېگورىيە/, /^تېگ(لار)?\b/, /كۆرۈلۈش( سانى)?/, /^[#>*\-]+$/
+  ];
+  function isLinkOnly(s) {
+    return /^!?\[[^\]]*\]\([^)]*\)$/.test(s) || /^<?https?:\/\/\S+>?$/.test(s);
+  }
+  let lines = text.split('\n');
+  while (lines.length) {
+    const last = (lines[lines.length - 1] || '').trim();
+    if (last === '') { lines.pop(); continue; }
+    const junky = last.length <= 80 && (isLinkOnly(last) || JUNK.some(re => re.test(last)));
+    if (junky) { lines.pop(); continue; }
+    break;
+  }
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+// Shared clean-extraction pipeline for URL-fetched HTML and local .html files:
+// DOMParser → Readability (drops nav/ads/sidebars/scripts) → DOMPurify →
+// Turndown (links/images flattened to their text) → cleanArticleTail →
+// markdownToPlainText. Returns { title, author, text } or null when no
+// readable article was found (JS-only page, empty page…). Never throws.
+function extractArticleText(html, baseUrl) {
+  try {
+    if (typeof Readability === 'undefined' || typeof TurndownService === 'undefined') return null;
+    const parser = new DOMParser();
+    // Readability MUTATES the document it's given, so parse a dedicated copy.
+    const rdoc = parser.parseFromString(String(html || ''), 'text/html');
+    const pageTitle = ((rdoc.querySelector('title') || {}).textContent || '').trim();
+    // Help Readability resolve relative links: set a <base>.
+    if (baseUrl) {
+      try {
+        const b = rdoc.createElement('base');
+        b.setAttribute('href', baseUrl);
+        if (rdoc.head) rdoc.head.insertBefore(b, rdoc.head.firstChild);
+      } catch (e) {}
+    }
+    let article = null;
+    try {
+      article = new Readability(rdoc, { charThreshold: 200 }).parse();
+    } catch (e) { console.warn('[import/web] Readability threw:', e); }
+    if (!article || !article.content || (article.textContent || '').trim().length < 120) return null;
+
+    // Belt-and-suspenders: sanitize the article HTML before converting, so no
+    // script/style residue can ever reach the saved text.
+    let bodyHtml = article.content;
+    if (window.DOMPurify) bodyHtml = DOMPurify.sanitize(bodyHtml);
+    else if (window.SafeHTML) bodyHtml = SafeHTML.sanitize(bodyHtml);
+
+    const td = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced', emDelimiter: '_' });
+    // Flatten links/images to their visible text right in the converter, so no
+    // [text](url) ever appears even before the markdown cleanup pass.
+    td.addRule('plainLink', { filter: 'a', replacement: content => content });
+    td.addRule('dropImage', { filter: 'img', replacement: () => '' });
+    let markdown = td.turndown(bodyHtml);
+    markdown = cleanArticleTail(markdown);
+    const text = markdownToPlainText(markdown);
+    if (!text) return null;
+
+    const title = ((article.title || '').trim() || pageTitle).slice(0, 120);
+    const author = ((article.siteName || article.byline || '') + '').trim().slice(0, 80);
+    return { title, author, text };
+  } catch (e) {
+    console.warn('[import/web] extract failed:', e);
+    return null;
+  }
+}
+
+function showWebImport() {
+  document.getElementById('weburl').value = '';
+  document.getElementById('webStatus').textContent = '';
+  document.getElementById('webbtn').disabled = false;
+  const sel = document.getElementById('webcat');
+  sel.innerHTML = S.cats.map(c => `<option value="${sanitize(c)}">${sanitize(c)}</option>`).join('');
+  sel.value = S.cats.includes('باشقا') ? 'باشقا' : (S.cats[0] || '');
+  document.getElementById('webov').classList.add('on');
+  setTimeout(() => document.getElementById('weburl').focus(), 100);
+}
+
+function hideWebImport() {
+  document.getElementById('webov').classList.remove('on');
+}
+
+async function importWebPage() {
+  const url = (document.getElementById('weburl').value || '').trim();
+  if (!url) { toast('تور ئادرېسىنى كىرگۈزۈڭ', 'e'); return; }
+  const btn = document.getElementById('webbtn');
+  const st = document.getElementById('webStatus');
+  btn.disabled = true;
+  st.textContent = 'تور بەت يۈكلىنىۋاتىدۇ...';
+  try {
+    const r = await window.electron.fetchUrlHtml(url);
+    if (!r || !r.ok) {
+      st.textContent = '';
+      toast((r && r.error) || 'تورغا ئۇلىنىش مەغلۇپ بولدى', 'e');
+      return;
+    }
+
+    st.textContent = 'ماقالە ئېلىنىۋاتىدۇ...';
+    const art = extractArticleText(r.html, r.finalUrl || url);
+    if (!art) {
+      st.textContent = '';
+      toast('تور بەت ئوقۇلدى، ئەمما ماقالە مەزمۇنى تېپىلمىدى (بەلكىم بۇ بەت پەقەت JavaScript بىلەن كۆرۈنىدۇ)', 'e');
+      return;
+    }
+
+    let title = art.title;
+    if (!title) {
+      try { title = new URL(r.finalUrl || url).host; } catch (e) { title = 'تور بەت'; }
+    }
+
+    // Same duplicate-detection hash as file imports
+    let fileHash = '';
+    try { fileHash = await window.electron.computeHash(art.text); } catch (e) {}
+
+    const category = document.getElementById('webcat').value || 'باشقا';
+    const result = await window.electron.dbAddBook({
+      title,
+      author: art.author,
+      category,
+      format: 'WEB',
+      date: new Date().toISOString().slice(0, 10),
+      description: 'مەنبە: ' + (r.finalUrl || url),
+      content: art.text,
+      fileHash
+    });
+    if (!result || !result.success) {
+      st.textContent = '';
+      if (result && result.error === 'duplicate') toast('بۇ تور بەت ئاللىقاچان قوشۇلغان!', 'e');
+      else toast('كىتاب قوشۇشتا خاتالىق: ' + ((result && result.error) || 'نامەلۇم'), 'e');
+      return;
+    }
+
+    // Sync frontend state, same post-insert steps as addBook()
+    const id = result.id;
+    S.books.unshift({ id, title, author: art.author, category, format: 'WEB', date: new Date().toISOString().slice(0, 10), desc: 'مەنبە: ' + (r.finalUrl || url) });
+    if (id >= S.nid) S.nid = id + 1;
+    await saveData();
+    hideWebImport();
+    renderSide();
+    renderBooks();
+    toast('تور بەت قوشۇلدى: ' + sanitize(title), 's');
+  } catch (e) {
+    console.warn('[import/web] failed:', e);
+    st.textContent = '';
+    toast('تور بەتنى قوشۇپ بولالمىدۇق', 'e');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ===== Settings modal (AI / Gemini) =====
+// Mirrors the mobile app's settings.js AI section, adapted to the desktop
+// modal pattern. All persistence goes through the Part-B IPC bridge — the
+// real API key never enters the renderer; the field shows a masked
+// placeholder after save.
+
+async function showSettings() {
+  try {
+    document.getElementById('aiEnabled').checked = await window.AI.isEnabled();
+    const ki = document.getElementById('aiKey');
+    ki.value = '';
+    const masked = await window.AI.getApiKey();   // masked form (first4…last4)
+    ki.placeholder = masked || 'AIza... / AQ...';
+    const sel = document.getElementById('aiModel');
+    const cur = await window.AI.getModel();
+    const models = (window.AI.SELECTABLE_MODELS || window.AI.MODEL_FALLBACKS || []).slice();
+    if (cur && models.indexOf(cur) === -1) models.unshift(cur);
+    sel.innerHTML = models.map(m => `<option value="${sanitize(m)}" ${m === cur ? 'selected' : ''}>${sanitize(m)}</option>`).join('');
+    // Short Uyghur description per model, always visible under the selector.
+    const info = window.AI.MODEL_INFO || {};
+    document.getElementById('aiModelDesc').innerHTML = models
+      .map(m => `<div><b style="font-family:monospace;font-size:10px;color:var(--text2)">${sanitize(m)}</b> — ${sanitize(info[m] || '')}</div>`)
+      .join('');
+    document.getElementById('aiUsage').textContent = 'بۈگۈن ئىشلىتىلگەن: ' + (await window.AI.getTodayUsage());
+    document.getElementById('aiTestResult').textContent = '';
+  } catch (e) {
+    console.warn('[settings] load failed:', e);
+  }
+  document.getElementById('setov').classList.add('on');
+}
+
+function hideSettings() {
+  document.getElementById('setov').classList.remove('on');
+  // AI may have just been enabled/disabled or the key changed — refresh the
+  // reader's AI button/panel gating if a book is open.
+  if (document.getElementById('rdr').classList.contains('on')) refreshAiReaderUI();
+}
+
+async function aiToggleEnabled() {
+  const on = document.getElementById('aiEnabled').checked;
+  try {
+    await window.AI.setEnabled(on);
+    toast(on ? 'AI قوزغىتىلدى' : 'AI ئېتىلدى', on ? 's' : 'i');
+  } catch (e) {
+    console.warn('[settings] setEnabled failed:', e);
+    toast('ساقلاشتا خاتالىق', 'e');
+  }
+}
+
+async function aiSaveKey() {
+  const ki = document.getElementById('aiKey');
+  const v = (ki.value || '').trim();
+  if (!v) { toast('ئاچقۇچ كىرگۈزۈلمىدى', 'e'); return; }
+  // Google issues several key formats (classic AIza…, newer AQ.…). Only warn
+  // when the value is clearly not key-shaped (whitespace / too short /
+  // non-key characters) — and even then the user may save anyway; the real
+  // validation happens on the first request.
+  if (!/^[A-Za-z0-9._-]{20,}$/.test(v)) {
+    if (!confirm('ئاچقۇچنىڭ شەكلى ئادەتتىكى Gemini ئاچقۇچىغا ئوخشىمايدۇ. شۇنداقتىمۇ ساقلامسىز؟')) return;
+  }
+  try {
+    await window.AI.setApiKey(v);
+    // Mask in the field after save: clear the plaintext, show first4…last4.
+    ki.value = '';
+    ki.placeholder = (await window.AI.getApiKey()) || 'AIza... / AQ...';
+    toast('API ئاچقۇچ ساقلاندى', 's');
+  } catch (e) {
+    console.warn('[settings] AI key save failed:', e);
+    toast('ساقلاشتا خاتالىق', 'e');
+  }
+}
+
+async function aiTestConnection() {
+  const btn = document.getElementById('aiTestBtn');
+  const out = document.getElementById('aiTestResult');
+  if (!(await window.AI.hasApiKey())) { toast('ئالدى بىلەن ئاچقۇچ ساقلاڭ', 'e'); return; }
+  btn.disabled = true;
+  out.textContent = 'سىنىلىۋاتىدۇ...';
+  try {
+    const r = await window.AI.test();
+    if (r && r.ok) {
+      // The PERSISTED model is the source of truth — test() saves whatever
+      // model actually answered (auto-fallback), so re-read it.
+      const model = (await window.AI.getModel()) || r.model;
+      out.textContent = '✓ ' + r.message + ' (مودېل: ' + model + ')';
+      toast('باغلىنىش ئىشلىدى', 's');
+      const sel = document.getElementById('aiModel');
+      if (sel && model) {
+        if (![...sel.options].some(o => o.value === model)) {
+          const opt = document.createElement('option');
+          opt.value = model; opt.textContent = model;
+          sel.appendChild(opt);
+        }
+        sel.value = model;
+      }
+      document.getElementById('aiUsage').textContent = 'بۈگۈن ئىشلىتىلگەن: ' + (await window.AI.getTodayUsage());
+    } else {
+      out.textContent = '✗ ' + ((r && r.message) || 'سىناش مەغلۇپ بولدى');
+      toast('سىناش مەغلۇپ بولدى', 'e');
+    }
+  } catch (e) {
+    out.textContent = '✗ ' + ((e && e.message) || '؟');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function aiChangeModel() {
+  const m = document.getElementById('aiModel').value;
+  try {
+    await window.AI.setModel(m);
+    toast('مودېل: ' + m, 'i');
+  } catch (e) {
+    console.warn('[settings] setModel failed:', e);
+    toast('ساقلاشتا خاتالىق', 'e');
+  }
+}
+
+// ===== Reader AI panel (سۈنئىي ئىدراك ياردەمچىسى) =====
+// Desktop port of the mobile #ai-sheet (reference: _mobile-ai-reference/js/
+// reader.js), as a right-side drawer next to the notes panel. Gated: the AI
+// button/panel/selection-chip exist only when AI is enabled AND a key is
+// saved — gated off, the reader is identical to the baseline. All network
+// goes through window.AI.askStream → the main process (CSP unchanged).
+
+const RAI = {
+  available: false,     // gate: enabled && hasKey (refreshed on reader open / settings close)
+  scope: 'selection',   // selection | page | all
+  context: '',
+  kind: '',
+  selStash: '',         // last captured in-reader selection (survives focus loss)
+  typeUserSet: false,   // an explicit type pick wins over auto-detect
+  streamHandle: null,   // { abort } of the in-flight stream
+  answerText: '',
+  lastReq: null
+};
+
+async function refreshAiReaderUI() {
+  let on = false;
+  try {
+    on = !!(window.AI && window.AI.isEnabled && (await window.AI.isEnabled()) && (await window.AI.hasApiKey()));
+  } catch (e) { on = false; }
+  RAI.available = on;
+  const btn = document.getElementById('aiReaderBtn');
+  if (btn) btn.style.display = on ? '' : 'none';
+  if (!on) { closeAiPanel(); hideAiSelChip(); }
+}
+
+function raiOnReaderOpen() {
+  // New book: drop the previous panel state, then re-evaluate the gate.
+  raiAbort();
+  closeAiPanel();
+  hideAiSelChip();
+  RAI.selStash = ''; RAI.context = ''; RAI.answerText = ''; RAI.lastReq = null; RAI.typeUserSet = false;
+  const qa = document.getElementById('rai-question'); if (qa) qa.value = '';
+  const ans = document.getElementById('rai-answer'); if (ans) ans.innerHTML = '';
+  const st = document.getElementById('rai-status'); if (st) st.innerHTML = '';
+  const acts = document.getElementById('rai-answer-actions'); if (acts) acts.style.display = 'none';
+  refreshAiReaderUI();
+}
+
+function raiOnReaderClose() {
+  raiAbort();
+  closeAiPanel();
+  hideAiSelChip();
+}
+
+function toggleAiPanel() {
+  const p = document.getElementById('rai-panel');
+  if (p.classList.contains('on')) closeAiPanel();
+  else openAiPanel();
+}
+
+function openAiPanel(scope, forcedText) {
+  if (!RAI.available) return;
+  document.getElementById('rai-panel').classList.add('on');
+  RAI.typeUserSet = false;
+  raiSetScope(scope || (raiLiveSelection() ? 'selection' : 'page'), forcedText);
+}
+
+function closeAiPanel() {
+  const p = document.getElementById('rai-panel');
+  if (p) p.classList.remove('on');
+  raiHideTranslateMenu();
+}
+
+function raiAbort() {
+  if (RAI.streamHandle) { try { RAI.streamHandle.abort(); } catch (e) {} RAI.streamHandle = null; }
+}
+
+// --- context gathering -----------------------------------------------------
+
+function raiLiveSelection() {
+  try {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return '';
+    const rc = document.getElementById('rc');
+    if (!rc || !sel.anchorNode || !rc.contains(sel.anchorNode)) return '';
+    return String(sel.toString() || '').trim();
+  } catch (e) { return ''; }
+}
+
+function raiGatherContext(scope, forcedText) {
+  const cap = (window.AI && window.AI.MAX_CONTEXT_CHARS) || 1000000;
+  if (scope === 'selection') {
+    // A live selection wins; else the last captured one (selecting text and
+    // then clicking panel buttons clears the native selection).
+    const live = (typeof forcedText === 'string' && forcedText.trim().length >= 3)
+      ? forcedText.trim()
+      : (raiLiveSelection() || RAI.selStash);
+    if (live && live.trim().length >= 3) return { text: live.trim().slice(0, 12000), kind: 'selection' };
+    return { text: '', kind: 'needSelection' };
+  }
+  if (scope === 'page') {
+    const page = (S.readerPages && S.readerPages[S.readerPage - 1]) || S.readerContent || '';
+    return { text: String(page).slice(0, cap), kind: 'page' };
+  }
+  const full = String(S.readerContent || '').trim();
+  if (!full) return { text: '', kind: 'empty' };
+  return { text: full.slice(0, cap), kind: 'all' };
+}
+
+function raiSetScope(scope, forcedText) {
+  RAI.scope = scope;
+  document.querySelectorAll('#rai-scope-row .rai-scope-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.scope === scope);
+  });
+  const ctx = raiGatherContext(scope, forcedText);
+  RAI.context = ctx.text;
+  RAI.kind = ctx.kind;
+  if (scope === 'selection' && ctx.text) RAI.selStash = ctx.text;
+
+  const meta = document.getElementById('rai-meta');
+  if (meta) {
+    meta.textContent = ({
+      selection: 'تاللانغان: ' + ctx.text.length + ' ھەرپ',
+      page: 'بۇ بەت: ' + ctx.text.length + ' ھەرپ',
+      all: 'پۈتۈن كىتاب: ' + ctx.text.length + ' ھەرپ',
+      needSelection: 'ئالدى بىلەن ئوقۇغۇچتىكى تېكىستنى تاللاڭ',
+      empty: '(تېكىست تېپىلمىدى)'
+    })[ctx.kind] || '';
+  }
+
+  // Auto type via detectType; an explicit user pick (since the panel opened) wins.
+  if (!RAI.typeUserSet && ctx.text && window.AI && window.AI.detectType) {
+    const sel = document.getElementById('rai-type');
+    if (sel) sel.value = window.AI.detectType(ctx.text);
+  }
+  raiRenderChips();
+}
+
+// --- quick actions + translate submenu --------------------------------------
+
+function raiQuick(kind) {
+  if (kind === 'translation') { raiToggleTranslateMenu(); return; }
+  raiHideTranslateMenu();
+  const sel = document.getElementById('rai-type');
+  const qa = document.getElementById('rai-question');
+  if (kind === 'summary') {
+    sel.value = 'general';
+    qa.value = 'بۇ تېكىستنىڭ خۇلاسىسىنى تۈزۈپ بەرگىن';
+  } else if (kind === 'explain') {
+    sel.value = 'general';
+    qa.value = 'بۇ تېكىستنى ئاددىي قىلىپ چۈشەندۈرۈپ بەرگىن';
+  } else if (kind === 'term_explain') {
+    sel.value = 'term_explain';
+  }
+  RAI.typeUserSet = true;
+  raiAsk();
+}
+
+function raiToggleTranslateMenu() {
+  const m = document.getElementById('rai-tr-menu');
+  m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
+}
+
+function raiHideTranslateMenu() {
+  const m = document.getElementById('rai-tr-menu');
+  if (m) m.style.display = 'none';
+}
+
+function raiTranslate(from, to) {
+  raiHideTranslateMenu();
+  raiSetScope(RAI.scope);   // re-gather the active scope
+  if (!RAI.context) {
+    raiStatus(RAI.scope === 'selection' ? 'ئالدى بىلەن تەرجىمە قىلىدىغان تېكىستنى تاللاڭ.' : 'تېكىست تېپىلمىدى.');
+    return;
+  }
+  raiExecute({ type: 'translation', translateFrom: from, translateTo: to, context: RAI.context, question: '', deepThink: false });
+}
+
+// --- ask + streaming ---------------------------------------------------------
+
+function raiAsk() {
+  raiSetScope(RAI.scope);   // refresh context from the live reader state
+  const qa = document.getElementById('rai-question');
+  const question = (qa.value || '').trim();
+  const type = document.getElementById('rai-type').value || 'general';
+  if (RAI.scope === 'selection' && !RAI.context) { raiStatus('ئالدى بىلەن ئوقۇغۇچتىكى تېكىستنى تاللاڭ.'); return; }
+  if (!RAI.context && !question) { raiStatus('تېكىست ياكى سوئال يوق.'); return; }
+  const deepThink = !!document.getElementById('rai-deep').checked;
+  raiExecute({ type: type, context: RAI.context, question: question, deepThink: deepThink });
+}
+
+// Stream a resolved request into #rai-answer (rAF-debounced re-render) with a
+// live Stop button. Ported from mobile executeAiRequest.
+function raiExecute(req) {
+  if (!window.AI || !RAI.available || !req) return;
+  raiAbort();   // cancel any in-flight stream before starting a new one
+  RAI.lastReq = req;
+
+  const ans = document.getElementById('rai-answer');
+  const acts = document.getElementById('rai-answer-actions');
+  acts.style.display = 'none';
+  ans.innerHTML = '';
+  RAI.answerText = '';
+
+  let buffer = '';
+  let rafPending = false;
+  const renderTick = () => {
+    rafPending = false;
+    const panel = document.getElementById('rai-panel');
+    const stick = panel ? (panel.scrollHeight - panel.scrollTop - panel.clientHeight < 120) : false;
+    ans.innerHTML = raiMdToHtml(buffer);
+    if (panel && stick) panel.scrollTop = panel.scrollHeight;   // follow the stream
+  };
+  const schedule = () => { if (!rafPending) { rafPending = true; requestAnimationFrame(renderTick); } };
+
+  let finished = false;
+  const finalize = (full) => {
+    if (finished) return;
+    finished = true;
+    RAI.streamHandle = null;
+    RAI.answerText = String(full || '');
+    ans.innerHTML = raiMdToHtml(RAI.answerText);
+    if (RAI.answerText) acts.style.display = 'flex';
+  };
+
+  raiAskBusy(true);
+  raiBusy(() => {           // Stop pressed — keep any partial text + actions
+    raiAbort();
+    raiAskBusy(false);
+    raiStatus('توختىتىلدى');
+    if (buffer) finalize(buffer);
+  });
+
+  RAI.streamHandle = window.AI.askStream(req,
+    (delta) => { buffer += delta; schedule(); },
+    (full, model) => {
+      finalize(full);
+      raiStatus(model ? ('مودېل: ' + model) : '');
+      raiAskBusy(false);
+    },
+    (res) => {
+      RAI.streamHandle = null;
+      finished = true;
+      raiAskBusy(false);
+      raiStatus('');
+      raiRenderError(res);
+    }
+  );
+}
+
+// --- status / answer rendering ----------------------------------------------
+
+function raiStatus(msg) {
+  const s = document.getElementById('rai-status');
+  if (s) { s.innerHTML = ''; s.textContent = msg || ''; }
+}
+
+function raiAskBusy(b) {
+  const btn = document.getElementById('rai-ask');
+  if (btn) btn.disabled = !!b;
+}
+
+function raiBusy(onStop) {
+  const s = document.getElementById('rai-status');
+  if (!s) return;
+  s.innerHTML = '';
+  const txt = document.createElement('span');
+  txt.textContent = 'جاۋاب يېزىلىۋاتىدۇ…';
+  const stop = document.createElement('button');
+  stop.type = 'button';
+  stop.className = 'hbtn';
+  stop.style.cssText = 'padding:2px 10px;font-size:11px';
+  stop.textContent = 'توختىتىش';
+  stop.addEventListener('click', () => { if (typeof onStop === 'function') onStop(); });
+  s.appendChild(txt);
+  s.appendChild(stop);
+}
+
+// Calm error with a retry button (port of mobile renderAiError, simplified).
+function raiRenderError(res) {
+  const ans = document.getElementById('rai-answer');
+  if (!ans) return;
+  ans.innerHTML = '';
+  const raw = (res && res.error) || 'سوراش مەغلۇپ بولدى. قايتا سىناڭ.';
+  const p = document.createElement('p');
+  p.style.cssText = 'color:var(--text2);font-size:12px;margin-bottom:8px';
+  p.textContent = raw.replace(/^HTTP\s+\d+\s*—\s*/, '');
+  ans.appendChild(p);
+  const retry = document.createElement('button');
+  retry.type = 'button';
+  retry.className = 'hbtn';
+  retry.textContent = 'قايتا سىناش';
+  retry.addEventListener('click', () => { if (RAI.lastReq) raiExecute(RAI.lastReq); });
+  ans.appendChild(retry);
+}
+
+// Minimal markdown → HTML for AI answers (the prompts ask for Markdown with
+// ## headings). Escape first, transform the small md subset, then pass the
+// result through the existing DOMPurify wrapper — defense in depth.
+function raiMdToHtml(text) {
+  let h = sanitize(String(text || ''));
+  h = h.replace(/^#{1,6}[ \t]+(.+)$/gm, '<h4>$1</h4>');
+  h = h.replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>');
+  h = h.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<i>$2</i>');
+  h = h.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  // consecutive "- item" lines → <ul>, "1. item" lines → <ol>
+  h = h.replace(/(^|\n)((?:[-*][ \t]+.+(?:\n|$))+)/g, (m, pre, block) => {
+    const items = block.trim().split('\n').map(l => '<li>' + l.replace(/^[-*][ \t]+/, '') + '</li>').join('');
+    return pre + '<ul>' + items + '</ul>\n';
+  });
+  h = h.replace(/(^|\n)((?:\d+[.)][ \t]+.+(?:\n|$))+)/g, (m, pre, block) => {
+    const items = block.trim().split('\n').map(l => '<li>' + l.replace(/^\d+[.)][ \t]+/, '') + '</li>').join('');
+    return pre + '<ol>' + items + '</ol>\n';
+  });
+  h = h.split(/\n{2,}/).map(part => {
+    const t = part.trim();
+    if (!t) return '';
+    if (/^<(h\d|ul|ol)/.test(t)) return t;
+    return '<p>' + t.replace(/\n/g, '<br>') + '</p>';
+  }).join('');
+  return window.SafeHTML ? SafeHTML.sanitize(h) : h;
+}
+
+// --- example chips / answer actions ------------------------------------------
+
+function raiRenderChips() {
+  const box = document.getElementById('rai-chips');
+  if (!box) return;
+  const type = (document.getElementById('rai-type') || {}).value || 'general';
+  const qs = (((window.AI || {}).EXAMPLE_QUESTIONS || {})[type] || []).slice(0, 2);
+  box.innerHTML = '';
+  qs.forEach(q => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'rai-chip';
+    b.textContent = q;
+    b.addEventListener('click', () => {
+      const qa = document.getElementById('rai-question');
+      if (qa) { qa.value = q; qa.focus(); }
+    });
+    box.appendChild(b);
+  });
+}
+
+async function raiCopy() {
+  if (!RAI.answerText) return;
+  try {
+    await navigator.clipboard.writeText(RAI.answerText);
+    toast('كۆچۈرۈلدى', 's');
+  } catch (e) {
+    toast('كۆچۈرۈشتە خاتالىق', 'e');
+  }
+}
+
+// Save question + answer as a normal book note (same path as addNote()).
+function raiSaveNote() {
+  if (!S.curB || !RAI.answerText) return;
+  const q = (RAI.lastReq && RAI.lastReq.question) ? RAI.lastReq.question : '';
+  const text = (q ? ('سوئال: ' + q + '\n\n') : '') + 'AI جاۋابى:\n' + RAI.answerText;
+  const rc = document.getElementById('rc');
+  const sh = rc.scrollHeight - rc.clientHeight;
+  const pos = sh > 0 ? (rc.scrollTop / sh) * 100 : 0;
+  const bookId = S.curB.id;
+  if (!S.bookNotes[bookId]) S.bookNotes[bookId] = [];
+  S.bookNotes[bookId].push({
+    id: Date.now().toString(),
+    text: text,
+    pos: pos,
+    date: new Date().toISOString()
+  });
+  renderNotesPanel();
+  saveData();
+  toast('ئىزاھات قوشۇلدى', 's');
+}
+
+// --- floating selection chip ---------------------------------------------------
+
+function hideAiSelChip() {
+  const c = document.getElementById('aiSelChip');
+  if (c) c.style.display = 'none';
+}
+
+(function bindAiSelection() {
+  const rc = document.getElementById('rc');
+  const chip = document.getElementById('aiSelChip');
+  if (!rc || !chip) return;
+  rc.addEventListener('mouseup', (e) => {
+    // Let the browser finalize the selection before reading it.
+    setTimeout(() => {
+      if (!RAI.available) return;
+      const sel = raiLiveSelection();
+      if (sel && sel.length >= 3) {
+        RAI.selStash = sel.slice(0, 12000);
+        chip.style.display = 'block';
+        chip.style.left = Math.min(window.innerWidth - 90, Math.max(8, e.clientX - 30)) + 'px';
+        chip.style.top = Math.max(8, e.clientY - 44) + 'px';
+      } else {
+        hideAiSelChip();
+      }
+    }, 10);
+  });
+  document.addEventListener('mousedown', (e) => {
+    if (!chip.contains(e.target)) hideAiSelChip();
+  });
+  chip.addEventListener('click', () => {
+    hideAiSelChip();
+    openAiPanel('selection', RAI.selStash);
+  });
+})();
+
 function setupFileZone() {
   const fz = document.getElementById('fz');
   fz.addEventListener('click', async () => {
@@ -1711,6 +2613,25 @@ async function handleFileResult(result) {
     const r = await window.electron.readDoc(filePath);
     if(r.success){S.tempContent=r.content;fi.textContent='✓ DOC: '+fileName;pf.style.width='100%';progress(100);toast('DOC مۇۋەپپەقىيەتلىك ئوقۇلدى','s');}
     else{S.tempContent='[DOC: '+fileName+']';fi.textContent='✓ '+fileName;pf.style.width='100%';}
+  } else if(ext==='md'||ext==='markdown'){
+    const r = await window.electron.readMd(filePath);
+    if(r.success){S.tempContent=markdownToPlainText(r.content);fi.textContent='✓ Markdown: '+fileName;pf.style.width='100%';progress(100);toast('Markdown ھۆججىتى ئوقۇلدى','s');}
+    else{fi.textContent='خاتالىق: '+r.error;toast('ھۆججەت ئوقۇغىلى بولمىدى','e');}
+  } else if(ext==='html'||ext==='htm'){
+    // Clean-extraction pipeline (Readability → text). Falls back to the plain
+    // main-process extractor when the file has no article-like structure.
+    const r = await window.electron.readTxt(filePath);
+    if(r.success){
+      const art = extractArticleText(r.content, '');
+      if(art && art.text){ S.tempContent = art.text; }
+      else {
+        const fb = await window.electron.readHtml(filePath);
+        S.tempContent = (fb.success && fb.content) ? fb.content : '';
+      }
+      if(S.tempContent){fi.textContent='✓ HTML: '+fileName;pf.style.width='100%';progress(100);toast('HTML ھۆججىتى ئوقۇلدى','s');}
+      else{fi.textContent='خاتالىق: مەزمۇن تېپىلمىدى';toast('HTML دىن مەزمۇن تېپىلمىدى','e');}
+    }
+    else{fi.textContent='خاتالىق: '+r.error;toast('ھۆججەت ئوقۇغىلى بولمىدى','e');}
   } else {
     S.tempContent='['+ext.toUpperCase()+': '+fileName+']';
     fi.textContent='✓ '+fileName;pf.style.width='100%';progress(100);
@@ -1869,7 +2790,7 @@ async function selectBatchFolder() {
       S.batchFiles = result.files.map(f => f.filePath);
       displayBatchFiles();
     } else {
-      toast('PDF · TXT · DOCX · DOC ھۆججىتى تېپىلمىدى','e');
+      toast('PDF · TXT · DOCX · DOC · MD ھۆججىتى تېپىلمىدى','e');
     }
   } catch(e) {
     toast('ھۆججەتخانىنى ئوچۇغىلى بولمىدى: '+e.message,'e');
@@ -1953,6 +2874,23 @@ async function confirmBatchImport() {
         const r = await window.electron.readDoc(filePath);
         if (!r.success) throw new Error(r.error || 'DOC read failed');
         content = r.content || '';
+      } else if (ext === 'md' || ext === 'markdown') {
+        const r = await window.electron.readMd(filePath);
+        if (!r.success) throw new Error(r.error || 'Markdown read failed');
+        content = markdownToPlainText(r.content || '');
+      } else if (ext === 'html' || ext === 'htm') {
+        // Same clean-extraction pipeline as single-file import, with the same
+        // plain-extractor fallback.
+        const r = await window.electron.readTxt(filePath);
+        if (!r.success) throw new Error(r.error || 'HTML read failed');
+        const art = extractArticleText(r.content, '');
+        if (art && art.text) {
+          content = art.text;
+        } else {
+          const fb = await window.electron.readHtml(filePath);
+          if (!fb.success) throw new Error(fb.error || 'HTML read failed');
+          content = fb.content || '';
+        }
       } else {
         content = '[' + ext.toUpperCase() + ': ' + fileName + ']';
       }
@@ -2284,6 +3222,12 @@ function setupKeyboardShortcuts() {
       if (target && target !== S.mode) setMode(target);
     }
     if (e.key === 'Escape') {
+      // If the reader AI panel is open, Escape closes IT first (not the reader).
+      const raip = document.getElementById('rai-panel');
+      if (raip && raip.classList.contains('on') && document.getElementById('rdr').classList.contains('on')) {
+        closeAiPanel();
+        return;
+      }
       closeReader();
       hideAdd();
       hideEdit();
@@ -2291,6 +3235,8 @@ function setupKeyboardShortcuts() {
       hideAbout();
       hideStats();
       hideBatchImport();
+      hideWebImport();
+      hideSettings();
       hideRename();
       hideExport();
     }
@@ -2432,6 +3378,11 @@ init();
 <link rel="stylesheet" href="quran.css">
 <link rel="stylesheet" href="notes.css">
 <script src="../assets/vendor/purify.min.js"></script>
+<!-- Web/HTML article import: Readability (article extraction) + Turndown (HTML→MD). Vendored, offline. -->
+<script src="../assets/vendor/Readability.js"></script>
+<script src="../assets/vendor/turndown.js"></script>
+<!-- AI: pure renderer helpers + final window.AI composition (no network here) -->
+<script src="ai-client.js"></script>
 <script src="sanitize.js"></script>
 <script src="ngram.js"></script>
 <script src="symspell.js"></script>
