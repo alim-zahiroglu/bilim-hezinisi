@@ -3211,7 +3211,10 @@ async function handleFileResult(result) {
           // Keep a pristine copy of the bytes for a possible OCR pass (pdfjs may
           // detach the buffer it is handed).
           const ocrBytes = arr.slice();
-          const pdf=await pdfjsLib.getDocument({data:arr}).promise;
+          // cMaps + standard fonts let pdf.js resolve CID-keyed Arabic/Uyghur
+          // fonts to Unicode, so getTextContent returns correct shaped text
+          // (not garbage) — the reason text-layer PDFs now import cleanly.
+          const pdf=await pdfjsLib.getDocument({data:arr,cMapUrl:'../assets/pdfjs/cmaps/',cMapPacked:true,standardFontDataUrl:'../assets/pdfjs/standard_fonts/'}).promise;
           let text='';const total=Math.min(pdf.numPages,100);
           for(let i=1;i<=total;i++){const page=await pdf.getPage(i);const tc=await page.getTextContent();text+=tc.items.map(x=>x.str).join(' ')+'\n';pf.style.width=Math.round((i/total)*100)+'%';}
           // Scanned-PDF detection: image-only pages yield almost no extractable
@@ -3324,7 +3327,7 @@ async function startPdfOcr() {
 
   let pdf;
   try {
-    pdf = await pdfjsLib.getDocument({ data: S.ocrPdf.bytes.slice() }).promise;
+    pdf = await pdfjsLib.getDocument({ data: S.ocrPdf.bytes.slice(), cMapUrl: '../assets/pdfjs/cmaps/', cMapPacked: true, standardFontDataUrl: '../assets/pdfjs/standard_fonts/' }).promise;
   } catch (e) {
     toast('PDF ئوقۇغىلى بولمىدى', 'e');
     document.getElementById('ocrButtons').style.display = 'flex';
@@ -3611,7 +3614,7 @@ async function confirmBatchImport() {
           const bin = atob(r.data);
           const arr = new Uint8Array(bin.length);
           for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-          const pdf = await pdfjsLib.getDocument({ data: arr }).promise;
+          const pdf = await pdfjsLib.getDocument({ data: arr, cMapUrl: '../assets/pdfjs/cmaps/', cMapPacked: true, standardFontDataUrl: '../assets/pdfjs/standard_fonts/' }).promise;
           let text = '';
           const totalPages = Math.min(pdf.numPages, 200);
           for (let i = 1; i <= totalPages; i++) {

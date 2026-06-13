@@ -81,4 +81,32 @@ FILES.concat(OCR_FILES).forEach(({ src, dest, hint }) => {
   console.log('[copy-vendor] Copied to', dest, '—', fs.statSync(dest).size, 'bytes');
 });
 
+// --- pdf.js cMaps + standard fonts (Phase 6) ------------------------------
+// pdf.js needs these to resolve CID-keyed Arabic/Uyghur fonts to Unicode so
+// getTextContent() returns correct shaped text. They ship in pdfjs-dist (a
+// devDependency pinned to the bundled pdf.min.js version). Best-effort: if
+// pdfjs-dist isn't installed yet, warn but don't fail postinstall — the app's
+// offline core still works, only CID-font text extraction is affected.
+function copyDirRecursive(srcDir, destDir) {
+  fs.mkdirSync(destDir, { recursive: true });
+  let n = 0;
+  for (const name of fs.readdirSync(srcDir)) {
+    const s = path.join(srcDir, name), d = path.join(destDir, name);
+    if (fs.statSync(s).isDirectory()) n += copyDirRecursive(s, d);
+    else { fs.copyFileSync(s, d); n++; }
+  }
+  return n;
+}
+const PDFJS_DIST = path.join(ROOT, 'node_modules', 'pdfjs-dist');
+const PDFJS_DEST = path.join(ROOT, 'assets', 'pdfjs');
+[['cmaps', 'cmaps'], ['standard_fonts', 'standard_fonts']].forEach(([from, to]) => {
+  const src = path.join(PDFJS_DIST, from);
+  if (!fs.existsSync(src)) {
+    console.warn('[copy-vendor] pdfjs-dist/' + from + ' not found — run `npm install` (pdfjs-dist devDep) so Arabic/Uyghur PDF text extraction works.');
+    return;
+  }
+  const count = copyDirRecursive(src, path.join(PDFJS_DEST, to));
+  console.log('[copy-vendor] Copied', count, 'pdf.js ' + to + ' files to assets/pdfjs/' + to);
+});
+
 if (failed) process.exit(1);

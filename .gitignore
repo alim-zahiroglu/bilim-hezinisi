@@ -35,3 +35,8 @@ assets/ocr/*.wasm
 assets/ocr/*.wasm.js
 assets/ocr/tesseract-core*.js
 assets/ocr/tessdata/*.traineddata
+
+# pdf.js cMaps + standard fonts — reproduced from the pdfjs-dist devDep by
+# `node scripts/copy-vendor.js` (postinstall); large + regenerable.
+assets/pdfjs/cmaps/
+assets/pdfjs/standard_fonts/
