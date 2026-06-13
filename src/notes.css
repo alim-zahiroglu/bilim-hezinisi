@@ -2,6 +2,41 @@
 
 .notes-layout { display: flex; flex: 1; overflow: hidden; height: 100%; }
 
+/* ===== Collapsible side panels (Phase 2) ===== */
+/* The notes list is the GLOBAL #side sidebar; collapse it only while in notes
+   mode (setMode restores #side to its normal width when leaving). The width
+   animation + overflow:hidden gives the Claude-desktop slide; flex-shrink:0
+   on #side / .notes-right-panel is preserved so the editor takes the slack. */
+#side { transition: width .18s ease, padding .18s ease; }
+#side.side-collapsed {
+  width: 0; min-width: 0; padding: 0; border: none; overflow: hidden;
+}
+.notes-right-panel { transition: width .18s ease; }
+.notes-right-panel.collapsed {
+  width: 0; min-width: 0; padding: 0; border: none; overflow: hidden;
+}
+.notes-collapse-btn {
+  flex-shrink: 0; width: 28px; height: 28px;
+  background: var(--bg2); border: 0.5px solid var(--border);
+  color: var(--text2); border-radius: var(--radius2); cursor: pointer;
+  font-size: 14px; line-height: 1; display: flex; align-items: center;
+  justify-content: center; transition: background .12s, color .12s, border-color .12s;
+}
+.notes-collapse-btn:hover { background: var(--bg3); color: var(--text); border-color: var(--border2); }
+.notes-collapse-btn.active { background: var(--am); color: #fff; border-color: var(--am); }
+/* Slim floating edge handle shown only when its panel is collapsed. */
+.notes-edge-handle {
+  position: fixed; top: 50%; transform: translateY(-50%);
+  width: 16px; height: 64px; z-index: 60;
+  background: var(--am); color: #fff;
+  display: none; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 12px; user-select: none;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.22);
+}
+.notes-edge-handle:hover { filter: brightness(1.08); }
+.notes-edge-right { right: 0; border-radius: 6px 0 0 6px; }
+.notes-edge-left  { left: 0;  border-radius: 0 6px 6px 0; }
+
 /* Document list sidebar */
 .notes-sidebar-inner { display: flex; flex-direction: column; height: 100%; }
 .notes-sidebar-header {

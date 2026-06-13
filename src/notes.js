@@ -80,13 +80,80 @@
   window.renderNotesView = async function renderNotesView() {
     const main = document.getElementById('main');
     if (!main) return;
+    // Restore the persisted collapse state for the two side panels before
+    // building the layout (Phase 2 — collapsible panels).
+    await loadCollapseState();
     main.innerHTML = `<div class="notes-layout">
       ${renderNotesMainColumn()}
       ${renderRightPanel()}
-    </div>`;
+    </div>
+    <!-- Floating edge handles to re-open a collapsed panel (Claude-desktop style).
+         RTL: notes list (#side) sits on the physical RIGHT, the قۇرئان/مەنبە
+         panel on the physical LEFT — so pick the edge + arrow by physical side. -->
+    <div class="notes-edge-handle notes-edge-right" id="notes-edge-list"
+      onclick="window.notesToggleList()" title="خاتىرىلەر تىزىملىكىنى ئېچىش (Ctrl+\\)">❮</div>
+    <div class="notes-edge-handle notes-edge-left" id="notes-edge-panel"
+      onclick="window.notesTogglePanel()" title="قۇرئان/مەنبە تاختىسىنى ئېچىش (Ctrl+Shift+\\)">❯</div>`;
+    applyCollapseState();
     if (_s().curDoc) {
       await mountEditor();
     }
+  };
+
+  // ========== COLLAPSIBLE SIDE PANELS (Phase 2) ==========
+  // Two panels collapse/expand with a smooth width animation: the notes list
+  // (the GLOBAL #side sidebar, only while in notes mode) and the .notes-right-
+  // panel (قۇرئان/مەنبە). State persists across restarts via the settings IPC.
+
+  async function loadCollapseState() {
+    const read = async (key) => {
+      try {
+        const r = await window.electron.dbGetSetting(key, '0');
+        const v = (r && typeof r === 'object' && 'value' in r) ? r.value : r;
+        return (v === '1' || v === 1 || v === true);
+      } catch (e) { return false; }
+    };
+    _s().listCollapsed = await read('notes_list_collapsed');
+    _s().panelCollapsed = await read('notes_panel_collapsed');
+  }
+
+  function applyListCollapsed(collapsed) {
+    const side = document.getElementById('side');
+    if (side) side.classList.toggle('side-collapsed', !!collapsed);
+    const handle = document.getElementById('notes-edge-list');
+    if (handle) handle.style.display = collapsed ? 'flex' : 'none';
+    const btn = document.getElementById('notes-collapse-list-btn');
+    if (btn) btn.classList.toggle('active', !!collapsed);
+  }
+
+  function applyPanelCollapsed(collapsed) {
+    const panel = document.querySelector('.notes-right-panel');
+    if (panel) panel.classList.toggle('collapsed', !!collapsed);
+    const handle = document.getElementById('notes-edge-panel');
+    if (handle) handle.style.display = collapsed ? 'flex' : 'none';
+    const btn = document.getElementById('notes-collapse-panel-btn');
+    if (btn) btn.classList.toggle('active', !!collapsed);
+  }
+
+  function applyCollapseState() {
+    applyListCollapsed(_s().listCollapsed);
+    applyPanelCollapsed(_s().panelCollapsed);
+  }
+  // Exposed so setMode() can re-apply the saved state when (re-)entering notes.
+  window.notesApplyCollapseState = applyCollapseState;
+
+  window.notesToggleList = function notesToggleList() {
+    const st = _s();
+    st.listCollapsed = !st.listCollapsed;
+    applyListCollapsed(st.listCollapsed);
+    try { window.electron.dbSetSetting('notes_list_collapsed', st.listCollapsed ? '1' : '0'); } catch (e) {}
+  };
+
+  window.notesTogglePanel = function notesTogglePanel() {
+    const st = _s();
+    st.panelCollapsed = !st.panelCollapsed;
+    applyPanelCollapsed(st.panelCollapsed);
+    try { window.electron.dbSetSetting('notes_panel_collapsed', st.panelCollapsed ? '1' : '0'); } catch (e) {}
   };
 
   function renderNotesMainColumn() {
@@ -103,11 +170,17 @@
     const d = _s().curDoc;
     return `<div class="notes-main">
       <div class="notes-title-bar">
+        <button class="notes-collapse-btn" id="notes-collapse-list-btn" type="button"
+          onclick="window.notesToggleList()"
+          title="خاتىرىلەر تىزىملىكىنى يىغىش/ئېچىش (Ctrl+\\)">◨</button>
         <input type="text" class="notes-title-input" id="notes-title"
           value="${escAttr(d.title || '')}"
           placeholder="خاتىرە نامى..."
           oninput="window.notesOnTitleInput(this.value)">
         <span class="notes-status saved" id="notes-status">ساقلاندى</span>
+        <button class="notes-collapse-btn" id="notes-collapse-panel-btn" type="button"
+          onclick="window.notesTogglePanel()"
+          title="قۇرئان/مەنبە تاختىسىنى يىغىش/ئېچىش (Ctrl+Shift+\\)">◧</button>
       </div>
       ${renderToolbar()}
       <div class="notes-toggle-bar">

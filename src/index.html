@@ -976,6 +976,12 @@ function renderSide() {
 function setMode(mode) {
   if (mode === S.mode) return;
   S.mode = mode;
+  // Leaving notes mode must ALWAYS restore #side to its normal width — the
+  // collapsible-panel state (Phase 2) only applies inside the notebook.
+  if (mode !== 'notes') {
+    const side = document.getElementById('side');
+    if (side) side.classList.remove('side-collapsed');
+  }
   // Hide the library top search bar in non-library modes
   const hd = document.getElementById('hd');
   if (hd) hd.style.display = (mode === 'library') ? 'flex' : 'none';
@@ -3386,6 +3392,18 @@ function setupKeyboardShortcuts() {
       const modeMap = { '1': 'library', '2': 'quran', '3': 'notes' };
       const target = modeMap[e.key];
       if (target && target !== S.mode) setMode(target);
+    }
+    // Notes collapsible panels (notes mode only): Ctrl+\ toggles the notes
+    // list, Ctrl+Shift+\ toggles the قۇرئان/مەنبە panel. e.code is layout-
+    // independent (the char varies with Shift on some keyboards).
+    if ((e.ctrlKey || e.metaKey) && e.code === 'Backslash') {
+      if (S.mode !== 'notes') return;
+      e.preventDefault();
+      if (e.shiftKey) {
+        if (typeof window.notesTogglePanel === 'function') window.notesTogglePanel();
+      } else {
+        if (typeof window.notesToggleList === 'function') window.notesToggleList();
+      }
     }
     if (e.key === 'Escape') {
       // If the reader AI panel is open, Escape closes IT first (not the reader).
