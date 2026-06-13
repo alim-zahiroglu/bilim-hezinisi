@@ -403,6 +403,42 @@ button.notes-ai-item:hover, .notes-ai-has-sub:hover > .notes-ai-item-label {
 .nai-bubble-acts { display: flex; gap: 6px; margin: -2px 0 8px; }
 @media (max-width: 900px) { #nai-panel { display: none !important; } }
 
+/* ===== Find / replace bar + word count (Phase 5.3) ===== */
+.notes-find-bar {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap; flex-shrink: 0;
+  padding: 6px 14px; border-bottom: 0.5px solid var(--border);
+  background: var(--bg); direction: rtl;
+}
+.notes-find-bar input {
+  background: var(--bg2); border: 0.5px solid var(--border2);
+  border-radius: var(--radius2); padding: 5px 8px;
+  font-family: var(--jf); font-size: 12px; color: var(--text);
+  direction: rtl; outline: none; min-width: 120px;
+}
+.notes-find-bar input:focus { border-color: var(--am); }
+.notes-find-bar button {
+  background: var(--bg2); border: 0.5px solid var(--border);
+  color: var(--text2); border-radius: var(--radius2);
+  padding: 4px 9px; cursor: pointer; font-family: var(--jf); font-size: 12px;
+}
+.notes-find-bar button:hover { background: var(--bg3); color: var(--text); }
+.notes-find-count { font-size: 11px; color: var(--text3); font-family: sans-serif; white-space: nowrap; }
+.notes-editor mark.notes-find-hit { background: #FFE08A; color: #000; border-radius: 2px; }
+.notes-editor mark.notes-find-hit.current { background: #F6A609; color: #000; }
+
+.notes-wordcount {
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  padding: 4px 14px; border-top: 0.5px solid var(--border);
+  background: var(--bg); font-size: 11px; color: var(--text3);
+  font-family: sans-serif; direction: rtl;
+}
+.notes-wc-action {
+  background: var(--ab); color: var(--at); border: 0.5px solid var(--am);
+  border-radius: var(--radius2); padding: 3px 10px; cursor: pointer;
+  font-family: var(--jf); font-size: 11px; margin-inline-start: auto;
+}
+.notes-wc-action:hover { background: var(--am); color: #fff; }
+
 /* Spell check — wavy red underline + suggestion popup */
 .spell-error {
   text-decoration: wavy underline #D32F2F;

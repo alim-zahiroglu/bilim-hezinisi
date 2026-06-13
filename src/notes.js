@@ -183,6 +183,8 @@
           placeholder="خاتىرە نامى..."
           oninput="window.notesOnTitleInput(this.value)">
         <span class="notes-status saved" id="notes-status">ساقلاندى</span>
+        <button class="notes-collapse-btn" type="button" onclick="window.notesExportDocx()"
+          title="Word قا چىقىرىش" style="width:auto;padding:0 8px;font-size:12px">📄 Word</button>
         <button class="notes-collapse-btn" id="notes-collapse-panel-btn" type="button"
           onclick="window.notesTogglePanel()"
           title="قۇرئان/مەنبە تاختىسىنى يىغىش/ئېچىش (Ctrl+Shift+\\)">◧</button>
@@ -224,9 +226,25 @@
           </div>
         </div>
       </div>
+      <div class="notes-find-bar" id="notes-find-bar" style="display:none">
+        <input type="text" id="notes-find-input" placeholder="ئىزدەش..."
+          onkeydown="window.notesFindKey(event)" oninput="window.notesFindRun()">
+        <span class="notes-find-count" id="notes-find-count">0 / 0</span>
+        <button type="button" onclick="window.notesFindPrev()" title="ئالدىنقى (Shift+Enter)">▲</button>
+        <button type="button" onclick="window.notesFindNext()" title="كېيىنكى (Enter)">▼</button>
+        <input type="text" id="notes-replace-input" placeholder="ئالماشتۇرۇش..." style="display:none">
+        <button type="button" id="notes-replace-btn" onclick="window.notesReplaceOne()" style="display:none">ئالماشتۇرۇش</button>
+        <button type="button" id="notes-replace-all-btn" onclick="window.notesReplaceAll()" style="display:none">ھەممىنى ئالماشتۇرۇش</button>
+        <button type="button" onclick="window.notesFindClose()" title="تاقاش (Esc)">✕</button>
+      </div>
       <div class="notes-editor-wrap">
         <div class="notes-editor" id="notes-editor"
           contenteditable="true" spellcheck="false"></div>
+      </div>
+      <div class="notes-wordcount" id="notes-wordcount">
+        <span id="notes-wc-text">سۆز: 0 · ھەرپ: 0</span>
+        <button type="button" id="notes-ocr-cleanup-btn" class="notes-wc-action" style="display:none"
+          onclick="window.naiOcrCleanupNote()">✨ OCR نەتىجىسىنى AI بىلەن تۈزىتىش (تور)</button>
       </div>
     </div>`;
   }
@@ -271,6 +289,8 @@
       <div class="notes-toolbar-group">
         <button id="notes-fp-btn" type="button" onmousedown="window.notesFpPress(event)"
           title="فورمات سۈپۈرگىسى (Alt+Ctrl+C / Alt+Ctrl+V)">🖌</button>
+        <button type="button" onclick="window.notesImageOcr()"
+          title="رەسىمدىن تېكىست (OCR، تورسىز)">📷</button>
       </div>
       <div class="notes-toolbar-group">
         <button onclick="window.notesExec('removeFormat')" title="فورماتنى ئۆچۈرۈش">✕</button>
@@ -463,6 +483,7 @@
     // any in-flight notebook AI stream that targeted the old drawer.
     fpDisarm();
     if (typeof window.naiAbort === 'function') window.naiAbort();
+    resetEditorTools();
 
     editorEl = document.getElementById('notes-editor');
     if (!editorEl) return;
@@ -482,7 +503,11 @@
         clearTimeout(_s()._spellTimer);
         _s()._spellTimer = setTimeout(() => window.notesRunSpellCheck(), 800);
       }
+      // Word/char count (debounced)
+      scheduleWordCount();
     });
+    // Initial word count for the loaded document.
+    updateWordCount();
 
     editorEl.addEventListener('keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
@@ -513,6 +538,10 @@
         fpDisarm();
         return;
       }
+      // Find / replace (Phase 5.3).
+      if ((e.ctrlKey || e.metaKey) && k === 'f') { e.preventDefault(); openFindBar(false); return; }
+      if ((e.ctrlKey || e.metaKey) && k === 'h') { e.preventDefault(); openFindBar(true); return; }
+      if (e.key === 'Escape' && isFindOpen()) { e.preventDefault(); window.notesFindClose(); return; }
     });
 
     // One-shot paint: while armed, the next non-collapsed selection the user
@@ -531,6 +560,21 @@
 
     // Sanitize pasted HTML — XSS defense-in-depth
     editorEl.addEventListener('paste', (e) => {
+      // Pasted image with no text → offer offline OCR (Phase 5.1). Plain-text /
+      // HTML paste behavior below is untouched.
+      const cd = e.clipboardData;
+      const hasText = cd && (cd.getData('text/plain') || cd.getData('text/html'));
+      if (cd && !hasText) {
+        const imgItem = Array.from(cd.items || []).find(it => it.type && it.type.indexOf('image/') === 0);
+        if (imgItem) {
+          e.preventDefault();
+          const file = imgItem.getAsFile();
+          if (file && confirm('چاپلانغان رەسىمنى تېكىستكە ئايلاندۇرامسىز؟ (تورسىز OCR)')) {
+            ocrImageFileToEditor(file);
+          }
+          return;
+        }
+      }
       // Only intercept HTML clipboard data; plain text is already safe
       const html = e.clipboardData && e.clipboardData.getData('text/html');
       if (!html) return; // let the browser paste plain text normally
@@ -744,7 +788,7 @@
     const docId = _s().curDoc.id;
 
     // Snapshot editor content. Sanitize before sending to backend.
-    const rawHtml = editorEl.innerHTML;
+    const rawHtml = snapshotHtml();
     const html = (window.SafeHTML && window.SafeHTML.sanitize)
       ? window.SafeHTML.sanitize(rawHtml)
       : rawHtml;
@@ -1292,6 +1336,203 @@
     markDirty();
     if (typeof showToast === 'function') showToast('مەنبە قىستۇرۇلدى', 's');
   };
+
+  // ========== QUALITY EXTRAS (Phase 5) ==========
+
+  // --- 5.3 word/char count -----------------------------------------------------
+  let _wcTimer = null;
+  function scheduleWordCount() { clearTimeout(_wcTimer); _wcTimer = setTimeout(updateWordCount, 300); }
+  function updateWordCount() {
+    const el = document.getElementById('notes-wordcount'); if (!el) return;
+    const txtEl = document.getElementById('notes-wc-text') || el;
+    const text = (editorEl ? (editorEl.innerText || '') : '').trim();
+    const words = text ? (text.match(/\S+/g) || []).length : 0;
+    const chars = text.replace(/\s/g, '').length;
+    txtEl.textContent = 'سۆز: ' + words + ' · ھەرپ: ' + chars;
+  }
+
+  // Clean snapshot for saving: drop transient find-highlight marks so they
+  // never persist into the stored document.
+  function snapshotHtml() {
+    if (!editorEl) return '';
+    if (!editorEl.querySelector('mark.notes-find-hit')) return editorEl.innerHTML;
+    const clone = editorEl.cloneNode(true);
+    clone.querySelectorAll('mark.notes-find-hit').forEach(mk => mk.replaceWith(document.createTextNode(mk.textContent)));
+    return clone.innerHTML;
+  }
+
+  // --- 5.3 find & replace ------------------------------------------------------
+  let findState = { hits: [], idx: -1 };
+  function isFindOpen() { const b = document.getElementById('notes-find-bar'); return !!(b && b.style.display !== 'none'); }
+  function openFindBar(withReplace) {
+    const bar = document.getElementById('notes-find-bar'); if (!bar) return;
+    bar.style.display = 'flex';
+    ['notes-replace-input', 'notes-replace-btn', 'notes-replace-all-btn'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.style.display = withReplace ? '' : 'none';
+    });
+    const inp = document.getElementById('notes-find-input');
+    if (inp) {
+      const sel = window.getSelection();
+      if (sel && !sel.isCollapsed && editorEl && editorEl.contains(sel.anchorNode) && sel.toString().trim()) {
+        inp.value = sel.toString().trim();
+      }
+      inp.focus(); inp.select();
+    }
+    window.notesFindRun();
+  }
+  function clearFindHighlights() {
+    if (!editorEl) return;
+    editorEl.querySelectorAll('mark.notes-find-hit').forEach(m => {
+      const p = m.parentNode; if (!p) return;
+      while (m.firstChild) p.insertBefore(m.firstChild, m);
+      p.removeChild(m);
+    });
+    editorEl.normalize();
+    findState.hits = []; findState.idx = -1;
+  }
+  function updateFindCount() {
+    const c = document.getElementById('notes-find-count');
+    if (c) c.textContent = (findState.hits.length ? (findState.idx + 1) : 0) + ' / ' + findState.hits.length;
+  }
+  function highlightCurrent() {
+    findState.hits.forEach((m, i) => m.classList.toggle('current', i === findState.idx));
+    const cur = findState.hits[findState.idx];
+    if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'center' });
+  }
+  window.notesFindRun = function () {
+    if (!editorEl) return;
+    clearFindHighlights();
+    const inp = document.getElementById('notes-find-input');
+    const q = (inp && inp.value) || '';
+    if (!q) { updateFindCount(); return; }
+    const ql = q.toLowerCase();
+    const walker = document.createTreeWalker(editorEl, NodeFilter.SHOW_TEXT, null);
+    const nodes = []; let n;
+    while ((n = walker.nextNode())) {
+      if (n.nodeValue && n.nodeValue.toLowerCase().indexOf(ql) !== -1) nodes.push(n);
+    }
+    for (const tn of nodes) {
+      const txt = tn.nodeValue, lower = txt.toLowerCase();
+      const parts = []; let idx = 0;
+      while ((idx = lower.indexOf(ql, idx)) !== -1) { parts.push({ s: idx, e: idx + q.length }); idx += q.length; }
+      if (!parts.length) continue;
+      const frag = document.createDocumentFragment(); let cur = 0;
+      for (const p of parts) {
+        if (p.s > cur) frag.appendChild(document.createTextNode(txt.slice(cur, p.s)));
+        const mk = document.createElement('mark'); mk.className = 'notes-find-hit'; mk.textContent = txt.slice(p.s, p.e);
+        frag.appendChild(mk); cur = p.e;
+      }
+      if (cur < txt.length) frag.appendChild(document.createTextNode(txt.slice(cur)));
+      if (tn.parentNode) tn.parentNode.replaceChild(frag, tn);
+    }
+    findState.hits = Array.from(editorEl.querySelectorAll('mark.notes-find-hit'));
+    findState.idx = findState.hits.length ? 0 : -1;
+    highlightCurrent(); updateFindCount();
+  };
+  window.notesFindNext = function () { if (!findState.hits.length) return; findState.idx = (findState.idx + 1) % findState.hits.length; highlightCurrent(); updateFindCount(); };
+  window.notesFindPrev = function () { if (!findState.hits.length) return; findState.idx = (findState.idx - 1 + findState.hits.length) % findState.hits.length; highlightCurrent(); updateFindCount(); };
+  window.notesFindKey = function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); if (e.shiftKey) window.notesFindPrev(); else window.notesFindNext(); }
+    else if (e.key === 'Escape') { e.preventDefault(); window.notesFindClose(); }
+  };
+  window.notesFindClose = function () {
+    clearFindHighlights();
+    const bar = document.getElementById('notes-find-bar'); if (bar) bar.style.display = 'none';
+    if (editorEl) editorEl.focus();
+  };
+  // Replace via one selectAll+insertHTML so it is a SINGLE undo step.
+  function applyReplacement(all) {
+    if (!editorEl || !findState.hits.length) return 0;
+    const repl = (document.getElementById('notes-replace-input') || {}).value || '';
+    let count = 0;
+    if (all) { findState.hits.forEach(m => { m.setAttribute('data-fr', '1'); count++; }); }
+    else if (findState.idx >= 0) { findState.hits[findState.idx].setAttribute('data-fr', '1'); count = 1; }
+    if (!count) return 0;
+    const clone = editorEl.cloneNode(true);
+    clone.querySelectorAll('mark.notes-find-hit').forEach(mk => {
+      const txt = mk.getAttribute('data-fr') === '1' ? repl : mk.textContent;
+      mk.replaceWith(document.createTextNode(txt));
+    });
+    editorEl.focus();
+    document.execCommand('selectAll', false);
+    document.execCommand('insertHTML', false, clone.innerHTML);
+    markDirty();
+    findState.hits = []; findState.idx = -1;
+    window.notesFindRun();
+    return count;
+  }
+  window.notesReplaceOne = function () { const n = applyReplacement(false); if (n && window.toast) window.toast(n + ' ئورۇن ئالماشتۇرۇلدى', 'i'); };
+  window.notesReplaceAll = function () { const n = applyReplacement(true); if (window.toast) window.toast((n || 0) + ' ئورۇن ئالماشتۇرۇلدى', n ? 's' : 'i'); };
+
+  // --- 5.3 DOCX export ---------------------------------------------------------
+  window.notesExportDocx = async function () {
+    if (!_s().curDoc || !editorEl) { if (window.toast) window.toast('خاتىرە يوق', 'e'); return; }
+    const title = ((_s().curDoc.title || '').trim()) || 'خاتىرە';
+    const text = editorEl.innerText || '';
+    if (!text.trim()) { if (window.toast) window.toast('خاتىرە قۇرۇق', 'e'); return; }
+    try {
+      const r = await window.electron.exportAsDocx(title, '', text);
+      if (r && r.success) { if (window.toast) window.toast('Word ھۆججىتى ساقلاندى', 's'); }
+      else if (r && r.error) { if (window.toast) window.toast('چىقىرىش خاتالىقى: ' + r.error, 'e'); }
+    } catch (e) { if (window.toast) window.toast('چىقىرىش مەغلۇپ بولدى', 'e'); }
+  };
+
+  // --- 5.1 image → text (offline OCR) ------------------------------------------
+  function insertPlainParagraphs(text) {
+    if (!editorEl) return;
+    editorEl.focus();
+    const sel = window.getSelection();
+    if (!sel.rangeCount || !editorEl.contains(sel.anchorNode)) placeCaretAtEnd(editorEl);
+    // Insert as plain paragraphs (newlines → line breaks within the caret block).
+    document.execCommand('insertText', false, String(text || ''));
+  }
+  let _ocrFileInput = null;
+  window.notesImageOcr = function () {
+    if (!editorEl) return;
+    if (!_ocrFileInput) {
+      _ocrFileInput = document.createElement('input');
+      _ocrFileInput.type = 'file';
+      _ocrFileInput.accept = 'image/png,image/jpeg,image/bmp,image/tiff,.png,.jpg,.jpeg,.bmp,.tif,.tiff';
+      _ocrFileInput.style.display = 'none';
+      document.body.appendChild(_ocrFileInput);
+      _ocrFileInput.addEventListener('change', () => {
+        const f = _ocrFileInput.files && _ocrFileInput.files[0];
+        _ocrFileInput.value = '';
+        if (f) ocrImageFileToEditor(f);
+      });
+    }
+    _ocrFileInput.click();
+  };
+  async function ocrImageFileToEditor(file) {
+    if (!editorEl || !file) return;
+    const dataUrl = await new Promise((res) => {
+      const fr = new FileReader();
+      fr.onload = () => res(fr.result);
+      fr.onerror = () => res(null);
+      fr.readAsDataURL(file);
+    });
+    if (!dataUrl) { if (window.toast) window.toast('رەسىم ئوقۇغىلى بولمىدى', 'e'); return; }
+    if (window.toast) window.toast('OCR ئىجرا بولۇۋاتىدۇ...', 'i');
+    let r;
+    try { r = await window.electron.ocrRecognize([dataUrl], 'ukij+uig'); }
+    catch (e) { if (window.toast) window.toast('OCR مەغلۇپ بولدى', 'e'); return; }
+    if (!r || !r.success) { if (window.toast) window.toast('OCR خاتالىقى: ' + ((r && r.error) || ''), 'e'); return; }
+    const text = (r.pages || []).join('\n\n').trim();
+    if (!text) { if (window.toast) window.toast('تېكىست چىقمىدى', 'e'); return; }
+    insertPlainParagraphs(text);
+    markDirty();
+    if (window.toast) window.toast('OCR تامام', 's');
+    // 5.2 — offer optional AI cleanup of the OCR output (online), if available.
+    if (typeof window.naiOfferOcrCleanup === 'function') window.naiOfferOcrCleanup();
+  }
+
+  // Reset transient editor tools when (re-)mounting a document.
+  function resetEditorTools() {
+    findState = { hits: [], idx: -1 };
+    const bar = document.getElementById('notes-find-bar'); if (bar) bar.style.display = 'none';
+    const btn = document.getElementById('notes-ocr-cleanup-btn'); if (btn) btn.style.display = 'none';
+  }
+  window.notesResetEditorTools = resetEditorTools;
 
   // Expose internals for Prompt 6
   window.NotesInternal = {

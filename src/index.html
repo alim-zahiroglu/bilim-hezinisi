@@ -424,8 +424,15 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
             <button type="button" class="hbtn" style="margin-top:8px" onclick="cancelPdfOcr()">توختىتىش</button>
           </div>
         </div>
+        <!-- AI cleanup of OCR output (online, optional, never automatic). -->
+        <div id="ocrCleanupBox" style="display:none;margin-top:8px">
+          <button type="button" class="hbtn" id="ocrCleanupBtn" onclick="window.naiOcrCleanupStaged()">✨ OCR نەتىجىسىنى AI بىلەن تۈزىتىش (تور)</button>
+          <span id="ocrCleanupStatus" style="font-size:11px;color:var(--text2);margin-inline-start:8px"></span>
+        </div>
       </div>
-      <div class="fl"><label>كىتاب نامى *</label><input id="btitle" class="inp" placeholder="كىتاب نامىنى كىرگۈزۈڭ"></div>
+      <div class="fl"><label>كىتاب نامى *</label><input id="btitle" class="inp" placeholder="كىتاب نامىنى كىرگۈزۈڭ">
+        <button type="button" id="aiMetaBtn" class="hbtn" style="display:none;margin-top:6px;font-size:11px" onclick="window.aiFillMetadata()">✨ AI بىلەن ئۇچۇرلارنى تولدۇرۇش</button>
+      </div>
       <div class="fl"><label>ئاپتور</label><input id="bauth" class="inp" placeholder="ئاپتور ئىسمى"></div>
       <div class="fl"><label>تۈر</label><select id="bcat" class="inp" style="cursor:pointer"></select></div>
       <div class="fl"><label>قىسقىچە چۈشەندۈرۈش</label><textarea id="bdesc" rows="3" class="inp" style="resize:vertical" placeholder="كىتاب ھەققىدە قىسقىچە..."></textarea></div>
@@ -2898,6 +2905,142 @@ document.addEventListener('click', (e) => {
   if (f && f.classList.contains('on') && wrap && !wrap.contains(e.target)) f.classList.remove('on');
 });
 
+// ===== Phase 5 — AI OCR cleanup (5.2) + metadata autofill (5.4) =====
+
+// Chunk text on paragraph boundaries so each chunk stays ≤ maxLen chars.
+function naiChunkParagraphs(text, maxLen) {
+  maxLen = maxLen || 8000;
+  const paras = String(text || '').split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+  const chunks = []; let cur = [], len = 0;
+  for (const p of paras) {
+    const add = p.length + 8;
+    if (cur.length && len + add > maxLen) { chunks.push(cur); cur = []; len = 0; }
+    cur.push(p); len += add;
+    if (len > maxLen) { chunks.push(cur); cur = []; len = 0; }
+  }
+  if (cur.length) chunks.push(cur);
+  return chunks;
+}
+// Repair OCR text in ⟦N⟧-segmented chunks via the non-stream ai.ask path.
+// Returns the stitched corrected text, or null on abort/error.
+let _naiOcrAbort = false;
+async function naiOcrCleanupCore(text, opts) {
+  opts = opts || {};
+  const chunks = naiChunkParagraphs(text, 8000);
+  const total = chunks.length;
+  if (!total) return null;
+  const out = [];
+  for (let i = 0; i < total; i++) {
+    if (opts.shouldAbort && opts.shouldAbort()) return null;
+    if (opts.onProgress) opts.onProgress(i + 1, total);
+    const paras = chunks[i];
+    const segmented = paras.map((p, j) => '⟦' + (j + 1) + '⟧ ' + p).join('\n');
+    let res;
+    try { res = await window.AI.ask({ type: 'ocr_cleanup', context: segmented }); }
+    catch (e) { res = { ok: false, error: (e && e.message) || '' }; }
+    if (!res || !res.ok) { if (opts.onError) opts.onError(res); return null; }
+    const map = naiParseSegments(res.text);
+    let ok = true;
+    for (let j = 1; j <= paras.length; j++) if (typeof map[j] !== 'string') { ok = false; break; }
+    if (ok) { for (let j = 1; j <= paras.length; j++) out.push(map[j]); }
+    else { out.push(res.text.replace(/⟦\d+⟧/g, '').trim()); }   // fallback: strip markers
+  }
+  return out.join('\n\n');
+}
+
+// Notebook context: show/hide the "clean OCR with AI" button under the editor.
+window.naiOfferOcrCleanup = function () {
+  naiAvailable().then(ok => { const b = document.getElementById('notes-ocr-cleanup-btn'); if (b) b.style.display = ok ? '' : 'none'; });
+};
+// Notebook context: clean the note's blocks, preview, then apply (reuses the
+// proofread block-apply path).
+window.naiOcrCleanupNote = function () {
+  naiGate(async () => {
+    const ed = naiEditor(); if (!ed) return;
+    const blocks = naiCollectBlocks(ed);
+    if (!blocks.length) { toast('تۈزىتىدىغان تېكىست يوق', 'e'); return; }
+    NAI.proofreadBlocks = blocks;
+    _naiOcrAbort = false;
+    naiOpenPanel('OCR تۈزىتىش'); naiActions(); naiExtra(null); naiChatbar(false); naiResult('');
+    naiBusy(() => { _naiOcrAbort = true; naiStatus('توختىتىلدى'); });
+    const text = blocks.map(b => (b.textContent || '').trim()).join('\n\n');
+    const cleaned = await naiOcrCleanupCore(text, {
+      onProgress: (x, y) => naiStatus('AI تۈزىتىۋاتىدۇ: بۆلەك ' + x + ' / ' + y),
+      shouldAbort: () => _naiOcrAbort,
+      onError: (res) => naiRenderError(res || {})
+    });
+    if (_naiOcrAbort) { naiStatus('توختىتىلدى'); return; }
+    if (cleaned == null) return;
+    const parts = cleaned.split(/\n{2,}/);
+    if (parts.length !== blocks.length) {
+      naiResult('<p style="color:var(--text2);font-size:12px">جاۋاب فورماتى خاتا — قايتا سىناڭ</p>');
+      const a = naiActions(); if (a) { a.style.display = 'flex'; a.appendChild(naiBtn('قايتا سىناش', () => window.naiOcrCleanupNote())); }
+      return;
+    }
+    NAI.proofreadMap = {}; parts.forEach((p, i) => { NAI.proofreadMap[i + 1] = p; });
+    naiStatus('');
+    naiResult('<div style="font-size:11px;color:var(--text3);margin-bottom:6px">تۈزىتىلگەن نۇسخا (كۆرۈنۈش):</div>' + parts.map(p => '<p>' + sanitize(p) + '</p>').join(''));
+    const a = naiActions(); if (a) { a.style.display = 'flex'; a.appendChild(naiBtn('قوللىنىش', naiProofreadApply)); a.appendChild(naiBtn('ۋاز كېچىش', naiClose)); }
+    const b = document.getElementById('notes-ocr-cleanup-btn'); if (b) b.style.display = 'none';
+  });
+};
+// PDF-import context: clean the staged S.tempContent, confirm preview, apply.
+window.naiOcrCleanupStaged = async function () {
+  if (!S.tempContent || !S.tempContent.trim()) { toast('تۈزىتىدىغان تېكىست يوق', 'e'); return; }
+  if (!(await naiAvailable())) { toast('ئالدى بىلەن تەڭشەكلەردىن Gemini API ئاچقۇچىنى تەڭشەڭ', 'e'); showSettings(); return; }
+  const btn = document.getElementById('ocrCleanupBtn'); const status = document.getElementById('ocrCleanupStatus');
+  _naiOcrAbort = false; if (btn) btn.disabled = true;
+  const cleaned = await naiOcrCleanupCore(S.tempContent, {
+    onProgress: (x, y) => { if (status) status.textContent = 'AI تۈزىتىۋاتىدۇ: بۆلەك ' + x + ' / ' + y; },
+    shouldAbort: () => _naiOcrAbort,
+    onError: (res) => { if (status) status.textContent = 'خاتالىق: ' + ((res && res.error) || ''); }
+  });
+  if (btn) btn.disabled = false;
+  if (cleaned == null) return;
+  if (status) status.textContent = '';
+  if (confirm('AI تۈزىتىش تامام. نەتىجىنى قوللىنامسىز؟\n\n' + cleaned.slice(0, 200) + (cleaned.length > 200 ? '…' : ''))) {
+    S.tempContent = cleaned;
+    const fi = document.getElementById('finfo'); if (fi) fi.textContent = '✓ PDF (OCR + AI تۈزىتىلدى)';
+    toast('AI تۈزىتىش قوللىنىلدى', 's');
+  }
+};
+
+// 5.4 — AI metadata autofill in the add-book dialog (button-triggered).
+function naiExtractJson(s) { const m = String(s || '').match(/\{[\s\S]*\}/); return m ? m[0] : String(s || ''); }
+function maybeShowMetaBtn() {
+  naiAvailable().then(ok => {
+    const mb = document.getElementById('aiMetaBtn');
+    if (mb) mb.style.display = (ok && S.tempContent && S.tempContent.trim()) ? 'inline-block' : 'none';
+    const box = document.getElementById('ocrCleanupBox');
+    if (box && box.style.display !== 'none') { /* leave as set by OCR flow */ }
+  });
+}
+window.aiFillMetadata = async function () {
+  if (!(await naiAvailable())) { toast('ئالدى بىلەن تەڭشەكلەردىن Gemini API ئاچقۇچىنى تەڭشەڭ', 'e'); showSettings(); return; }
+  const content = (S.tempContent || '').slice(0, 4000);
+  if (!content.trim()) { toast('ئالدى بىلەن ھۆججەت يۈكلەڭ', 'e'); return; }
+  const cats = Array.from(document.getElementById('bcat').options).map(o => o.value);
+  const btn = document.getElementById('aiMetaBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '✨ تولدۇرۇلۇۋاتىدۇ...'; }
+  let res;
+  try { res = await window.AI.ask({ type: 'metadata', context: content, categories: cats }); }
+  catch (e) { res = { ok: false }; }
+  if (btn) { btn.disabled = false; btn.textContent = '✨ AI بىلەن ئۇچۇرلارنى تولدۇرۇش'; }
+  if (!res || !res.ok) { toast('AI جاۋابىنى ئوقۇغىلى بولمىدى', 'e'); return; }
+  let data = null;
+  try { data = JSON.parse(naiExtractJson(res.text)); } catch (e) { data = null; }
+  if (!data || typeof data !== 'object') { toast('AI جاۋابىنى ئوقۇغىلى بولمىدى', 'e'); return; }
+  const tEl = document.getElementById('btitle'), aEl = document.getElementById('bauth'),
+        dEl = document.getElementById('bdesc'), cEl = document.getElementById('bcat');
+  // Fill ONLY fields the user left empty.
+  if (tEl && !tEl.value.trim() && data.title) tEl.value = String(data.title).trim();
+  if (aEl && !aEl.value.trim() && data.author) aEl.value = String(data.author).trim();
+  if (dEl && !dEl.value.trim() && data.description) dEl.value = String(data.description).trim();
+  // Preselect category ONLY on an exact match with an existing option.
+  if (cEl && data.category && cats.indexOf(String(data.category)) !== -1) cEl.value = String(data.category);
+  toast('تولدۇرۇلدى — تەكشۈرۈپ بېقىڭ', 's');
+};
+
 // --- example chips / answer actions ------------------------------------------
 
 function raiRenderChips() {
@@ -3084,6 +3227,8 @@ async function handleFileResult(result) {
     S.tempContent='['+ext.toUpperCase()+': '+fileName+']';
     fi.textContent='✓ '+fileName;pf.style.width='100%';progress(100);
   }
+  // Offer AI metadata autofill once content is staged (Phase 5.4).
+  if (typeof maybeShowMetaBtn === 'function') maybeShowMetaBtn();
 }
 
 // ===== Offline scanned-PDF OCR (Phase 1) =====
@@ -3111,6 +3256,7 @@ function hideOcrOffer() {
 function dismissOcrOffer() {
   if (S.ocrPdf) S.tempContent = S.ocrPdf.fallbackText || S.tempContent || '';
   hideOcrOffer();
+  if (typeof maybeShowMetaBtn === 'function') maybeShowMetaBtn();
   progress(100);
 }
 
@@ -3201,6 +3347,9 @@ async function startPdfOcr() {
     document.getElementById('finfo').textContent =
       '✓ PDF (OCR): ' + S.ocrPdf.fileName + ' (' + allText.length + ' بەت)';
     toast(_ocrCancel ? 'OCR توختىتىلدى — قىسمەن تېكىست ساقلاندى' : 'OCR تامام بولدى', 's');
+    // Offer optional AI cleanup of the OCR output + metadata autofill (Phase 5).
+    naiAvailable().then(ok => { const box = document.getElementById('ocrCleanupBox'); if (box) box.style.display = ok ? 'block' : 'none'; });
+    if (typeof maybeShowMetaBtn === 'function') maybeShowMetaBtn();
   } else if (!_ocrCancel) {
     toast('OCR دىن تېكىست چىقمىدى', 'e');
   }
@@ -3332,6 +3481,8 @@ function showAdd(){
   document.getElementById('finfo').style.display='none';document.getElementById('pb').style.display='none';document.getElementById('pf').style.width='0';
   S.tempFile=null;S.tempExt='';S.tempContent='';S.ocrPdf=null;
   hideOcrOffer();
+  const _cb=document.getElementById('ocrCleanupBox'); if(_cb) _cb.style.display='none';
+  const _mb=document.getElementById('aiMetaBtn'); if(_mb) _mb.style.display='none';
   document.getElementById('addov').classList.add('on');
 }
 function hideAdd(){document.getElementById('addov').classList.remove('on');}
