@@ -25,3 +25,13 @@ desktop.ini
 
 # Mobile-app source copied in only as a reference for the AI port (not shipped)
 _mobile-ai-reference/
+
+# Offline OCR — large, reproducible binaries are NOT committed:
+#  - engine vendor files reproduced by `node scripts/copy-vendor.js` (postinstall)
+#  - trained models fetched by `npm run fetch-ocr-models`
+# (electron-builder still bundles them from disk at package time.)
+assets/ocr/worker.min.js
+assets/ocr/*.wasm
+assets/ocr/*.wasm.js
+assets/ocr/tesseract-core*.js
+assets/ocr/tessdata/*.traineddata

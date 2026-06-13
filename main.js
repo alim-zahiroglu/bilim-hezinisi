@@ -5,6 +5,7 @@ const os = require('os');
 const crypto = require('crypto');
 const database = require('./database');
 const ai = require('./ai');
+const { cleanOcrPage } = require('./ocr-postprocess');
 const { seedQuran } = require('./scripts/seed-quran');
 const windowStateKeeper = require('electron-window-state');
 
@@ -630,23 +631,86 @@ ipcMain.handle('get-content-size', () => {
 
 // ========== FILE OPERATIONS ==========
 
-ipcMain.handle('ocr-image', async (event, base64data) => {
-  try {
-    const Tesseract = require('tesseract.js');
-    const buffer = Buffer.from(base64data, 'base64');
-    const worker = await Tesseract.createWorker();
-    await worker.load();
-    await worker.loadLanguage('ara+eng');
-    await worker.initialize('ara+eng');
-    worker.on('progress', (progress) => {
-      event.sender.send('ocr-progress', { status: progress.status, progress: progress.progress });
-    });
-    const result = await worker.recognize(buffer);
-    await worker.terminate();
-    return { success: true, text: result.data.text, progress: 1.0 };
-  } catch(e) {
-    return { success: false, error: e.message };
+// ===== OFFLINE OCR (UyghurOCR 2.0 models + bundled tesseract.js) =====
+// All OCR runs HERE in the main process (Node), so the renderer never touches
+// the network or the filesystem for it — it only ships base64 PNGs in and gets
+// text back. tesseract.js v5 in Node spawns a worker_threads worker from a real
+// file path and loads the WASM core via require('tesseract.js-core/...'); when
+// packaged, both modules (and assets/ocr) are asarUnpack'd so those real paths
+// resolve. Engine: LSTM-only (OEM 1), PSM Auto, models default 'ukij+uig'.
+
+// Rewrite an app.asar path to its app.asar.unpacked sibling (no-op in dev).
+function unpackedPath(p) {
+  return String(p).replace(/app\.asar([\\/])/, 'app.asar.unpacked$1');
+}
+// tessdata directory holding the *.traineddata models (see fetch-ocr-models).
+function ocrTessdataDir() {
+  return unpackedPath(path.join(__dirname, 'assets', 'ocr', 'tessdata'));
+}
+// The Node worker script worker_threads must load from a real file.
+function ocrWorkerPath() {
+  return unpackedPath(require.resolve('tesseract.js/src/worker-script/node/index.js'));
+}
+
+// Cancellation is cooperative: ocr-cancel sets this flag; the per-page loop
+// checks it between pages and stops, keeping whatever pages already finished.
+let ocrCancelRequested = false;
+
+ipcMain.handle('ocr-recognize', async (event, opts) => {
+  opts = opts || {};
+  const images = Array.isArray(opts.images) ? opts.images : [];
+  let langs = (typeof opts.langs === 'string' && opts.langs.trim()) ? opts.langs.trim() : 'ukij+uig';
+  if (!images.length) return { success: false, error: 'رەسىم تېپىلمىدى' };
+
+  // Verify at least the first requested model exists, else fail clearly
+  // (offline-friendly: tells the user to fetch the models, never a stack trace).
+  const firstLang = langs.split('+')[0];
+  const tessdata = ocrTessdataDir();
+  if (!fs.existsSync(path.join(tessdata, firstLang + '.traineddata'))) {
+    return { success: false, error: 'OCR مودېلى تېپىلمىدى. تەرەققىياتچى: «npm run fetch-ocr-models» نى ئىجرا قىلىڭ.' };
   }
+
+  ocrCancelRequested = false;
+  let worker = null;
+  const pages = [];
+  try {
+    const { createWorker } = require('tesseract.js');
+    // LSTM-only (OEM 1). Local langPath + cacheMethod:'none' + gzip:false ⇒
+    // models are read straight from disk, never fetched or cached over network.
+    worker = await createWorker(langs, 1, {
+      workerPath: ocrWorkerPath(),
+      langPath: tessdata,
+      cacheMethod: 'none',
+      gzip: false,
+      logger: () => {}
+    });
+    // PSM 3 = fully automatic page segmentation (full-page documents).
+    await worker.setParameters({ tessedit_pageseg_mode: '3' });
+
+    const total = images.length;
+    for (let i = 0; i < total; i++) {
+      if (ocrCancelRequested) break;
+      const raw = String(images[i] || '').replace(/^data:image\/[a-zA-Z]+;base64,/, '');
+      const buf = Buffer.from(raw, 'base64');
+      const { data } = await worker.recognize(buf);
+      pages.push(cleanOcrPage((data && data.text) || ''));
+      try {
+        if (!event.sender.isDestroyed()) {
+          event.sender.send('ocr-progress', { page: i + 1, total, progress: (i + 1) / total });
+        }
+      } catch (_) {}
+    }
+    return { success: true, pages, cancelled: ocrCancelRequested };
+  } catch (e) {
+    return { success: false, error: (e && e.message) || String(e) };
+  } finally {
+    if (worker) { try { await worker.terminate(); } catch (_) {} }
+  }
+});
+
+ipcMain.handle('ocr-cancel', () => {
+  ocrCancelRequested = true;
+  return { success: true };
 });
 
 ipcMain.handle('open-file', async () => {

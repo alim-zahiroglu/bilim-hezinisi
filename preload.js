@@ -52,8 +52,15 @@ contextBridge.exposeInMainWorld('electron', {
   exportAsPdf: (title, author, content) => ipcRenderer.invoke('export-as-pdf', title, author, content),
   openFolder: () => ipcRenderer.invoke('open-folder'),
   readFolder: (folderPath) => ipcRenderer.invoke('read-folder', folderPath),
-  ocrImage: (base64data) => ipcRenderer.invoke('ocr-image', base64data),
-  onOcrProgress: (callback) => ipcRenderer.on('ocr-progress', (event, data) => callback(data)),
+  // Offline OCR (main process runs tesseract.js; renderer ships base64 PNGs).
+  ocrRecognize: (images, langs) => ipcRenderer.invoke('ocr-recognize', { images, langs }),
+  ocrCancel: () => ipcRenderer.invoke('ocr-cancel'),
+  onOcrProgress: (callback) => {
+    const handler = (event, data) => callback(data);
+    ipcRenderer.on('ocr-progress', handler);
+    // Return an unsubscribe so callers can detach between OCR sessions.
+    return () => ipcRenderer.removeListener('ocr-progress', handler);
+  },
   getVersion: () => ipcRenderer.invoke('get-version'),
   openDataFolder: () => ipcRenderer.invoke('open-data-folder'),
   getContentSize: () => ipcRenderer.invoke('get-content-size'),

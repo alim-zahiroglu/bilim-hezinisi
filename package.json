@@ -7,6 +7,7 @@
     "setup": "node setup-pdfjs.js",
     "postinstall": "electron-rebuild -f -w better-sqlite3 && node scripts/copy-dompurify.js && node scripts/copy-vendor.js",
     "fetch-quran": "node scripts/fetch-quran-data.js",
+    "fetch-ocr-models": "node scripts/fetch-ocr-models.js",
     "build-spelldict": "node scripts/build-spelldict.js",
     "start": "electron .",
     "dev": "electron . --dev",
@@ -70,6 +71,7 @@
       "main.js",
       "preload.js",
       "database.js",
+      "ocr-postprocess.js",
       "src/**/*",
       "assets/ukijekran.ttf",
       "assets/trad-arabic.ttf",
@@ -89,12 +91,16 @@
       "assets/spellcheck/uyghur_words.txt",
       "assets/spellcheck/uyghur_corrections.json",
       "assets/vendor/**/*",
+      "assets/ocr/**/*",
       "scripts/**/*",
       "!scripts/build-spelldict.js",
       "!assets/spellcheck/raw/**/*"
     ],
     "asarUnpack": [
-      "node_modules/better-sqlite3/**/*"
+      "node_modules/better-sqlite3/**/*",
+      "node_modules/tesseract.js/**/*",
+      "node_modules/tesseract.js-core/**/*",
+      "assets/ocr/**/*"
     ],
     "nodeGypRebuild": false
   },

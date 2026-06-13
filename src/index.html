@@ -405,6 +405,25 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
         </div>
         <div class="finfo" id="finfo"></div>
         <div class="pb" id="pb"><div class="pf" id="pf"></div></div>
+        <!-- Scanned-PDF OCR offer (Phase 1, offline). Hidden until a scanned PDF is detected. -->
+        <div id="ocrOffer" style="display:none;margin-top:8px;padding:10px;border:0.5px solid var(--border2);border-radius:var(--radius2);background:var(--bg2);direction:rtl">
+          <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:8px">بۇ PDF سىكاننېرلانغان رەسىم شەكلىدە ئىكەن. تورسىز OCR بىلەن تېكىستكە ئايلاندۇرامسىز؟</div>
+          <div id="ocrLangs" style="display:flex;flex-wrap:wrap;gap:10px 16px;margin-bottom:10px;font-size:12px;color:var(--text2)">
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="ocrLangUkij" checked>ئۇيغۇرچە (UKIJ)</label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="ocrLangUig" checked>ئۇيغۇرچە (يەنە بىر مودېل)</label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="ocrLangEng">ئىنگلىزچە</label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="ocrLangTur">تۈركچە</label>
+          </div>
+          <div id="ocrButtons" style="display:flex;gap:8px">
+            <button type="button" class="hbtn p" onclick="startPdfOcr()">OCR باشلاش</button>
+            <button type="button" class="hbtn" onclick="dismissOcrOffer()">ياق، شۇنداق قوشۇلسۇن</button>
+          </div>
+          <div id="ocrProgress" style="display:none;margin-top:8px">
+            <div id="ocrProgressText" style="font-size:12px;color:var(--text2);margin-bottom:6px">OCR: بەت 0 / 0</div>
+            <div class="pb" style="display:block"><div class="pf" id="ocrProgressBar" style="width:0"></div></div>
+            <button type="button" class="hbtn" style="margin-top:8px" onclick="cancelPdfOcr()">توختىتىش</button>
+          </div>
+        </div>
       </div>
       <div class="fl"><label>كىتاب نامى *</label><input id="btitle" class="inp" placeholder="كىتاب نامىنى كىرگۈزۈڭ"></div>
       <div class="fl"><label>ئاپتور</label><input id="bauth" class="inp" placeholder="ئاپتور ئىسمى"></div>
@@ -762,7 +781,7 @@ const ICONS = {
 const S = {
   books:[], cats:[], cat:'all', sort:'d', view:'g',
   srch:false, res:[], nid:1, curB:null, fs:17,
-  tempFile:null, tempExt:'', tempContent:'', matchIdx:0, matches:[],
+  tempFile:null, tempExt:'', tempContent:'', matchIdx:0, matches:[], ocrPdf:null,
   darkMode:null, theme:'light', recent:[], readPos:{}, page:1, pageSize:30,
   searchDebounceTimer:null, editingBookId:null, batchFiles:[],
   bookmarks:{}, bookNotes:{}, searchIndex:{}, readerContent:'',
@@ -2606,10 +2625,24 @@ async function handleFileResult(result) {
         if(window.pdfjsLib){
           pdfjsLib.GlobalWorkerOptions.workerSrc='../assets/pdfjs/pdf.worker.min.js';
           const bin=atob(r.data);const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+          // Keep a pristine copy of the bytes for a possible OCR pass (pdfjs may
+          // detach the buffer it is handed).
+          const ocrBytes = arr.slice();
           const pdf=await pdfjsLib.getDocument({data:arr}).promise;
           let text='';const total=Math.min(pdf.numPages,100);
           for(let i=1;i<=total;i++){const page=await pdf.getPage(i);const tc=await page.getTextContent();text+=tc.items.map(x=>x.str).join(' ')+'\n';pf.style.width=Math.round((i/total)*100)+'%';}
-          S.tempContent=text;fi.textContent='✓ PDF: '+fileName+' ('+pdf.numPages+' بەت)';progress(100);toast('PDF مۇۋەپپەقىيەتلىك ئوقۇلدى','s');
+          // Scanned-PDF detection: image-only pages yield almost no extractable
+          // text. < 50 chars/page ⇒ treat as scanned and offer offline OCR.
+          const avgCharsPerPage = total > 0 ? (text.replace(/\s/g,'').length / total) : 0;
+          if (avgCharsPerPage < 50) {
+            S.ocrPdf = { bytes: ocrBytes, fileName: fileName, numPages: pdf.numPages, fallbackText: text };
+            S.tempContent = text;   // keep the (near-empty) extraction aside
+            fi.textContent = '⚠ PDF (سىكان): ' + fileName + ' (' + pdf.numPages + ' بەت)';
+            pf.style.width = '100%';
+            showOcrOffer();
+          } else {
+            S.tempContent=text;fi.textContent='✓ PDF: '+fileName+' ('+pdf.numPages+' بەت)';progress(100);toast('PDF مۇۋەپپەقىيەتلىك ئوقۇلدى','s');
+          }
         }
       } catch(e){S.tempContent='[PDF: '+fileName+']';fi.textContent='✓ '+fileName;pf.style.width='100%';}
     }
@@ -2644,6 +2677,128 @@ async function handleFileResult(result) {
     S.tempContent='['+ext.toUpperCase()+': '+fileName+']';
     fi.textContent='✓ '+fileName;pf.style.width='100%';progress(100);
   }
+}
+
+// ===== Offline scanned-PDF OCR (Phase 1) =====
+// The renderer renders each PDF page to a canvas (≈300 DPI), ships the PNGs to
+// the main process in small batches, and the main process runs tesseract.js
+// with the UyghurOCR models. Nothing here touches the network.
+
+let _ocrCancel = false;
+let _ocrUnsub = null;
+
+function showOcrOffer() {
+  const o = document.getElementById('ocrOffer');
+  if (!o) return;
+  document.getElementById('ocrButtons').style.display = 'flex';
+  document.getElementById('ocrProgress').style.display = 'none';
+  o.style.display = 'block';
+}
+
+function hideOcrOffer() {
+  const o = document.getElementById('ocrOffer');
+  if (o) o.style.display = 'none';
+}
+
+// "ياق، شۇنداق قوشۇلسۇن" — keep the plain extraction (possibly empty) as-is.
+function dismissOcrOffer() {
+  if (S.ocrPdf) S.tempContent = S.ocrPdf.fallbackText || S.tempContent || '';
+  hideOcrOffer();
+  progress(100);
+}
+
+function cancelPdfOcr() {
+  _ocrCancel = true;
+  try { window.electron.ocrCancel(); } catch (_) {}
+  const t = document.getElementById('ocrProgressText');
+  if (t) t.textContent = t.textContent + ' — توختىتىلىۋاتىدۇ...';
+}
+
+async function startPdfOcr() {
+  if (!S.ocrPdf || !window.pdfjsLib) { toast('PDF تېپىلمىدى', 'e'); return; }
+
+  // Build the language string from the checkboxes (order = priority).
+  const langs = [];
+  if (document.getElementById('ocrLangUkij').checked) langs.push('ukij');
+  if (document.getElementById('ocrLangUig').checked)  langs.push('uig');
+  if (document.getElementById('ocrLangEng').checked)  langs.push('eng');
+  if (document.getElementById('ocrLangTur').checked)  langs.push('tur');
+  if (!langs.length) { toast('كەم دېگەندە بىر تىل تاللاڭ', 'e'); return; }
+  const langStr = langs.join('+');
+
+  _ocrCancel = false;
+  document.getElementById('ocrButtons').style.display = 'none';
+  document.getElementById('ocrProgress').style.display = 'block';
+  const ptext = document.getElementById('ocrProgressText');
+  const pbar  = document.getElementById('ocrProgressBar');
+
+  const maxPages = Math.min(S.ocrPdf.numPages, 300);   // hard cap
+  ptext.textContent = 'OCR: بەت 0 / ' + maxPages;
+  pbar.style.width = '0';
+
+  let pdf;
+  try {
+    pdf = await pdfjsLib.getDocument({ data: S.ocrPdf.bytes.slice() }).promise;
+  } catch (e) {
+    toast('PDF ئوقۇغىلى بولمىدى', 'e');
+    document.getElementById('ocrButtons').style.display = 'flex';
+    document.getElementById('ocrProgress').style.display = 'none';
+    return;
+  }
+
+  // Fine-grained progress: the main process emits per-page events (page index
+  // within the current batch); add the batch base for a global page number.
+  let basePage = 0;
+  if (_ocrUnsub) { try { _ocrUnsub(); } catch (_) {} }
+  _ocrUnsub = window.electron.onOcrProgress((d) => {
+    const done = basePage + (d.page || 0);
+    ptext.textContent = 'OCR: بەت ' + done + ' / ' + maxPages;
+    pbar.style.width = Math.round((done / maxPages) * 100) + '%';
+  });
+
+  const BATCH = 5, SCALE = 2.5;
+  const allText = [];
+  try {
+    for (let start = 1; start <= maxPages && !_ocrCancel; start += BATCH) {
+      const end = Math.min(start + BATCH - 1, maxPages);
+      const imgs = [];
+      for (let p = start; p <= end && !_ocrCancel; p++) {
+        const page = await pdf.getPage(p);
+        const viewport = page.getViewport({ scale: SCALE });
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.ceil(viewport.width);
+        canvas.height = Math.ceil(viewport.height);
+        const ctx = canvas.getContext('2d');
+        await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+        imgs.push(canvas.toDataURL('image/png'));
+        canvas.width = canvas.height = 0;   // free the bitmap promptly
+        if (page.cleanup) try { page.cleanup(); } catch (_) {}
+      }
+      if (_ocrCancel || !imgs.length) break;
+      basePage = start - 1;
+      const r = await window.electron.ocrRecognize(imgs, langStr);
+      if (!r || !r.success) { toast('OCR خاتالىقى: ' + ((r && r.error) || ''), 'e'); break; }
+      for (const t of r.pages) allText.push(t);
+      pbar.style.width = Math.round((end / maxPages) * 100) + '%';
+      if (r.cancelled) break;
+    }
+  } catch (e) {
+    toast('OCR مەغلۇپ بولدى: ' + ((e && e.message) || ''), 'e');
+  }
+
+  if (_ocrUnsub) { try { _ocrUnsub(); } catch (_) {} _ocrUnsub = null; }
+
+  const joined = allText.join('\n\n').trim();
+  if (joined) {
+    S.tempContent = joined;
+    document.getElementById('finfo').textContent =
+      '✓ PDF (OCR): ' + S.ocrPdf.fileName + ' (' + allText.length + ' بەت)';
+    toast(_ocrCancel ? 'OCR توختىتىلدى — قىسمەن تېكىست ساقلاندى' : 'OCR تامام بولدى', 's');
+  } else if (!_ocrCancel) {
+    toast('OCR دىن تېكىست چىقمىدى', 'e');
+  }
+  hideOcrOffer();
+  progress(100);
 }
 
 async function addBook() {
@@ -2697,6 +2852,8 @@ async function addBook() {
   // Clear staged upload so the next "add" starts fresh
   S.tempContent = '';
   S.tempExt = '';
+  S.ocrPdf = null;
+  hideOcrOffer();
 
   // Keep legacy library.json in sync (categories, bookmarks, etc.)
   await saveData();
@@ -2766,7 +2923,8 @@ function showAdd(){
   document.getElementById('bcat').innerHTML=S.cats.map(c=>`<option value="${sanitize(c)}">${sanitize(c)}</option>`).join('');
   document.getElementById('btitle').value='';document.getElementById('bauth').value='';document.getElementById('bdesc').value='';
   document.getElementById('finfo').style.display='none';document.getElementById('pb').style.display='none';document.getElementById('pf').style.width='0';
-  S.tempFile=null;S.tempExt='';S.tempContent='';
+  S.tempFile=null;S.tempExt='';S.tempContent='';S.ocrPdf=null;
+  hideOcrOffer();
   document.getElementById('addov').classList.add('on');
 }
 function hideAdd(){document.getElementById('addov').classList.remove('on');}
