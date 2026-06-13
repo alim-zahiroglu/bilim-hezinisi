@@ -984,10 +984,11 @@ function setMode(mode) {
   if (mode === S.mode) return;
   S.mode = mode;
   // Leaving notes mode must ALWAYS restore #side to its normal width — the
-  // collapsible-panel state (Phase 2) only applies inside the notebook.
+  // collapse state (Phase 2) and the persisted drag width (Phase 5) only apply
+  // inside the notebook.
   if (mode !== 'notes') {
     const side = document.getElementById('side');
-    if (side) side.classList.remove('side-collapsed');
+    if (side) { side.classList.remove('side-collapsed'); side.style.width = ''; }
     // Also disarm the format painter (Phase 3) and abort any in-flight
     // notebook AI stream (Phase 4) — both are tied to the notebook editor.
     if (typeof window.notesDisarmFormatPainter === 'function') window.notesDisarmFormatPainter();

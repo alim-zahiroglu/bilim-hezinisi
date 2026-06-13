@@ -84,7 +84,9 @@
     // building the layout (Phase 2 — collapsible panels).
     await loadCollapseState();
     main.innerHTML = `<div class="notes-layout">
+      <div class="notes-splitter" id="notes-splitter-side" data-target="side" title="كەڭلىكنى تەڭشەش"></div>
       ${renderNotesMainColumn()}
+      <div class="notes-splitter" id="notes-splitter-panel" data-target="panel" title="كەڭلىكنى تەڭشەش"></div>
       ${renderRightPanel()}
     </div>
     <!-- Floating edge handles to re-open a collapsed panel (Claude-desktop style).
@@ -113,8 +115,18 @@
         return (v === '1' || v === 1 || v === true);
       } catch (e) { return false; }
     };
+    const readNum = async (key) => {
+      try {
+        const r = await window.electron.dbGetSetting(key, '');
+        const v = (r && typeof r === 'object' && 'value' in r) ? r.value : r;
+        const n = parseInt(v, 10);
+        return (Number.isFinite(n) && n >= 220 && n <= 560) ? n : null;
+      } catch (e) { return null; }
+    };
     _s().listCollapsed = await read('notes_list_collapsed');
     _s().panelCollapsed = await read('notes_panel_collapsed');
+    _s().sideWidth = await readNum('notes_side_width');     // Phase 5 — persisted drag widths
+    _s().panelWidth = await readNum('notes_panel_width');
   }
 
   function applyListCollapsed(collapsed) {
@@ -124,6 +136,8 @@
     if (handle) handle.style.display = collapsed ? 'flex' : 'none';
     const btn = document.getElementById('notes-collapse-list-btn');
     if (btn) btn.classList.toggle('active', !!collapsed);
+    const sp = document.getElementById('notes-splitter-side');   // hide divider while collapsed
+    if (sp) sp.style.display = collapsed ? 'none' : '';
   }
 
   function applyPanelCollapsed(collapsed) {
@@ -133,12 +147,74 @@
     if (handle) handle.style.display = collapsed ? 'flex' : 'none';
     const btn = document.getElementById('notes-collapse-panel-btn');
     if (btn) btn.classList.toggle('active', !!collapsed);
+    const sp = document.getElementById('notes-splitter-panel');
+    if (sp) sp.style.display = collapsed ? 'none' : '';
+  }
+
+  // Apply persisted drag widths as inline styles. The collapse classes use
+  // width:0 !important, so a collapsed panel still wins over these.
+  function applyPanelWidths() {
+    const side = document.getElementById('side');
+    if (side && _s().sideWidth) side.style.width = _s().sideWidth + 'px';
+    const panel = document.querySelector('.notes-right-panel');
+    if (panel && _s().panelWidth) panel.style.width = _s().panelWidth + 'px';
   }
 
   function applyCollapseState() {
     applyListCollapsed(_s().listCollapsed);
     applyPanelCollapsed(_s().panelCollapsed);
+    applyPanelWidths();
   }
+
+  // ===== Draggable dividers (Phase 5) =====
+  // RTL: #side is on the physical RIGHT, .notes-right-panel on the physical
+  // LEFT, so dragging the same dx grows one and shrinks the other (opposite
+  // signs). Widths clamp to [220, 560] and persist via the settings IPC.
+  let _splitDrag = null;
+  function onSplitterDown(e) {
+    const sp = e.target && e.target.closest ? e.target.closest('.notes-splitter') : null;
+    if (!sp) return;
+    const target = sp.dataset.target;   // 'side' | 'panel'
+    const el = (target === 'side') ? document.getElementById('side') : document.querySelector('.notes-right-panel');
+    if (!el) return;
+    _splitDrag = {
+      target: target, el: el, sp: sp,
+      startX: e.clientX,
+      startW: el.getBoundingClientRect().width,
+      sign: (target === 'side') ? -1 : 1
+    };
+    sp.classList.add('dragging');
+    el.style.transition = 'none';
+    document.body.style.userSelect = 'none';
+    try { sp.setPointerCapture(e.pointerId); } catch (_) {}
+    e.preventDefault();
+  }
+  function onSplitterMove(e) {
+    if (!_splitDrag) return;
+    const dx = e.clientX - _splitDrag.startX;
+    let w = _splitDrag.startW + _splitDrag.sign * dx;
+    w = Math.max(220, Math.min(560, w));
+    _splitDrag.el.style.width = w + 'px';
+  }
+  function onSplitterUp() {
+    if (!_splitDrag) return;
+    const { target, el, sp } = _splitDrag;
+    el.style.transition = '';
+    if (sp) sp.classList.remove('dragging');
+    document.body.style.userSelect = '';
+    const w = parseInt(el.style.width, 10);
+    if (Number.isFinite(w)) {
+      if (target === 'side') _s().sideWidth = w; else _s().panelWidth = w;
+      const key = (target === 'side') ? 'notes_side_width' : 'notes_panel_width';
+      try { window.electron.dbSetSetting(key, String(w)); } catch (_) {}
+    }
+    _splitDrag = null;
+  }
+  // One set of delegated listeners (the splitter elements are re-rendered each
+  // time the notes view mounts, but these document-level handlers persist).
+  document.addEventListener('pointerdown', onSplitterDown);
+  document.addEventListener('pointermove', onSplitterMove);
+  document.addEventListener('pointerup', onSplitterUp);
   // Exposed so setMode() can re-apply the saved state when (re-)entering notes.
   window.notesApplyCollapseState = applyCollapseState;
 

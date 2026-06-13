@@ -8,13 +8,25 @@
    animation + overflow:hidden gives the Claude-desktop slide; flex-shrink:0
    on #side / .notes-right-panel is preserved so the editor takes the slack. */
 #side { transition: width .18s ease, padding .18s ease; }
+/* width:0 !important so a collapsed panel still wins over a persisted drag
+   width set inline on the element (Phase 5). */
 #side.side-collapsed {
-  width: 0; min-width: 0; padding: 0; border: none; overflow: hidden;
+  width: 0 !important; min-width: 0; padding: 0; border: none; overflow: hidden;
 }
 .notes-right-panel { transition: width .18s ease; }
 .notes-right-panel.collapsed {
-  width: 0; min-width: 0; padding: 0; border: none; overflow: hidden;
+  width: 0 !important; min-width: 0; padding: 0; border: none; overflow: hidden;
 }
+/* Draggable divider (Phase 5) — thin, col-resize, with a hover/drag hairline. */
+.notes-splitter {
+  flex: 0 0 5px; align-self: stretch; cursor: col-resize;
+  background: transparent; position: relative; z-index: 5;
+}
+.notes-splitter::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 2px; width: 1px;
+  background: transparent; transition: background .12s;
+}
+.notes-splitter:hover::after, .notes-splitter.dragging::after { background: var(--am); }
 .notes-collapse-btn {
   flex-shrink: 0; width: 28px; height: 28px;
   background: var(--bg2); border: 0.5px solid var(--border);
