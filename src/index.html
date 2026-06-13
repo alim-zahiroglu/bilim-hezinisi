@@ -2615,6 +2615,15 @@ function naiExtra(html) {
   return ex;
 }
 function naiChatbar(show) { const c = document.getElementById('nai-chatbar'); if (c) c.style.display = show ? 'flex' : 'none'; }
+// Auto-grow a textarea with content up to maxPx, then scroll (Phase 4).
+function naiAutoGrow(el, maxPx) {
+  if (!el) return;
+  maxPx = maxPx || 240;
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, maxPx) + 'px';
+  el.style.overflowY = (el.scrollHeight > maxPx) ? 'auto' : 'hidden';
+}
+window.naiAutoGrow = naiAutoGrow;
 function naiBusy(onStop) {
   const s = document.getElementById('nai-status'); if (!s) return;
   s.innerHTML = '';
@@ -2839,6 +2848,7 @@ function naiChatSend() {
   const hist = (S.notes.chatHistory = S.notes.chatHistory || []);
   hist.push({ role: 'user', text: q });
   inp.value = '';
+  naiAutoGrow(inp);   // shrink the box back to base after sending
   naiRenderChat();
   const messages = hist.slice(-20).map(m => ({ role: m.role, text: m.text }));
   naiAbort();
@@ -2875,7 +2885,7 @@ function naiPageQA(kind) {
     if (kind === 'other') {
       naiOpenPanel('كۆرۈنمە بەت ھەققىدە سوئال');
       naiActions(); naiChatbar(false); naiResult('');
-      naiExtra('<textarea id="nai-page-q" placeholder="بۇ بەت ھەققىدە سوئالىڭىزنى يېزىڭ..." style="width:100%;min-height:60px;box-sizing:border-box"></textarea>'
+      naiExtra('<textarea id="nai-page-q" placeholder="بۇ بەت ھەققىدە سوئالىڭىزنى يېزىڭ..." oninput="window.naiAutoGrow(this)" style="width:100%;min-height:120px;max-height:240px;box-sizing:border-box;overflow-y:auto"></textarea>'
              + '<button type="button" class="hbtn p" style="margin-top:6px" onclick="window.naiPageAsk()">سوراش</button>');
       const t = document.getElementById('nai-page-q'); if (t) t.focus();
       return;

@@ -328,6 +328,7 @@
       <div id="nai-actions" style="display:none"></div>
       <div id="nai-chatbar" style="display:none">
         <textarea id="nai-chat-input" placeholder="سوئالىڭىزنى يېزىڭ..."
+          oninput="window.naiAutoGrow && window.naiAutoGrow(this)"
           onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();window.naiChatSend();}"></textarea>
         <button type="button" onclick="window.naiChatSend()">ئەۋەت</button>
       </div>
