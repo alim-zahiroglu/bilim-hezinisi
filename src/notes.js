@@ -238,6 +238,10 @@
         <button onclick="window.notesExec('justifyLeft')" title="سولغا">⟸</button>
       </div>
       <div class="notes-toolbar-group">
+        <button id="notes-fp-btn" type="button" onmousedown="window.notesFpPress(event)"
+          title="فورمات سۈپۈرگىسى (Alt+Ctrl+C / Alt+Ctrl+V)">🖌</button>
+      </div>
+      <div class="notes-toolbar-group">
         <button onclick="window.notesExec('removeFormat')" title="فورماتنى ئۆچۈرۈش">✕</button>
         <button onclick="window.notesSaveNow()" title="ھازىرلا ساقلاش (Ctrl+S)">💾</button>
       </div>
@@ -398,6 +402,10 @@
     const spCb = document.getElementById('notes-toggle-spellcheck');
     if (spCb) spCb.checked = !!_s().spellCheckEnabled;
 
+    // Switching documents (re-mounting the editor) always disarms the format
+    // painter — its captured format belonged to the previous editor.
+    fpDisarm();
+
     editorEl = document.getElementById('notes-editor');
     if (!editorEl) return;
     const safeHtml = (window.SafeHTML && window.SafeHTML.sanitize)
@@ -422,7 +430,45 @@
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
         saveNow();
+        return;
       }
+      // Format painter (Word parity): Alt+Ctrl+C captures + arms (one-shot);
+      // Alt+Ctrl+V applies the captured format to the selection. Legacy
+      // Ctrl+Shift+C / Ctrl+Shift+V also accepted. Esc always disarms.
+      const k = e.key.toLowerCase();
+      const fpMod = (e.ctrlKey || e.metaKey) && (e.altKey || e.shiftKey);
+      if (fpMod && k === 'c') {
+        e.preventDefault();
+        fpFormat = fpCaptureFormat();
+        fpArm(false);
+        return;
+      }
+      if (fpMod && k === 'v') {
+        e.preventDefault();
+        if (!fpFormat) return;
+        fpApplyFormat();
+        if (!fpSticky) fpDisarm();
+        return;
+      }
+      if (e.key === 'Escape' && fpArmed) {
+        e.preventDefault();
+        fpDisarm();
+        return;
+      }
+    });
+
+    // One-shot paint: while armed, the next non-collapsed selection the user
+    // makes in the editor receives the captured format, then disarms (unless
+    // sticky). Deferred so the selection is finalized after mouseup.
+    editorEl.addEventListener('mouseup', () => {
+      if (!fpArmed) return;
+      setTimeout(() => {
+        const sel = window.getSelection();
+        if (sel && !sel.isCollapsed && sel.anchorNode && editorEl.contains(sel.anchorNode)) {
+          fpApplyFormat();
+          if (!fpSticky) fpDisarm();
+        }
+      }, 0);
     });
 
     // Sanitize pasted HTML — XSS defense-in-depth
@@ -484,6 +530,137 @@
   };
 
   window.notesSaveNow = function() { saveNow(); };
+
+  // ========== FORMAT PAINTER (Phase 3) — Word's «سۈپۈرگە» ==========
+  // Capture the formatting at the caret/selection, then paint it onto the next
+  // selection. One-shot by default; double-click the toolbar button for sticky
+  // mode. State is module-local and resets on doc switch / leaving notes.
+
+  let fpArmed = false;     // paint mode active
+  let fpSticky = false;    // keep painting until Esc / button click
+  let fpFormat = null;     // captured format descriptor
+  let fpPressTimer = null; // single- vs double-click discrimination
+
+  // Map a pixel size onto execCommand fontSize's 1–7 scale (as notesSetSize uses).
+  function fpPxToSize(px) {
+    const table = [10, 13, 16, 18, 24, 32, 48]; // sizes 1..7
+    let best = 3, bestD = Infinity;
+    for (let i = 0; i < table.length; i++) {
+      const d = Math.abs(px - table[i]);
+      if (d < bestD) { bestD = d; best = i + 1; }
+    }
+    return best;
+  }
+  function fpRgbToHex(c) {
+    const m = String(c || '').match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+    if (!m) return c;
+    const h = (n) => ('0' + parseInt(n, 10).toString(16)).slice(-2);
+    return '#' + h(m[1]) + h(m[2]) + h(m[3]);
+  }
+  function fpIsTransparent(c) {
+    const s = String(c || '').replace(/\s/g, '');
+    return !s || s === 'transparent' || /rgba\(\d+,\d+,\d+,0(\.0+)?\)/.test(s);
+  }
+
+  // Read the computed format at the current selection's anchor element.
+  function fpCaptureFormat() {
+    if (!editorEl) return null;
+    const sel = window.getSelection();
+    let node = (sel && sel.rangeCount) ? sel.getRangeAt(0).startContainer : null;
+    let el = node && node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+    if (!el || !editorEl.contains(el)) el = editorEl;
+    const cs = window.getComputedStyle(el);
+    // Nearest block ancestor for text-align + blockquote.
+    let block = el;
+    while (block && block !== editorEl && !/^(P|DIV|H[1-6]|LI|BLOCKQUOTE)$/.test(block.tagName || '')) {
+      block = block.parentElement;
+    }
+    const bcs = block && block !== editorEl ? window.getComputedStyle(block) : cs;
+    const td = (cs.textDecorationLine || cs.textDecoration || '');
+    return {
+      bold: parseInt(cs.fontWeight, 10) >= 600,
+      italic: cs.fontStyle === 'italic' || cs.fontStyle === 'oblique',
+      underline: /underline/.test(td),
+      strike: /line-through/.test(td),
+      fontFamily: (cs.fontFamily || '').split(',')[0].replace(/^["']|["']$/g, '').trim(),
+      fontSizePx: parseFloat(cs.fontSize) || 0,
+      color: cs.color,
+      background: cs.backgroundColor,
+      align: bcs.textAlign,
+      blockquote: !!(block && block.tagName === 'BLOCKQUOTE')
+    };
+  }
+
+  // Apply the captured format to the current (non-collapsed) selection.
+  function fpApplyFormat() {
+    if (!editorEl || !fpFormat) return;
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !sel.anchorNode || !editorEl.contains(sel.anchorNode)) return;
+    editorEl.focus();
+    const f = fpFormat;
+    // Toggle inline marks to MATCH the source — painting from plain text REMOVES
+    // bold/italic/etc on the target (Word parity).
+    if (document.queryCommandState('bold') !== f.bold) document.execCommand('bold');
+    if (document.queryCommandState('italic') !== f.italic) document.execCommand('italic');
+    if (document.queryCommandState('underline') !== f.underline) document.execCommand('underline');
+    if (document.queryCommandState('strikeThrough') !== f.strike) document.execCommand('strikeThrough');
+    if (f.fontFamily) document.execCommand('fontName', false, f.fontFamily);
+    if (f.fontSizePx) document.execCommand('fontSize', false, String(fpPxToSize(f.fontSizePx)));
+    if (f.color) document.execCommand('foreColor', false, fpRgbToHex(f.color));
+    if (f.background && !fpIsTransparent(f.background)) {
+      document.execCommand('hiliteColor', false, fpRgbToHex(f.background));
+    }
+    // Block-level bits.
+    if (f.align === 'center') document.execCommand('justifyCenter');
+    else if (f.align === 'left') document.execCommand('justifyLeft');
+    else if (f.align === 'right' || f.align === 'start') document.execCommand('justifyRight');
+    document.execCommand('formatBlock', false, f.blockquote ? 'blockquote' : 'p');
+    markDirty();
+  }
+
+  function fpArm(sticky) {
+    if (!editorEl || !fpFormat) return;
+    fpArmed = true;
+    fpSticky = !!sticky;
+    editorEl.classList.add('fp-armed');
+    const btn = document.getElementById('notes-fp-btn');
+    if (btn) btn.classList.add('active');
+    if (typeof window.toast === 'function') {
+      window.toast(sticky ? 'سۈپۈرگە: ئۈزلۈكسىز (Esc توختىتىدۇ)' : 'سۈپۈرگە: بىر قېتىملىق', 'i');
+    }
+  }
+
+  function fpDisarm() {
+    fpArmed = false;
+    fpSticky = false;
+    if (editorEl) editorEl.classList.remove('fp-armed');
+    const btn = document.getElementById('notes-fp-btn');
+    if (btn) btn.classList.remove('active');
+  }
+
+  // Toolbar button press (mousedown, default-prevented so the editor keeps its
+  // selection). One press = one-shot (or toggle off if already armed); two
+  // quick presses = sticky.
+  window.notesFpPress = function notesFpPress(ev) {
+    if (ev) ev.preventDefault();
+    if (!editorEl) return;
+    if (fpPressTimer) {                       // second press → sticky
+      clearTimeout(fpPressTimer); fpPressTimer = null;
+      fpFormat = fpCaptureFormat();
+      fpArm(true);
+      return;
+    }
+    const captured = fpCaptureFormat();
+    fpPressTimer = setTimeout(() => {
+      fpPressTimer = null;
+      if (fpArmed) { fpDisarm(); return; }    // armed → clicking again disarms
+      fpFormat = captured;
+      fpArm(false);
+    }, 220);
+  };
+
+  // Exposed so setMode() can disarm when leaving notes mode.
+  window.notesDisarmFormatPainter = fpDisarm;
 
   function markDirty() {
     if (!_s().curDoc) return;

@@ -981,6 +981,9 @@ function setMode(mode) {
   if (mode !== 'notes') {
     const side = document.getElementById('side');
     if (side) side.classList.remove('side-collapsed');
+    // Also disarm the format painter (Phase 3) — its captured format is
+    // tied to the notebook editor.
+    if (typeof window.notesDisarmFormatPainter === 'function') window.notesDisarmFormatPainter();
   }
   // Hide the library top search bar in non-library modes
   const hd = document.getElementById('hd');
