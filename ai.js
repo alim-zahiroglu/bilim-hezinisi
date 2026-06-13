@@ -1363,6 +1363,64 @@ function chatStream(messages, onChunk, onDone, onError) {
 }
 
 // ----------------------------------------------------------------
+// Gemini OCR (Phase 7B) — multimodal transcription of scanned page images.
+// The user's selected model is multimodal; STRICT model selection still
+// applies. Pages are sent in small batches (≈2–4 images per request) and the
+// transcriptions are concatenated. Free-tier / size / quota failures are
+// classified as `freeTierLimit` so the renderer can fall back to offline UKIJ
+// OCR instead. Returns { ok:true, text } or { ok:false, error, freeTierLimit?,
+// pages? } (pages = whatever was transcribed before the failure).
+// ----------------------------------------------------------------
+const OCR_IMAGE_INSTRUCTION =
+  'Transcribe the Uyghur/Arabic text in these page images exactly. Output only ' +
+  'the transcribed text, preserve paragraph breaks, add no commentary.';
+
+async function ocrImages(imagesBase64, opts) {
+  opts = opts || {};
+  const key = loadKey();
+  if (!key) return { ok: false, error: 'Gemini API ئاچقۇچى تەڭشەلمىگەن.' };
+  if (!isEnabled()) return { ok: false, error: 'سۈنئىي ئىدراك ئىقتىدارى ئېتىلگەن.' };
+  const images = Array.isArray(imagesBase64) ? imagesBase64 : [];
+  if (!images.length) return { ok: false, error: 'رەسىم تېپىلمىدى' };
+
+  const model = getModel();   // STRICT — multimodal, never substituted
+  const batch = Math.min(Math.max(parseInt(opts.batchSize, 10) || 3, 1), 4);
+  const FREE_TIER_MSG = 'ھەقسىز API بۇ كىتابنى ئايلاندۇرالمىدى. UKIJ OCR (تورسىز) نى تاللاڭ.';
+  const out = [];
+
+  for (let i = 0; i < images.length; i += batch) {
+    const slice = images.slice(i, i + batch);
+    const parts = [{ text: OCR_IMAGE_INSTRUCTION }];
+    for (const img of slice) {
+      const data = String(img || '').replace(/^data:image\/[a-zA-Z]+;base64,/, '');
+      parts.push({ inlineData: { mimeType: 'image/png', data: data } });
+    }
+    const body = {
+      contents: [{ role: 'user', parts: parts }],
+      generationConfig: { temperature: 0.1, topP: 0.9, thinkingConfig: { thinkingBudget: 0 }, maxOutputTokens: 8192 },
+      safetySettings: SAFETY_SETTINGS
+    };
+    try {
+      const json = await callGemini(model, key, body);
+      const text = extractText(json);
+      if (text) out.push(text);
+      bumpUsage();
+      logTokenUsage(model, json.usageMetadata, false);
+      if (typeof opts.onProgress === 'function') {
+        try { opts.onProgress(Math.min(i + batch, images.length), images.length); } catch (_) {}
+      }
+    } catch (e) {
+      // Unavailable model → strict message. Size/quota → free-tier fallback.
+      if (isModelUnavailableError(e)) return { ok: false, error: modelUnavailableMessage(model), pages: out };
+      if (isSizeError(e) || isQuotaError(e)) return { ok: false, freeTierLimit: true, error: FREE_TIER_MSG, pages: out };
+      if (isServerBusyError(e)) return { ok: false, busy: true, error: SERVER_BUSY_MESSAGE, pages: out };
+      return { ok: false, error: (e && e.message) || 'Gemini OCR مەغلۇپ بولدى', pages: out };
+    }
+  }
+  return { ok: true, text: out.join('\n\n') };
+}
+
+// ----------------------------------------------------------------
 // Public surface (consumed by main.js IPC handlers; the renderer-side
 // detectType/typeLabel/MAX_CONTEXT_CHARS helpers arrive in src/ai-client.js)
 // ----------------------------------------------------------------
@@ -1381,6 +1439,7 @@ module.exports = {
   askStream: askStream,
   translateStream: translateStream,
   chatStream: chatStream,
+  ocrImages: ocrImages,
   test: test,
   DEFAULT_MODEL: DEFAULT_MODEL,
   MODEL_FALLBACKS: MODEL_FALLBACKS,

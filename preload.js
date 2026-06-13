@@ -54,6 +54,8 @@ contextBridge.exposeInMainWorld('electron', {
   readFolder: (folderPath) => ipcRenderer.invoke('read-folder', folderPath),
   // Offline OCR (main process runs tesseract.js; renderer ships base64 PNGs).
   ocrRecognize: (images, langs) => ipcRenderer.invoke('ocr-recognize', { images, langs }),
+  // Online Gemini OCR (main process only; gated on AI enabled + key).
+  ocrGemini: (images, opts) => ipcRenderer.invoke('ocr-gemini', images, opts),
   ocrCancel: () => ipcRenderer.invoke('ocr-cancel'),
   onOcrProgress: (callback) => {
     const handler = (event, data) => callback(data);

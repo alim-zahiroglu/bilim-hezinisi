@@ -73,6 +73,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--jf); font-s
 .hbtn { font-size: 12px; background: none; border: 0.5px solid var(--border2); color: var(--text2); padding: 6px 12px; border-radius: var(--radius2); cursor: pointer; font-family: var(--jf); white-space: nowrap; transition: all .15s; }
 .hbtn:hover { background: var(--bg2); color: var(--text); }
 .hbtn.p { background: var(--am); border-color: var(--am); color: #fff; font-weight: 600; }
+.hbtn-glow { box-shadow: 0 0 0 2px var(--am); animation: hbtnGlow 1s ease-in-out 3; }
+@keyframes hbtnGlow { 0%,100% { box-shadow: 0 0 0 2px var(--am); } 50% { box-shadow: 0 0 0 5px var(--ab); } }
 .hbtn.p:hover { opacity: 0.9; }
 #layout { display: flex; flex: 1; overflow: hidden; }
 #side { width: 200px; background: var(--bg2); border-left: 0.5px solid var(--border); overflow-y: auto; flex-shrink: 0; padding-bottom: 12px; }
@@ -405,19 +407,23 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
         </div>
         <div class="finfo" id="finfo"></div>
         <div class="pb" id="pb"><div class="pf" id="pf"></div></div>
-        <!-- Scanned-PDF OCR offer (Phase 1, offline). Hidden until a scanned PDF is detected. -->
+        <!-- Scanned-PDF OCR offer (two engines: offline UKIJ / online Gemini). -->
         <div id="ocrOffer" style="display:none;margin-top:8px;padding:10px;border:0.5px solid var(--border2);border-radius:var(--radius2);background:var(--bg2);direction:rtl">
-          <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:8px">بۇ PDF سىكاننېرلانغان رەسىم شەكلىدە ئىكەن. تورسىز OCR بىلەن تېكىستكە ئايلاندۇرامسىز؟</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:8px">بۇ PDF سىكاننېرلانغان رەسىم شەكلىدە ئىكەن. تېكىستكە ئايلاندۇرۇش ماتورىنى تاللاڭ:</div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px">UKIJ OCR تىللىرى:</div>
           <div id="ocrLangs" style="display:flex;flex-wrap:wrap;gap:10px 16px;margin-bottom:10px;font-size:12px;color:var(--text2)">
             <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="ocrLangUkij" checked>ئۇيغۇرچە (UKIJ)</label>
             <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="ocrLangUig" checked>ئۇيغۇرچە (يەنە بىر مودېل)</label>
             <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="ocrLangEng">ئىنگلىزچە</label>
             <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="ocrLangTur">تۈركچە</label>
           </div>
-          <div id="ocrButtons" style="display:flex;gap:8px">
-            <button type="button" class="hbtn p" onclick="startPdfOcr()">OCR باشلاش</button>
+          <div id="ocrButtons" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+            <button type="button" class="hbtn p" id="ocrUkijBtn" onclick="startPdfOcr('ukij')">UKIJ OCR (تورسىز)</button>
+            <button type="button" class="hbtn" id="ocrGeminiBtn" onclick="startPdfOcr('gemini')">Gemini OCR (تورلۇق)</button>
             <button type="button" class="hbtn" onclick="dismissOcrOffer()">ياق، شۇنداق قوشۇلسۇن</button>
           </div>
+          <div id="ocrGeminiHint" style="display:none;font-size:11px;color:var(--text3);margin-top:6px"></div>
+          <div id="ocrFallbackMsg" style="display:none;font-size:12px;color:#A32D2D;margin-top:8px"></div>
           <div id="ocrProgress" style="display:none;margin-top:8px">
             <div id="ocrProgressText" style="font-size:12px;color:var(--text2);margin-bottom:6px">OCR: بەت 0 / 0</div>
             <div class="pb" style="display:block"><div class="pf" id="ocrProgressBar" style="width:0"></div></div>
@@ -3280,7 +3286,26 @@ function showOcrOffer() {
   if (!o) return;
   document.getElementById('ocrButtons').style.display = 'flex';
   document.getElementById('ocrProgress').style.display = 'none';
+  const fb = document.getElementById('ocrFallbackMsg'); if (fb) fb.style.display = 'none';
+  const uk = document.getElementById('ocrUkijBtn'); if (uk) uk.classList.remove('hbtn-glow');
+  refreshOcrEngineButtons();
   o.style.display = 'block';
+}
+
+// Gate the Gemini OCR button on AI availability and note large books (Phase 7C).
+// The offline UKIJ button is always actionable.
+async function refreshOcrEngineButtons() {
+  const gBtn = document.getElementById('ocrGeminiBtn');
+  const hint = document.getElementById('ocrGeminiHint');
+  let ok = false;
+  try { ok = await naiAvailable(); } catch (e) { ok = false; }
+  if (gBtn) { gBtn.disabled = !ok; gBtn.title = ok ? '' : 'تەڭشەكتىن AI نى ئېچىڭ'; }
+  if (hint) {
+    const pages = (S.ocrPdf && S.ocrPdf.numPages) || 0;
+    if (!ok) { hint.textContent = 'Gemini OCR ئۈچۈن تەڭشەكتىن AI نى ئېچىڭ.'; hint.style.display = 'block'; }
+    else if (pages > 50) { hint.textContent = 'بۇ كىتاب چوڭ (' + pages + ' بەت) — ھەقسىز Gemini چەكلىمىسى يېتىشى مۇمكىن؛ چوڭ كىتابلارغا UKIJ تەۋسىيە قىلىنىدۇ.'; hint.style.display = 'block'; }
+    else { hint.style.display = 'none'; }
+  }
 }
 
 function hideOcrOffer() {
@@ -3303,26 +3328,37 @@ function cancelPdfOcr() {
   if (t) t.textContent = t.textContent + ' — توختىتىلىۋاتىدۇ...';
 }
 
-async function startPdfOcr() {
+// engine: 'ukij' (offline Tesseract) | 'gemini' (online). Page→PNG rendering is
+// shared; only the recognize call differs. On a Gemini free-tier failure we
+// keep any partial text and steer the user to the offline UKIJ engine.
+async function startPdfOcr(engine) {
+  engine = engine || 'ukij';
   if (!S.ocrPdf || !window.pdfjsLib) { toast('PDF تېپىلمىدى', 'e'); return; }
 
-  // Build the language string from the checkboxes (order = priority).
-  const langs = [];
-  if (document.getElementById('ocrLangUkij').checked) langs.push('ukij');
-  if (document.getElementById('ocrLangUig').checked)  langs.push('uig');
-  if (document.getElementById('ocrLangEng').checked)  langs.push('eng');
-  if (document.getElementById('ocrLangTur').checked)  langs.push('tur');
-  if (!langs.length) { toast('كەم دېگەندە بىر تىل تاللاڭ', 'e'); return; }
-  const langStr = langs.join('+');
+  let langStr = '';
+  if (engine === 'ukij') {
+    const langs = [];
+    if (document.getElementById('ocrLangUkij').checked) langs.push('ukij');
+    if (document.getElementById('ocrLangUig').checked)  langs.push('uig');
+    if (document.getElementById('ocrLangEng').checked)  langs.push('eng');
+    if (document.getElementById('ocrLangTur').checked)  langs.push('tur');
+    if (!langs.length) { toast('كەم دېگەندە بىر تىل تاللاڭ', 'e'); return; }
+    langStr = langs.join('+');
+  } else if (engine === 'gemini') {
+    if (!(await naiAvailable())) { toast('ئالدى بىلەن تەڭشەكلەردىن Gemini API ئاچقۇچىنى تەڭشەڭ', 'e'); showSettings(); return; }
+  }
 
   _ocrCancel = false;
+  const fbMsg = document.getElementById('ocrFallbackMsg'); if (fbMsg) fbMsg.style.display = 'none';
+  const ukBtn = document.getElementById('ocrUkijBtn'); if (ukBtn) ukBtn.classList.remove('hbtn-glow');
   document.getElementById('ocrButtons').style.display = 'none';
   document.getElementById('ocrProgress').style.display = 'block';
   const ptext = document.getElementById('ocrProgressText');
   const pbar  = document.getElementById('ocrProgressBar');
+  const engLabel = (engine === 'gemini') ? 'Gemini' : 'UKIJ';
 
   const maxPages = Math.min(S.ocrPdf.numPages, 300);   // hard cap
-  ptext.textContent = 'OCR: بەت 0 / ' + maxPages;
+  ptext.textContent = engLabel + ' OCR: بەت 0 / ' + maxPages;
   pbar.style.width = '0';
 
   let pdf;
@@ -3335,18 +3371,19 @@ async function startPdfOcr() {
     return;
   }
 
-  // Fine-grained progress: the main process emits per-page events (page index
-  // within the current batch); add the batch base for a global page number.
+  // Fine-grained progress: both engines emit per-page events (page index within
+  // the current batch); add the batch base for a global page number.
   let basePage = 0;
   if (_ocrUnsub) { try { _ocrUnsub(); } catch (_) {} }
   _ocrUnsub = window.electron.onOcrProgress((d) => {
     const done = basePage + (d.page || 0);
-    ptext.textContent = 'OCR: بەت ' + done + ' / ' + maxPages;
+    ptext.textContent = engLabel + ' OCR: بەت ' + done + ' / ' + maxPages;
     pbar.style.width = Math.round((done / maxPages) * 100) + '%';
   });
 
   const BATCH = 5, SCALE = 2.5;
   const allText = [];
+  let geminiFailed = false, geminiMsg = '';
   try {
     for (let start = 1; start <= maxPages && !_ocrCancel; start += BATCH) {
       const end = Math.min(start + BATCH - 1, maxPages);
@@ -3365,11 +3402,27 @@ async function startPdfOcr() {
       }
       if (_ocrCancel || !imgs.length) break;
       basePage = start - 1;
-      const r = await window.electron.ocrRecognize(imgs, langStr);
-      if (!r || !r.success) { toast('OCR خاتالىقى: ' + ((r && r.error) || ''), 'e'); break; }
-      for (const t of r.pages) allText.push(t);
-      pbar.style.width = Math.round((end / maxPages) * 100) + '%';
-      if (r.cancelled) break;
+      if (engine === 'gemini') {
+        const r = await window.electron.ocrGemini(imgs, {});
+        if (r && Array.isArray(r.pages)) for (const t of r.pages) { if (t) allText.push(t); }
+        if (!r || !r.success) {
+          if (r && (r.freeTierLimit || r.unavailable)) {
+            geminiFailed = true;
+            geminiMsg = (r.error) || 'ھەقسىز API بۇ كىتابنى ئايلاندۇرالمىدى. UKIJ OCR (تورسىز) نى تاللاڭ.';
+          } else {
+            toast('Gemini OCR خاتالىقى: ' + ((r && r.error) || ''), 'e');
+          }
+          break;
+        }
+        if (r.text) allText.push(r.text);
+        pbar.style.width = Math.round((end / maxPages) * 100) + '%';
+      } else {
+        const r = await window.electron.ocrRecognize(imgs, langStr);
+        if (!r || !r.success) { toast('OCR خاتالىقى: ' + ((r && r.error) || ''), 'e'); break; }
+        for (const t of r.pages) allText.push(t);
+        pbar.style.width = Math.round((end / maxPages) * 100) + '%';
+        if (r.cancelled) break;
+      }
     }
   } catch (e) {
     toast('OCR مەغلۇپ بولدى: ' + ((e && e.message) || ''), 'e');
@@ -3377,13 +3430,25 @@ async function startPdfOcr() {
 
   if (_ocrUnsub) { try { _ocrUnsub(); } catch (_) {} _ocrUnsub = null; }
 
+  // Keep whatever was produced as the fallback content, regardless of outcome.
   const joined = allText.join('\n\n').trim();
+  if (joined) S.tempContent = joined;
+
+  if (geminiFailed) {
+    // Free-tier limit / unavailable: stop, keep partial text, steer to UKIJ.
+    // Do NOT auto-switch — AI stays opt-in; the user clicks UKIJ to finish.
+    document.getElementById('ocrProgress').style.display = 'none';
+    document.getElementById('ocrButtons').style.display = 'flex';
+    if (fbMsg) { fbMsg.textContent = geminiMsg; fbMsg.style.display = 'block'; }
+    if (ukBtn) { ukBtn.classList.add('hbtn-glow'); try { ukBtn.focus(); } catch (_) {} }
+    if (joined) document.getElementById('finfo').textContent = '⚠ PDF (Gemini OCR قىسمەن): ' + S.ocrPdf.fileName;
+    return;
+  }
+
   if (joined) {
-    S.tempContent = joined;
     document.getElementById('finfo').textContent =
-      '✓ PDF (OCR): ' + S.ocrPdf.fileName + ' (' + allText.length + ' بەت)';
+      '✓ PDF (' + engLabel + ' OCR): ' + S.ocrPdf.fileName + ' (' + allText.length + ' بۆلەك)';
     toast(_ocrCancel ? 'OCR توختىتىلدى — قىسمەن تېكىست ساقلاندى' : 'OCR تامام بولدى', 's');
-    // Offer optional AI cleanup of the OCR output + metadata autofill (Phase 5).
     naiAvailable().then(ok => { const box = document.getElementById('ocrCleanupBox'); if (box) box.style.display = ok ? 'block' : 'none'; });
     if (typeof maybeShowMetaBtn === 'function') maybeShowMetaBtn();
   } else if (!_ocrCancel) {

@@ -713,6 +713,30 @@ ipcMain.handle('ocr-cancel', () => {
   return { success: true };
 });
 
+// Gemini (online) OCR engine (Phase 7B). Gated on AI enabled + key — never
+// blocks the offline UKIJ engine. Emits ocr-progress like ocr-recognize.
+ipcMain.handle('ocr-gemini', async (event, images, opts) => {
+  if (!ai.isEnabled() || !ai.hasApiKey()) return { success: false, unavailable: true };
+  const wc = event.sender;
+  try {
+    const res = await ai.ocrImages(images || [], Object.assign({}, opts || {}, {
+      onProgress: (done, total) => {
+        try { if (!wc.isDestroyed()) wc.send('ocr-progress', { page: done, total: total, progress: total ? done / total : 0 }); } catch (_) {}
+      }
+    }));
+    if (res && res.ok) return { success: true, text: res.text };
+    return {
+      success: false,
+      freeTierLimit: !!(res && res.freeTierLimit),
+      busy: !!(res && res.busy),
+      error: (res && res.error) || 'Gemini OCR مەغلۇپ بولدى',
+      pages: (res && res.pages) || []
+    };
+  } catch (e) {
+    return { success: false, error: (e && e.message) || 'Gemini OCR مەغلۇپ بولدى' };
+  }
+});
+
 ipcMain.handle('open-file', async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openFile'],
