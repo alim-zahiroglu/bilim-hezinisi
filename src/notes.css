@@ -167,16 +167,18 @@
 }
 .notes-right-panel-tabs { display: flex; border-bottom: 0.5px solid var(--border); }
 .notes-right-panel-tab {
-  flex: 1; padding: 10px 10px; text-align: center;
-  cursor: pointer; font-size: 12px; color: var(--text2);
+  flex: 1; padding: 9px 4px; text-align: center;
+  cursor: pointer; font-size: 10.5px; color: var(--text2);
   transition: background .12s, color .12s;
   border-bottom: 2px solid transparent; user-select: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .notes-right-panel-tab:hover { background: var(--bg3); }
 .notes-right-panel-tab.active {
   color: var(--am); border-bottom-color: var(--am); font-weight: 600;
 }
 .notes-right-panel-content { flex: 1; overflow-y: auto; padding: 10px; }
+.notes-right-pane { min-height: 0; }
 
 /* Quran picker */
 .notes-quran-picker {
@@ -368,21 +370,14 @@ button.notes-ai-item:hover, .notes-ai-has-sub:hover > .notes-ai-item-label {
 }
 .notes-ai-submenu button:hover { background: var(--ab); color: var(--at); }
 
-/* Drawer — cloned from #rai-panel, on the physical LEFT (last flex child). */
-#nai-panel {
-  width: 340px; background: var(--bg2);
-  border-right: 0.5px solid var(--border);
-  overflow-y: auto; flex-shrink: 0; display: none; flex-direction: column;
-  transition: width .18s ease;
+/* AI output — docked inside the right panel's AI tab (Phase 3). */
+#nai-tab { display: flex; flex-direction: column; gap: 8px; }
+.nai-tab-title { font-size: 12px; font-weight: 600; color: var(--text); }
+.nai-tab-gate {
+  font-size: 12px; color: var(--text2); line-height: 1.7;
+  background: var(--bg); border: 0.5px dashed var(--border2);
+  border-radius: var(--radius2); padding: 14px; text-align: center;
 }
-#nai-panel.on { display: flex; }
-#nai-header {
-  padding: 12px; border-bottom: 0.5px solid var(--border);
-  font-size: 13px; font-weight: 600; color: var(--text);
-  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
-}
-#nai-header .nai-x { background: none; border: none; font-size: 16px; color: var(--text2); cursor: pointer; }
-#nai-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
 #nai-status { font-size: 11px; color: var(--text2); min-height: 16px; display: flex; align-items: center; gap: 8px; }
 #nai-result { font-family: var(--jf); font-size: 13px; line-height: 1.9; color: var(--text); direction: rtl; }
 #nai-result h1, #nai-result h2, #nai-result h3, #nai-result h4 { font-size: 13.5px; font-weight: 700; color: var(--at); margin: 8px 0 4px; }
@@ -412,7 +407,6 @@ button.notes-ai-item:hover, .notes-ai-has-sub:hover > .notes-ai-item-label {
 .nai-bubble-user { background: var(--ab); color: var(--at); margin-inline-start: 20px; }
 .nai-bubble-model { background: var(--bg); border: 0.5px solid var(--border); color: var(--text); margin-inline-end: 12px; }
 .nai-bubble-acts { display: flex; gap: 6px; margin: -2px 0 8px; }
-@media (max-width: 900px) { #nai-panel { display: none !important; } }
 
 /* ===== Find / replace bar + word count (Phase 5.3) ===== */
 .notes-find-bar {

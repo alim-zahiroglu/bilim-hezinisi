@@ -2526,11 +2526,12 @@ function aiMdToHtml(text) {
 }
 function raiMdToHtml(text) { return aiMdToHtml(text); }
 
-// ===== Notebook AI drawer + menu (Phase 4) — #nai-panel / nai* =====
+// ===== Notebook AI tab + menu — nai* =====
 // Mirrors the reader AI plumbing (window.AI.askStream / chatStream → main
-// process; CSP + STRICT model selection unchanged). The drawer markup and the
-// ✨ menu are rendered by notes.js; these functions drive them. The reader's
-// own AI panel (rai*) is left completely untouched.
+// process; CSP + STRICT model selection unchanged). The AI output is docked in
+// the right panel's AI tab (Phase 3); the ✨ menu and the tab markup are
+// rendered by notes.js; these functions drive them. The reader's own AI panel
+// (rai*) is left completely untouched.
 
 const NAI = {
   streamHandle: null, lastReq: null, mode: null, answerText: '',
@@ -2583,21 +2584,26 @@ function naiGate(fn) {
 
 // --- drawer open/close -------------------------------------------------------
 function naiOpenPanel(title) {
-  const p = document.getElementById('nai-panel'); if (!p) return;
-  p.classList.add('on');
-  const eh = document.getElementById('nai-edge'); if (eh) eh.style.display = 'none';
+  // Phase 3: the AI output is a tab in the right panel — switch to it (and
+  // expand the panel if collapsed) instead of opening a floating drawer.
+  if (typeof window.notesShowAiTab === 'function') window.notesShowAiTab();
   if (title) { const t = document.getElementById('nai-title'); if (t) t.textContent = '✨ ' + title; }
   naiCloseMenu();
 }
 function naiClose() {
+  // Abort any running stream and return to the offline قۇرئان tab.
   naiAbort();
-  const p = document.getElementById('nai-panel'); if (p) p.classList.remove('on');
-  const eh = document.getElementById('nai-edge'); if (eh) eh.style.display = 'flex';
+  if (typeof window.notesSetTab === 'function') window.notesSetTab('quran');
 }
-function naiReopen() {
-  const p = document.getElementById('nai-panel'); if (p) p.classList.add('on');
-  const eh = document.getElementById('nai-edge'); if (eh) eh.style.display = 'none';
-}
+// Gentle gate message inside the AI tab when AI is off / no key. Never affects
+// the offline Quran/Source tabs. Called by notes.js when the AI tab is shown.
+window.naiRefreshTab = async function () {
+  const gate = document.getElementById('nai-gate');
+  if (!gate) return;
+  let ok = false;
+  try { ok = await naiAvailable(); } catch (e) { ok = false; }
+  gate.style.display = ok ? 'none' : 'block';
+};
 function naiAbort() { if (NAI.streamHandle) { try { NAI.streamHandle.abort(); } catch (e) {} NAI.streamHandle = null; } }
 function naiStatus(msg) { const s = document.getElementById('nai-status'); if (s) { s.innerHTML = ''; s.textContent = msg || ''; } }
 function naiResult(html) { const r = document.getElementById('nai-result'); if (r) r.innerHTML = html; }
@@ -2645,7 +2651,8 @@ function naiStream(req, title, onDone) {
   let buffer = '', rafPending = false, finished = false;
   const tick = () => {
     rafPending = false;
-    const panel = document.getElementById('nai-panel');
+    // Scroll the right-panel content (the AI tab now lives inside it).
+    const panel = document.getElementById('notes-right-content');
     const stick = panel ? (panel.scrollHeight - panel.scrollTop - panel.clientHeight < 120) : false;
     if (r) r.innerHTML = aiMdToHtml(buffer);
     if (panel && stick) panel.scrollTop = panel.scrollHeight;
@@ -2824,7 +2831,7 @@ function naiRenderChat(streamingText) {
   if (streamingText != null) html += '<div class="nai-bubble nai-bubble-model">' + aiMdToHtml(streamingText) + '</div>';
   r.innerHTML = html;
   const a = naiActions(); if (a) { a.style.display = 'flex'; a.appendChild(naiBtn('سۆھبەتنى تازىلاش', naiChatClear)); }
-  const p = document.getElementById('nai-panel'); if (p) p.scrollTop = p.scrollHeight;
+  const p = document.getElementById('notes-right-content'); if (p) p.scrollTop = p.scrollHeight;
 }
 function naiChatSend() {
   const inp = document.getElementById('nai-chat-input'); if (!inp) return;
@@ -2900,7 +2907,6 @@ window.naiChatOpen = naiChatOpen;
 window.naiChatSend = naiChatSend;
 window.naiPageQA = naiPageQA;
 window.naiClose = naiClose;
-window.naiReopen = naiReopen;
 window.naiAbort = naiAbort;
 
 // Track the editor's last non-collapsed selection so the menu (which steals

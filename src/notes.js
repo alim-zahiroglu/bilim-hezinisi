@@ -86,19 +86,14 @@
     main.innerHTML = `<div class="notes-layout">
       ${renderNotesMainColumn()}
       ${renderRightPanel()}
-      ${renderNaiPanel()}
     </div>
     <!-- Floating edge handles to re-open a collapsed panel (Claude-desktop style).
-         RTL: notes list (#side) sits on the physical RIGHT, the قۇرئان/مەنبە
+         RTL: notes list (#side) sits on the physical RIGHT, the قۇرئان/مەنبە/AI
          panel on the physical LEFT — so pick the edge + arrow by physical side. -->
     <div class="notes-edge-handle notes-edge-right" id="notes-edge-list"
       onclick="window.notesToggleList()" title="خاتىرىلەر تىزىملىكىنى ئېچىش (Ctrl+\\)">❮</div>
     <div class="notes-edge-handle notes-edge-left" id="notes-edge-panel"
-      onclick="window.notesTogglePanel()" title="قۇرئان/مەنبە تاختىسىنى ئېچىش (Ctrl+Shift+\\)">❯</div>
-    <!-- Reopen handle for the AI Q&A drawer (offset so it never overlaps the
-         قۇرئان/مەنبە handle). Shown only when the drawer was closed. -->
-    <div class="notes-edge-handle notes-edge-left" id="nai-edge" style="top:34%;display:none"
-      onclick="window.naiReopen()" title="سۈنئىي ئىدراك تاختىسىنى ئېچىش">❯</div>`;
+      onclick="window.notesTogglePanel()" title="قۇرئان/مەنبە/AI تاختىسىنى ئېچىش (Ctrl+Shift+\\)">❯</div>`;
     applyCollapseState();
     if (_s().curDoc) {
       await mountEditor();
@@ -299,40 +294,42 @@
     </div>`;
   }
 
-  // Notebook AI drawer (Phase 4). Rendered as the LAST child of .notes-layout
-  // so in RTL it sits on the physical LEFT edge (where the owner wants the Q&A
-  // window). Hidden until an AI function opens it; the nai* logic lives in
-  // index.html (window.AI.askStream/chatStream → main process). Clones the
-  // reader drawer's look (#rai-panel).
-  function renderNaiPanel() {
-    return `<div id="nai-panel">
-      <div id="nai-header">
-        <span id="nai-title">✨ سۈنئىي ئىدراك</span>
-        <button type="button" class="nai-x" onclick="window.naiClose()" title="تاقاش">✕</button>
+  function renderRightPanel() {
+    const tab = _s().rightTab || 'quran';
+    const vis = (name) => (tab === name) ? '' : 'display:none';
+    // Three panes (قۇرئان · مەنبە · AI), all kept in the DOM and toggled by
+    // visibility (Phase 3). The AI tab is online; the other two are offline +
+    // DB-backed and never affected by the AI tab's state.
+    return `<div class="notes-right-panel">
+      <div class="notes-right-panel-tabs">
+        <div class="notes-right-panel-tab ${tab==='quran'?'active':''}" data-tab="quran" onclick="window.notesSetTab('quran')">📖 قۇرئان · تورسىز</div>
+        <div class="notes-right-panel-tab ${tab==='refs'?'active':''}" data-tab="refs" onclick="window.notesSetTab('refs')">🔗 مەنبە · تورسىز</div>
+        <div class="notes-right-panel-tab ${tab==='ai'?'active':''}" data-tab="ai" onclick="window.notesSetTab('ai')">✨ AI · تورلۇق</div>
       </div>
-      <div id="nai-body">
-        <div id="nai-status"></div>
-        <div id="nai-result"></div>
-        <div id="nai-extra" style="display:none"></div>
-        <div id="nai-actions" style="display:none"></div>
-        <div id="nai-chatbar" style="display:none">
-          <textarea id="nai-chat-input" placeholder="سوئالىڭىزنى يېزىڭ..."
-            onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();window.naiChatSend();}"></textarea>
-          <button type="button" onclick="window.naiChatSend()">ئەۋەت</button>
-        </div>
+      <div class="notes-right-panel-content" id="notes-right-content">
+        <div class="notes-right-pane" data-pane="quran" style="${vis('quran')}">${renderQuranPicker()}</div>
+        <div class="notes-right-pane" data-pane="refs" style="${vis('refs')}">${renderRefsEmpty()}</div>
+        <div class="notes-right-pane" data-pane="ai" style="${vis('ai')}">${renderAiTab()}</div>
       </div>
     </div>`;
   }
 
-  function renderRightPanel() {
-    const tab = _s().rightTab || 'quran';
-    return `<div class="notes-right-panel">
-      <div class="notes-right-panel-tabs">
-        <div class="notes-right-panel-tab ${tab==='quran'?'active':''}" data-tab="quran" onclick="window.notesSetTab('quran')">📖 قۇرئان</div>
-        <div class="notes-right-panel-tab ${tab==='refs'?'active':''}" data-tab="refs" onclick="window.notesSetTab('refs')">🔗 مەنبە</div>
-      </div>
-      <div class="notes-right-panel-content" id="notes-right-content">
-        ${tab === 'quran' ? renderQuranPicker() : renderRefsEmpty()}
+  // The AI output tab (Phase 3). Replaces the old floating #nai-panel; keeps the
+  // SAME element IDs so the index.html nai* logic targets them unchanged. It
+  // stays mounted (toggled with the other panes), so a running stream's target
+  // (#nai-result) never disappears on a tab switch.
+  function renderAiTab() {
+    return `<div id="nai-tab">
+      <div id="nai-title" class="nai-tab-title">✨ سۈنئىي ئىدراك</div>
+      <div id="nai-gate" class="nai-tab-gate" style="display:none">تەڭشەكتىن AI نى ئېچىڭ</div>
+      <div id="nai-status"></div>
+      <div id="nai-result"></div>
+      <div id="nai-extra" style="display:none"></div>
+      <div id="nai-actions" style="display:none"></div>
+      <div id="nai-chatbar" style="display:none">
+        <textarea id="nai-chat-input" placeholder="سوئالىڭىزنى يېزىڭ..."
+          onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();window.naiChatSend();}"></textarea>
+        <button type="button" onclick="window.naiChatSend()">ئەۋەت</button>
       </div>
     </div>`;
   }
@@ -370,16 +367,29 @@
 
   window.notesSetTab = function(tab) {
     _s().rightTab = tab;
-    // Use data-tab attribute (robust to tab order changes)
-    const tabs = document.querySelectorAll('.notes-right-panel-tab');
-    tabs.forEach(t => {
+    // Toggle visibility of the three panes (Phase 3) — never rebuild innerHTML,
+    // so a streaming AI answer in #nai-result survives a tab switch.
+    document.querySelectorAll('.notes-right-panel-tab').forEach(t => {
       t.classList.toggle('active', t.dataset.tab === tab);
     });
-    const content = document.getElementById('notes-right-content');
-    if (content) content.innerHTML = (tab === 'quran') ? renderQuranPicker() : renderRefsEmpty();
+    document.querySelectorAll('.notes-right-pane').forEach(p => {
+      p.style.display = (p.dataset.pane === tab) ? '' : 'none';
+    });
     if (tab === 'refs' && typeof window.notesRenderRefsPanel === 'function') {
       window.notesRenderRefsPanel();
     }
+    if (tab === 'ai' && typeof window.naiRefreshTab === 'function') {
+      window.naiRefreshTab();
+    }
+  };
+
+  // Open the AI tab (expanding the right panel if it was collapsed). Used by the
+  // index.html nai* logic in place of the retired floating drawer.
+  window.notesShowAiTab = function() {
+    if (_s().panelCollapsed && typeof window.notesTogglePanel === 'function') {
+      window.notesTogglePanel();
+    }
+    window.notesSetTab('ai');
   };
 
   window.notesToggleQuickTr = function(checked) {
@@ -1296,15 +1306,8 @@
 
   window.notesShowRefFor = function(word) {
     _s().refsFilter = word;
-    _s().rightTab = 'refs';
-
-    // Update right-panel UI: switch tabs, replace content with refs list container
-    const tabs = document.querySelectorAll('.notes-right-panel-tab');
-    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === 'refs'));
-    const rightContent = document.getElementById('notes-right-content');
-    if (rightContent) {
-      rightContent.innerHTML = `<div id="notes-refs-content" class="notes-ref-list"></div>`;
-    }
+    // Switch to the refs pane (kept mounted; #notes-refs-content lives in it).
+    window.notesSetTab('refs');
     renderRefsPanel();
   };
 
