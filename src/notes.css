@@ -341,6 +341,17 @@
 button.notes-ai-item:hover, .notes-ai-has-sub:hover > .notes-ai-item-label {
   background: var(--ab); color: var(--at);
 }
+/* Leading bullet on the four TOP-LEVEL menu items only. The submenu parents
+   carry both .notes-ai-item AND .notes-ai-has-sub, so target button.notes-ai-
+   item for the plain items + the label for the has-sub items — never the
+   submenu buttons, and never a double bullet. */
+#notes-ai-flyout > button.notes-ai-item::before,
+#notes-ai-flyout > .notes-ai-has-sub > .notes-ai-item-label::before {
+  content: '\25CF';            /* ● */
+  color: var(--am);
+  font-size: 1.05em;
+  margin-inline-end: 8px;
+}
 .notes-ai-has-sub { position: relative; }
 .notes-ai-submenu {
   display: none; position: absolute; top: 0; inset-inline-end: 100%;
