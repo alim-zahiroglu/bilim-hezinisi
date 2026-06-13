@@ -316,6 +316,93 @@
   cursor: pointer;
 }
 
+/* ===== Notebook AI menu + drawer (Phase 4) ===== */
+.notes-ai-menu-wrap { position: relative; margin-inline-start: auto; }
+.notes-ai-trigger {
+  background: var(--ab); color: var(--at); border: 0.5px solid var(--am);
+  border-radius: var(--radius2); padding: 4px 10px; cursor: pointer;
+  font-family: var(--jf); font-size: 12px; white-space: nowrap;
+}
+.notes-ai-trigger:hover { background: var(--am); color: #fff; }
+.notes-ai-flyout {
+  display: none; position: absolute; top: 100%; inset-inline-start: 0;
+  margin-top: 4px; min-width: 250px; z-index: 200;
+  background: var(--bg2); border: 0.5px solid var(--border2);
+  border-radius: var(--radius2); box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+  padding: 4px; direction: rtl;
+}
+.notes-ai-flyout.on { display: block; }
+.notes-ai-item, .notes-ai-item-label {
+  display: block; width: 100%; text-align: right; box-sizing: border-box;
+  background: none; border: none; color: var(--text);
+  font-family: var(--jf); font-size: 12.5px; padding: 8px 10px;
+  border-radius: var(--radius2); cursor: pointer; white-space: nowrap;
+}
+button.notes-ai-item:hover, .notes-ai-has-sub:hover > .notes-ai-item-label {
+  background: var(--ab); color: var(--at);
+}
+.notes-ai-has-sub { position: relative; }
+.notes-ai-submenu {
+  display: none; position: absolute; top: 0; inset-inline-end: 100%;
+  margin-inline-end: 2px; min-width: 215px;
+  background: var(--bg2); border: 0.5px solid var(--border2);
+  border-radius: var(--radius2); box-shadow: 0 6px 24px rgba(0,0,0,0.18); padding: 4px;
+}
+.notes-ai-has-sub:hover > .notes-ai-submenu { display: block; }
+.notes-ai-submenu button {
+  display: block; width: 100%; text-align: right; box-sizing: border-box;
+  background: none; border: none; color: var(--text);
+  font-family: var(--jf); font-size: 12px; padding: 7px 10px;
+  border-radius: var(--radius2); cursor: pointer; white-space: nowrap;
+}
+.notes-ai-submenu button:hover { background: var(--ab); color: var(--at); }
+
+/* Drawer — cloned from #rai-panel, on the physical LEFT (last flex child). */
+#nai-panel {
+  width: 340px; background: var(--bg2);
+  border-right: 0.5px solid var(--border);
+  overflow-y: auto; flex-shrink: 0; display: none; flex-direction: column;
+  transition: width .18s ease;
+}
+#nai-panel.on { display: flex; }
+#nai-header {
+  padding: 12px; border-bottom: 0.5px solid var(--border);
+  font-size: 13px; font-weight: 600; color: var(--text);
+  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+}
+#nai-header .nai-x { background: none; border: none; font-size: 16px; color: var(--text2); cursor: pointer; }
+#nai-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+#nai-status { font-size: 11px; color: var(--text2); min-height: 16px; display: flex; align-items: center; gap: 8px; }
+#nai-result { font-family: var(--jf); font-size: 13px; line-height: 1.9; color: var(--text); direction: rtl; }
+#nai-result h1, #nai-result h2, #nai-result h3, #nai-result h4 { font-size: 13.5px; font-weight: 700; color: var(--at); margin: 8px 0 4px; }
+#nai-result p { margin-bottom: 6px; }
+#nai-result ul, #nai-result ol { margin: 4px 18px 6px 0; padding: 0; }
+#nai-result li { margin-bottom: 3px; }
+#nai-result code { font-family: monospace; font-size: 11px; background: var(--bg3); padding: 1px 4px; border-radius: 3px; }
+#nai-actions { gap: 6px; flex-wrap: wrap; padding-top: 6px; border-top: 0.5px solid var(--border); }
+#nai-extra textarea {
+  width: 100%; box-sizing: border-box; padding: 8px; border: 0.5px solid var(--border);
+  border-radius: var(--radius2); font-family: var(--jf); font-size: 12px;
+  color: var(--text); background: var(--bg); direction: rtl; resize: vertical;
+}
+#nai-chatbar { gap: 6px; align-items: flex-end; border-top: 0.5px solid var(--border); padding-top: 8px; }
+#nai-chatbar textarea {
+  flex: 1; min-height: 44px; padding: 8px; box-sizing: border-box;
+  border: 0.5px solid var(--border); border-radius: var(--radius2);
+  font-family: var(--jf); font-size: 12px; color: var(--text);
+  background: var(--bg); direction: rtl; resize: vertical;
+}
+#nai-chatbar button {
+  background: var(--am); color: #fff; border: none; border-radius: var(--radius2);
+  padding: 8px 12px; cursor: pointer; font-family: var(--jf); font-size: 12px; white-space: nowrap;
+}
+.nai-chat-empty { color: var(--text3); font-size: 12px; text-align: center; padding: 20px; }
+.nai-bubble { padding: 8px 10px; border-radius: var(--radius2); margin-bottom: 6px; font-size: 12.5px; line-height: 1.8; direction: rtl; }
+.nai-bubble-user { background: var(--ab); color: var(--at); margin-inline-start: 20px; }
+.nai-bubble-model { background: var(--bg); border: 0.5px solid var(--border); color: var(--text); margin-inline-end: 12px; }
+.nai-bubble-acts { display: flex; gap: 6px; margin: -2px 0 8px; }
+@media (max-width: 900px) { #nai-panel { display: none !important; } }
+
 /* Spell check — wavy red underline + suggestion popup */
 .spell-error {
   text-decoration: wavy underline #D32F2F;

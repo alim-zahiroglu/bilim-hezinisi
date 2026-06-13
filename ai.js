@@ -243,6 +243,16 @@ const SYSTEM_BASE =
   '- جاۋابنى Markdown شەكلىدە تۇزۇپ، تۈرلەرنى ## كىچىك سەرلەۋھە بىلەن\n' +
   '  ئاجراتسىڭىز بولىدۇ.';
 
+// System instruction for the free-form notebook chatbot (Phase 4 — NOT tied to
+// the library). Sent as Gemini `systemInstruction`, so it is NOT overridden by
+// SYSTEM_BASE.
+const CHAT_SYSTEM =
+  'سىز بىلىمى كەڭ، سەمىمىي ياردەمچىسىز. قائىدىلەر:\n' +
+  '- سوئال قايسى تىلدا بولسا شۇ تىلدا، ئادەتتە ئۇيغۇر تىلىدا (ئۇيغۇر يېزىقىدا) جاۋاب بېرىڭ.\n' +
+  '- ھەدىس، ئايەت ياكى ئالىم سۆزىنى نەقىل قىلسىڭىز، پەقەت راست مەنبەدىنلا نەقىل قىلىڭ؛ مەنبەسىنى (توپلام، كىتاب) كۆرسىتىڭ. ئېنىق بىلمىسىڭىز «بۇ ھەقتە ئېنىق مەنبە تاپالمىدىم» دەڭ — ئويدۇرماڭ.\n' +
+  '- جاۋابنى Markdown بىلەن رەتلىك تۈزۈڭ.\n' +
+  '- ھېكايە، شېئىر قاتارلىق ئىجادىي تەلەپلەرنى خۇشاللىق بىلەن ئورۇنداڭ.';
+
 const PROMPTS = {
   hadith: {
     role: 'سىز ئىسلام ھەدىس ئىلمى بويىچە چوڭقۇر ساۋادلىق ئالىمسىز.',
@@ -416,11 +426,45 @@ function buildTranslationPrompt(from, to, text) {
   ].join('\n');
 }
 
+// Uyghur proofreading prompt (Phase 4). Fixes ONLY spelling/orthography/
+// punctuation on numbered ⟦N⟧ segments, returning the SAME markers in order.
+// English meta-instructions (Gemini follows them most reliably); the content
+// rules are Uyghur-specific.
+function buildProofreadPrompt(segmented) {
+  return [
+'TASK: Proofread modern Uyghur text (Arabic script). Fix ONLY spelling, orthography, and punctuation. Output the corrected text and NOTHING else.',
+'',
+'You are an expert editor of modern standard Uyghur (ھازىرقى زامان ئۇيغۇر ئەدەبىي تىلى) with complete command of the current official orthography and punctuation rules.',
+'',
+'The input consists of numbered segments. Each segment starts with a marker like ⟦1⟧, ⟦2⟧ … on its own line region. You MUST return the SAME segments with the SAME markers in the SAME order — one corrected segment per marker, no segments added, merged, split, or dropped.',
+'',
+'CORRECT (and nothing more):',
+'1. Spelling per current Uyghur orthography: correct hemze (ئ) usage at word/syllable starts; correct Uyghur vowel letters (ا ە ې ى و ۇ ۆ ۈ); vowel-harmony-consistent suffix forms; commonly confused consonants (ق/ك، غ/خ، ھ/خ) judged by the intended word.',
+'2. Character-level intrusions from Arabic/Persian keyboards: ی→ي، ك variants→ك، ه used as a vowel→ە، ة→ت where the word is Uyghur. Never "correct" genuinely Arabic quotations (Quran, hadith, duas) — leave Arabic passages exactly as written.',
+'3. Punctuation per Uyghur rules: sentence-final «.», question «؟», exclamation «!», comma «،», semicolon «؛», colon «:», quotes «...» for quotations; no space BEFORE punctuation, exactly one space AFTER; paired punctuation balanced.',
+'4. Spacing: collapse double spaces; fix spaces around parentheses and dashes; fix wrongly joined or split words ONLY when the correct form is unambiguous.',
+'',
+'NEVER:',
+'- Rephrase, reorder, summarize, expand, or "improve" wording. Word choice belongs to the author.',
+'- Change names, numbers, dates, Latin-script words, or Arabic quotations.',
+'- Add or remove sentences. If a word is ambiguous and context does not decide it, leave it unchanged.',
+'',
+'OUTPUT: only the corrected segments with their ⟦N⟧ markers. No preamble, no explanations, no diff.',
+'',
+'INPUT SEGMENTS:',
+String(segmented || '')
+  ].join('\n');
+}
+
 function buildPrompt(opts) {
   // Translation bypasses SYSTEM_BASE entirely.
   if (opts.type === 'translation' && opts.translateFrom && opts.translateTo) {
     return buildTranslationPrompt(opts.translateFrom, opts.translateTo,
       String(opts.context || '').slice(0, MAX_CONTEXT_CHARS));
+  }
+  // Uyghur proofread — segmented ⟦N⟧ protocol, also bypasses SYSTEM_BASE.
+  if (opts.type === 'uy_proofread') {
+    return buildProofreadPrompt(String(opts.context || '').slice(0, MAX_CONTEXT_CHARS));
   }
   const type = opts.type || 'general';
   const tmpl = PROMPTS[type] || PROMPTS.general;
@@ -1165,6 +1209,74 @@ function translateStream(opts, onChunk, onDone, onError) {
 }
 
 // ----------------------------------------------------------------
+// Free-form chat (Phase 4) — multi-turn Gemini chat, NOT tied to the library.
+// `messages` is [{ role:'user'|'model', text }]; mapped to Gemini `contents`
+// with CHAT_SYSTEM as the systemInstruction. Same SSE core (streamOnce),
+// timeout, STRICT model selection, and quota/unavailable error mapping as the
+// rest of the file. Callback contract matches askStream.
+// ----------------------------------------------------------------
+function chatStream(messages, onChunk, onDone, onError) {
+  onChunk = onChunk || function () {};
+  onDone  = onDone  || function () {};
+  onError = onError || function () {};
+
+  let aborted = false;
+  let controller = null;
+  function abort() { aborted = true; if (controller) { try { controller.abort(); } catch (_) {} } }
+
+  (async function run() {
+    const key = loadKey();
+    if (!key) { onError({ ok: false, noKey: true, error: 'Gemini API ئاچقۇچى تەڭشەلمىگەن. تەڭشەكلەرگە كىرىپ ئاچقۇچىڭىزنى قوشۇڭ.' }); return; }
+    if (!isEnabled()) { onError({ ok: false, error: 'سۈنئىي ئىدراك ئىقتىدارى تەڭشەكلەردە ئېتىلگەن.' }); return; }
+
+    // Cap history to the last 20 turns; clamp each turn's length.
+    const msgs = Array.isArray(messages) ? messages.slice(-20) : [];
+    const contents = msgs
+      .filter(function (m) { return m && m.text; })
+      .map(function (m) { return { role: m.role === 'model' ? 'model' : 'user', parts: [{ text: String(m.text).slice(0, 8000) }] }; });
+    if (!contents.length) { onError({ ok: false, error: 'سوئال يوق.' }); return; }
+    if (aborted) return;
+
+    const model = getModel();
+    const body = {
+      systemInstruction: { parts: [{ text: CHAT_SYSTEM }] },
+      contents: contents,
+      generationConfig: { temperature: 0.7, topP: 0.9, thinkingConfig: { thinkingBudget: 0 }, maxOutputTokens: 4096 },
+      safetySettings: SAFETY_SETTINGS
+    };
+
+    try {
+      const r = await streamOnce(model, key, body,
+        function (d) { if (!aborted) onChunk(d); },
+        function () { return aborted; },
+        function (c) { controller = c; });
+      if (aborted) return;
+      if (!r.text || !r.text.trim()) { onError({ ok: false, error: 'جاۋاب چىقمىدى. قايتا سىناڭ.' }); return; }
+      bumpUsage();
+      logTokenUsage(model, r.usage, false);
+      onDone(r.text, model, r.usage);
+    } catch (e) {
+      if (aborted || (e && e.aborted)) return;
+      // Streaming failed → one non-stream retry on the SAME model (STRICT).
+      try {
+        const json = await callGemini(model, key, body);
+        if (aborted) return;
+        const t = extractText(json);
+        if (t) { bumpUsage(); onChunk(t); onDone(t, model, json.usageMetadata || null); return; }
+        onError({ ok: false, error: 'جاۋاب چىقمىدى. قايتا سىناڭ.' });
+      } catch (e2) {
+        if (aborted) return;
+        if (isModelUnavailableError(e) || isModelUnavailableError(e2)) { onError({ ok: false, error: modelUnavailableMessage(model) }); return; }
+        if (isQuotaError(e) || isQuotaError(e2)) { onError({ ok: false, quotaExhausted: true, error: 'ھەقسىز ئىشلىتىش ھەققىڭىز توشۇپ قالدى. بىردەمدىن كېيىن قايتا سىناڭ.' }); return; }
+        onError({ ok: false, error: 'سوراش مەغلۇپ بولدى: ' + ((e2 && e2.message) || (e && e.message) || 'نامەلۇم خاتالىق') });
+      }
+    }
+  })();
+
+  return { abort: abort };
+}
+
+// ----------------------------------------------------------------
 // Public surface (consumed by main.js IPC handlers; the renderer-side
 // detectType/typeLabel/MAX_CONTEXT_CHARS helpers arrive in src/ai-client.js)
 // ----------------------------------------------------------------
@@ -1182,6 +1294,7 @@ module.exports = {
   ask: ask,
   askStream: askStream,
   translateStream: translateStream,
+  chatStream: chatStream,
   test: test,
   DEFAULT_MODEL: DEFAULT_MODEL,
   MODEL_FALLBACKS: MODEL_FALLBACKS,

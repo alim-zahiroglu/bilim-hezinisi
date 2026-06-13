@@ -1240,6 +1240,36 @@ ipcMain.handle('ai-ask-stream', (event, requestId, opts) => {
   }
 });
 
+// Free-form notebook chat stream (Phase 4). Same per-request channel protocol
+// as ai-ask-stream and the SAME ai-cancel for aborting. `messages` is an array
+// of { role:'user'|'model', text }.
+ipcMain.handle('ai-chat-stream', (event, requestId, messages) => {
+  const id = String(requestId || '');
+  if (!id) return { ok: false, error: 'requestId يوق' };
+  const wc = event.sender;
+  const safeSend = (channel, payload) => {
+    try { if (!wc.isDestroyed()) wc.send(channel, payload); } catch (_) {}
+  };
+  try {
+    const handle = ai.chatStream(messages || [],
+      (delta) => safeSend('ai-chunk-' + id, delta),
+      (fullText, model, usage) => {
+        activeAiStreams.delete(id);
+        safeSend('ai-done-' + id, { text: fullText, model: model, usage: usage || null });
+      },
+      (err) => {
+        activeAiStreams.delete(id);
+        safeSend('ai-error-' + id, err || { ok: false, error: 'نامەلۇم خاتالىق' });
+      }
+    );
+    activeAiStreams.set(id, handle);
+    return { ok: true, started: true };
+  } catch (e) {
+    activeAiStreams.delete(id);
+    return { ok: false, error: (e && e.message) || 'نامەلۇم خاتالىق' };
+  }
+});
+
 ipcMain.handle('ai-cancel', (event, requestId) => {
   const id = String(requestId || '');
   const handle = activeAiStreams.get(id);

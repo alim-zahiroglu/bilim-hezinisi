@@ -172,5 +172,50 @@ contextBridge.exposeInMainWorld('AIBridge', {
         ipcRenderer.invoke('ai-cancel', requestId).catch(() => {});
       }
     };
+  },
+
+  // Free-form notebook chat (Phase 4). Same callback contract + per-request
+  // channels as askStream, but sends a `messages` array and hits
+  // 'ai-chat-stream'. Cancellation reuses 'ai-cancel'.
+  chatStream: (messages, onChunk, onDone, onError) => {
+    const requestId = 'ch' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    const chunkCh = 'ai-chunk-' + requestId;
+    const doneCh = 'ai-done-' + requestId;
+    const errCh = 'ai-error-' + requestId;
+
+    const onChunkWrap = (event, delta) => {
+      try { if (onChunk) onChunk(delta); } catch (_) {}
+    };
+    const cleanup = () => {
+      ipcRenderer.removeListener(chunkCh, onChunkWrap);
+      ipcRenderer.removeAllListeners(doneCh);
+      ipcRenderer.removeAllListeners(errCh);
+    };
+    ipcRenderer.on(chunkCh, onChunkWrap);
+    ipcRenderer.once(doneCh, (event, result) => {
+      cleanup();
+      try { if (onDone) onDone(result && result.text, result && result.model, result && result.usage); } catch (_) {}
+    });
+    ipcRenderer.once(errCh, (event, err) => {
+      cleanup();
+      try { if (onError) onError(err); } catch (_) {}
+    });
+
+    ipcRenderer.invoke('ai-chat-stream', requestId, messages).then((res) => {
+      if (res && res.ok === false) {
+        cleanup();
+        try { if (onError) onError(res); } catch (_) {}
+      }
+    }).catch((err) => {
+      cleanup();
+      try { if (onError) onError({ ok: false, error: String((err && err.message) || err) }); } catch (_) {}
+    });
+
+    return {
+      abort: () => {
+        cleanup();
+        ipcRenderer.invoke('ai-cancel', requestId).catch(() => {});
+      }
+    };
   }
 });

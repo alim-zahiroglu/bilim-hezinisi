@@ -86,6 +86,7 @@
     main.innerHTML = `<div class="notes-layout">
       ${renderNotesMainColumn()}
       ${renderRightPanel()}
+      ${renderNaiPanel()}
     </div>
     <!-- Floating edge handles to re-open a collapsed panel (Claude-desktop style).
          RTL: notes list (#side) sits on the physical RIGHT, the قۇرئان/مەنبە
@@ -93,7 +94,11 @@
     <div class="notes-edge-handle notes-edge-right" id="notes-edge-list"
       onclick="window.notesToggleList()" title="خاتىرىلەر تىزىملىكىنى ئېچىش (Ctrl+\\)">❮</div>
     <div class="notes-edge-handle notes-edge-left" id="notes-edge-panel"
-      onclick="window.notesTogglePanel()" title="قۇرئان/مەنبە تاختىسىنى ئېچىش (Ctrl+Shift+\\)">❯</div>`;
+      onclick="window.notesTogglePanel()" title="قۇرئان/مەنبە تاختىسىنى ئېچىش (Ctrl+Shift+\\)">❯</div>
+    <!-- Reopen handle for the AI Q&A drawer (offset so it never overlaps the
+         قۇرئان/مەنبە handle). Shown only when the drawer was closed. -->
+    <div class="notes-edge-handle notes-edge-left" id="nai-edge" style="top:34%;display:none"
+      onclick="window.naiReopen()" title="سۈنئىي ئىدراك تاختىسىنى ئېچىش">❯</div>`;
     applyCollapseState();
     if (_s().curDoc) {
       await mountEditor();
@@ -186,12 +191,38 @@
       <div class="notes-toggle-bar">
         <label class="notes-toggle-label">
           <input type="checkbox" id="notes-toggle-refscan" onchange="window.notesToggleRefScan(this.checked)">
-          <span>كىتاب ئامبىرىدىن ئىزدەش</span>
+          <span>كىتاب ئامبىرىدىن ئىزدەش (تورسىز)</span>
         </label>
         <label class="notes-toggle-label">
           <input type="checkbox" id="notes-toggle-spellcheck" onchange="window.notesToggleSpellCheck(this.checked)">
-          <span>ئىملانى تەكشۈرۈش</span>
+          <span>ئىملانى تەكشۈرۈش (تورسىز)</span>
         </label>
+        <div class="notes-ai-menu-wrap" id="notes-ai-menu-wrap">
+          <button type="button" class="notes-ai-trigger" id="notes-ai-trigger" onclick="window.naiToggleMenu(event)">✨ سۈنئىي ئىدراك ئىقتىدارلىرى (Gemini API — تور ھالىتىدە) ▾</button>
+          <div class="notes-ai-flyout" id="notes-ai-flyout">
+            <div class="notes-ai-item notes-ai-has-sub">
+              <span class="notes-ai-item-label">تەرجىمە قىلىش ◂</span>
+              <div class="notes-ai-submenu">
+                <button type="button" onclick="window.naiTranslate('uy','ar')">ئۇيغۇرچىدىن ئەرەبچىگە</button>
+                <button type="button" onclick="window.naiTranslate('ar','uy')">ئەرەبچىدىن ئۇيغۇرچىگە</button>
+                <button type="button" onclick="window.naiTranslate('uy','en')">ئۇيغۇرچىدىن ئىنگلىزچىگە</button>
+                <button type="button" onclick="window.naiTranslate('en','uy')">ئىنگلىزچىدىن ئۇيغۇرچىگە</button>
+                <button type="button" onclick="window.naiTranslate('uy','tr')">ئۇيغۇرچىدىن تۈركچىگە</button>
+                <button type="button" onclick="window.naiTranslate('tr','uy')">تۈركچىدىن ئۇيغۇرچىگە</button>
+              </div>
+            </div>
+            <button type="button" class="notes-ai-item" onclick="window.naiProofread()">تىنىش بەلگىلىرى ۋە ئىملانى توغرىلاش</button>
+            <button type="button" class="notes-ai-item" onclick="window.naiChatOpen()">سۈنئىي ئىدراكتىن سوراش</button>
+            <div class="notes-ai-item notes-ai-has-sub">
+              <span class="notes-ai-item-label">كۆرۈنمە بەت ھەققىدە سوئال سوراش ◂</span>
+              <div class="notes-ai-submenu">
+                <button type="button" onclick="window.naiPageQA('summary')">خۇلاسىلەش</button>
+                <button type="button" onclick="window.naiPageQA('explain')">ئاددىي چۈشەندۈرۈش</button>
+                <button type="button" onclick="window.naiPageQA('other')">باشقا...</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="notes-editor-wrap">
         <div class="notes-editor" id="notes-editor"
@@ -244,6 +275,31 @@
       <div class="notes-toolbar-group">
         <button onclick="window.notesExec('removeFormat')" title="فورماتنى ئۆچۈرۈش">✕</button>
         <button onclick="window.notesSaveNow()" title="ھازىرلا ساقلاش (Ctrl+S)">💾</button>
+      </div>
+    </div>`;
+  }
+
+  // Notebook AI drawer (Phase 4). Rendered as the LAST child of .notes-layout
+  // so in RTL it sits on the physical LEFT edge (where the owner wants the Q&A
+  // window). Hidden until an AI function opens it; the nai* logic lives in
+  // index.html (window.AI.askStream/chatStream → main process). Clones the
+  // reader drawer's look (#rai-panel).
+  function renderNaiPanel() {
+    return `<div id="nai-panel">
+      <div id="nai-header">
+        <span id="nai-title">✨ سۈنئىي ئىدراك</span>
+        <button type="button" class="nai-x" onclick="window.naiClose()" title="تاقاش">✕</button>
+      </div>
+      <div id="nai-body">
+        <div id="nai-status"></div>
+        <div id="nai-result"></div>
+        <div id="nai-extra" style="display:none"></div>
+        <div id="nai-actions" style="display:none"></div>
+        <div id="nai-chatbar" style="display:none">
+          <textarea id="nai-chat-input" placeholder="سوئالىڭىزنى يېزىڭ..."
+            onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();window.naiChatSend();}"></textarea>
+          <button type="button" onclick="window.naiChatSend()">ئەۋەت</button>
+        </div>
       </div>
     </div>`;
   }
@@ -403,8 +459,10 @@
     if (spCb) spCb.checked = !!_s().spellCheckEnabled;
 
     // Switching documents (re-mounting the editor) always disarms the format
-    // painter — its captured format belonged to the previous editor.
+    // painter (its captured format belonged to the previous editor) and aborts
+    // any in-flight notebook AI stream that targeted the old drawer.
     fpDisarm();
+    if (typeof window.naiAbort === 'function') window.naiAbort();
 
     editorEl = document.getElementById('notes-editor');
     if (!editorEl) return;

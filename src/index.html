@@ -981,9 +981,10 @@ function setMode(mode) {
   if (mode !== 'notes') {
     const side = document.getElementById('side');
     if (side) side.classList.remove('side-collapsed');
-    // Also disarm the format painter (Phase 3) — its captured format is
-    // tied to the notebook editor.
+    // Also disarm the format painter (Phase 3) and abort any in-flight
+    // notebook AI stream (Phase 4) — both are tied to the notebook editor.
     if (typeof window.notesDisarmFormatPainter === 'function') window.notesDisarmFormatPainter();
+    if (typeof window.naiAbort === 'function') window.naiAbort();
   }
   // Hide the library top search bar in non-library modes
   const hd = document.getElementById('hd');
@@ -2476,7 +2477,8 @@ function raiRenderError(res) {
 // Minimal markdown → HTML for AI answers (the prompts ask for Markdown with
 // ## headings). Escape first, transform the small md subset, then pass the
 // result through the existing DOMPurify wrapper — defense in depth.
-function raiMdToHtml(text) {
+// Shared by the reader AI panel (rai*) AND the notebook AI drawer (nai*).
+function aiMdToHtml(text) {
   let h = sanitize(String(text || ''));
   h = h.replace(/^#{1,6}[ \t]+(.+)$/gm, '<h4>$1</h4>');
   h = h.replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>');
@@ -2499,6 +2501,402 @@ function raiMdToHtml(text) {
   }).join('');
   return window.SafeHTML ? SafeHTML.sanitize(h) : h;
 }
+function raiMdToHtml(text) { return aiMdToHtml(text); }
+
+// ===== Notebook AI drawer + menu (Phase 4) — #nai-panel / nai* =====
+// Mirrors the reader AI plumbing (window.AI.askStream / chatStream → main
+// process; CSP + STRICT model selection unchanged). The drawer markup and the
+// ✨ menu are rendered by notes.js; these functions drive them. The reader's
+// own AI panel (rai*) is left completely untouched.
+
+const NAI = {
+  streamHandle: null, lastReq: null, mode: null, answerText: '',
+  scopeWasSelection: false, selText: '', selRange: null,
+  lastSel: null, proofreadBlocks: null, proofreadMap: null, pageNoteText: ''
+};
+
+async function naiAvailable() {
+  try { return !!(window.AI && (await window.AI.isEnabled()) && (await window.AI.hasApiKey())); }
+  catch (e) { return false; }
+}
+function naiEditor() {
+  return (window.NotesInternal && window.NotesInternal.getEditor && window.NotesInternal.getEditor())
+      || document.getElementById('notes-editor');
+}
+function naiMarkDirty() { if (typeof window.notesMarkDirty === 'function') window.notesMarkDirty(); }
+function naiBtn(label, fn) {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'hbtn'; b.textContent = label;
+  b.addEventListener('click', fn);
+  return b;
+}
+function naiPlaceCaretEnd(el) {
+  try { el.focus(); const sel = window.getSelection(); const r = document.createRange();
+    r.selectNodeContents(el); r.collapse(false); sel.removeAllRanges(); sel.addRange(r); } catch (e) {}
+}
+
+// --- menu (flyout) -----------------------------------------------------------
+function naiToggleMenu(ev) {
+  if (ev) ev.stopPropagation();
+  const f = document.getElementById('notes-ai-flyout');
+  if (!f) return;
+  if (f.classList.contains('on')) { f.classList.remove('on'); return; }
+  naiAvailable().then(ok => {
+    if (!ok) {
+      toast('ئالدى بىلەن تەڭشەكلەردىن Gemini API ئاچقۇچىنى تەڭشەڭ', 'e');
+      showSettings();
+      return;
+    }
+    f.classList.add('on');
+  });
+}
+function naiCloseMenu() { const f = document.getElementById('notes-ai-flyout'); if (f) f.classList.remove('on'); }
+function naiGate(fn) {
+  naiAvailable().then(ok => {
+    if (!ok) { toast('ئالدى بىلەن تەڭشەكلەردىن Gemini API ئاچقۇچىنى تەڭشەڭ', 'e'); showSettings(); return; }
+    fn();
+  });
+}
+
+// --- drawer open/close -------------------------------------------------------
+function naiOpenPanel(title) {
+  const p = document.getElementById('nai-panel'); if (!p) return;
+  p.classList.add('on');
+  const eh = document.getElementById('nai-edge'); if (eh) eh.style.display = 'none';
+  if (title) { const t = document.getElementById('nai-title'); if (t) t.textContent = '✨ ' + title; }
+  naiCloseMenu();
+}
+function naiClose() {
+  naiAbort();
+  const p = document.getElementById('nai-panel'); if (p) p.classList.remove('on');
+  const eh = document.getElementById('nai-edge'); if (eh) eh.style.display = 'flex';
+}
+function naiReopen() {
+  const p = document.getElementById('nai-panel'); if (p) p.classList.add('on');
+  const eh = document.getElementById('nai-edge'); if (eh) eh.style.display = 'none';
+}
+function naiAbort() { if (NAI.streamHandle) { try { NAI.streamHandle.abort(); } catch (e) {} NAI.streamHandle = null; } }
+function naiStatus(msg) { const s = document.getElementById('nai-status'); if (s) { s.innerHTML = ''; s.textContent = msg || ''; } }
+function naiResult(html) { const r = document.getElementById('nai-result'); if (r) r.innerHTML = html; }
+function naiActions() { const a = document.getElementById('nai-actions'); if (a) { a.innerHTML = ''; a.style.display = 'none'; } return a; }
+function naiExtra(html) {
+  const ex = document.getElementById('nai-extra'); if (!ex) return null;
+  if (html == null) { ex.innerHTML = ''; ex.style.display = 'none'; }
+  else { ex.innerHTML = html; ex.style.display = 'block'; }
+  return ex;
+}
+function naiChatbar(show) { const c = document.getElementById('nai-chatbar'); if (c) c.style.display = show ? 'flex' : 'none'; }
+function naiBusy(onStop) {
+  const s = document.getElementById('nai-status'); if (!s) return;
+  s.innerHTML = '';
+  const t = document.createElement('span'); t.textContent = 'جاۋاب يېزىلىۋاتىدۇ…';
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'hbtn';
+  b.style.cssText = 'padding:2px 10px;font-size:11px;margin-inline-start:8px'; b.textContent = 'توختىتىش';
+  b.addEventListener('click', () => { if (typeof onStop === 'function') onStop(); });
+  s.appendChild(t); s.appendChild(b);
+}
+function naiRenderError(res) {
+  const r = document.getElementById('nai-result'); if (!r) return;
+  r.innerHTML = '';
+  const raw = (res && res.error) || 'سوراش مەغلۇپ بولدى. قايتا سىناڭ.';
+  const p = document.createElement('p');
+  p.style.cssText = 'color:var(--text2);font-size:12px;margin-bottom:8px';
+  p.textContent = raw.replace(/^HTTP\s+\d+\s*—\s*/, '');
+  r.appendChild(p);
+  if (typeof NAI.lastReq === 'function') {
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'hbtn';
+    btn.textContent = 'قايتا سىناش';
+    btn.addEventListener('click', () => { if (typeof NAI.lastReq === 'function') NAI.lastReq(); });
+    r.appendChild(btn);
+  }
+}
+
+// Generic one-shot streaming runner (ports raiExecute), rAF-debounced.
+function naiStream(req, title, onDone) {
+  if (!window.AI) return;
+  naiAbort();
+  naiOpenPanel(title);
+  naiActions(); naiExtra(null); naiChatbar(false);
+  const r = document.getElementById('nai-result'); if (r) r.innerHTML = '';
+  NAI.answerText = '';
+  let buffer = '', rafPending = false, finished = false;
+  const tick = () => {
+    rafPending = false;
+    const panel = document.getElementById('nai-panel');
+    const stick = panel ? (panel.scrollHeight - panel.scrollTop - panel.clientHeight < 120) : false;
+    if (r) r.innerHTML = aiMdToHtml(buffer);
+    if (panel && stick) panel.scrollTop = panel.scrollHeight;
+  };
+  const schedule = () => { if (!rafPending) { rafPending = true; requestAnimationFrame(tick); } };
+  const finalize = (full) => {
+    if (finished) return; finished = true; NAI.streamHandle = null;
+    NAI.answerText = String(full || '');
+    if (r) r.innerHTML = aiMdToHtml(NAI.answerText);
+    if (NAI.answerText && typeof onDone === 'function') onDone();
+  };
+  naiBusy(() => { naiAbort(); naiStatus('توختىتىلدى'); if (buffer) finalize(buffer); });
+  NAI.streamHandle = window.AI.askStream(req,
+    (delta) => { buffer += delta; schedule(); },
+    (full, model) => { finalize(full); naiStatus(model ? ('مودېل: ' + model) : ''); },
+    (res) => { NAI.streamHandle = null; finished = true; naiStatus(''); naiRenderError(res); }
+  );
+}
+
+// --- (1) Translation ---------------------------------------------------------
+function naiScope() {
+  const ed = naiEditor(); if (!ed) return { text: '', selection: false };
+  const sel = window.getSelection();
+  if (sel && !sel.isCollapsed && sel.anchorNode && ed.contains(sel.anchorNode)) {
+    return { text: sel.toString().trim(), selection: true, range: sel.getRangeAt(0).cloneRange() };
+  }
+  if (NAI.lastSel && NAI.lastSel.text && NAI.lastSel.text.trim()) {
+    return { text: NAI.lastSel.text.trim(), selection: true, range: NAI.lastSel.range };
+  }
+  return { text: (ed.innerText || '').trim(), selection: false };
+}
+function naiTranslate(from, to) {
+  naiGate(() => {
+    const scope = naiScope();
+    if (!scope.text) { naiOpenPanel('تەرجىمە'); naiStatus('تەرجىمە قىلىدىغان تېكىست تېپىلمىدى.'); return; }
+    NAI.scopeWasSelection = scope.selection;
+    NAI.selRange = scope.range || null;
+    NAI.selText = scope.text;
+    NAI.mode = 'translate';
+    NAI.lastReq = () => naiTranslate(from, to);
+    naiStream({ type: 'translation', translateFrom: from, translateTo: to, context: scope.text }, 'تەرجىمە', () => {
+      const a = naiActions(); if (!a) return; a.style.display = 'flex';
+      a.appendChild(naiBtn('كۆچۈرۈش', naiCopy));
+      a.appendChild(naiBtn('نۇقتىغا قىستۇرۇش', naiInsertAtCaret));
+      if (NAI.scopeWasSelection) a.appendChild(naiBtn('تاللانغاننى ئالماشتۇرۇش', naiReplaceSelection));
+    });
+  });
+}
+async function naiCopy() {
+  if (!NAI.answerText) return;
+  try { await navigator.clipboard.writeText(NAI.answerText); toast('كۆچۈرۈلدى', 's'); }
+  catch (e) { toast('كۆچۈرۈشتە خاتالىق', 'e'); }
+}
+function naiInsertAtCaret() {
+  const ed = naiEditor(); if (!ed || !NAI.answerText) return;
+  ed.focus();
+  const sel = window.getSelection();
+  if (!sel.rangeCount || !ed.contains(sel.anchorNode)) naiPlaceCaretEnd(ed);
+  document.execCommand('insertText', false, NAI.answerText);
+  naiMarkDirty();
+  toast('قىستۇرۇلدى', 's');
+}
+function naiReplaceSelection() {
+  const ed = naiEditor(); if (!ed || !NAI.answerText) return;
+  ed.focus();
+  const sel = window.getSelection();
+  if (NAI.selRange) { try { sel.removeAllRanges(); sel.addRange(NAI.selRange); } catch (e) {} }
+  if (!sel.rangeCount || sel.isCollapsed) { toast('ئالماشتۇرىدىغان تاللاش يوق', 'e'); return; }
+  document.execCommand('insertText', false, NAI.answerText);   // single undo step
+  naiMarkDirty();
+  toast('ئالماشتۇرۇلدى', 's');
+}
+
+// --- (2) Punctuation & spelling correction (segmented ⟦N⟧) -------------------
+function naiCollectBlocks(ed) {
+  const selector = 'p, div, h1, h2, h3, h4, h5, h6, li, blockquote';
+  const blocks = Array.from(ed.querySelectorAll(selector)).filter(el => {
+    const txt = (el.textContent || '').trim();
+    if (!txt) return false;
+    return !el.querySelector(selector);   // leaf text blocks only (avoid nesting double-count)
+  });
+  if (!blocks.length && (ed.textContent || '').trim()) return [ed];
+  return blocks;
+}
+function naiParseSegments(text) {
+  const map = {};
+  const re = /⟦(\d+)⟧/g; let m; const marks = [];
+  while ((m = re.exec(text))) marks.push({ num: parseInt(m[1], 10), start: m.index, end: re.lastIndex });
+  for (let i = 0; i < marks.length; i++) {
+    const seg = marks[i], next = marks[i + 1];
+    map[seg.num] = text.slice(seg.end, next ? next.start : text.length).trim();
+  }
+  return map;
+}
+function naiProofread() {
+  naiGate(() => {
+    const ed = naiEditor(); if (!ed) return;
+    const blocks = naiCollectBlocks(ed);
+    if (!blocks.length) { naiOpenPanel('ئىملا تۈزىتىش'); naiStatus('تۈزىتىدىغان تېكىست يوق.'); return; }
+    if (!confirm('تۈزىتىشتە ئابزاس ئىچىدىكى ئىنچىكە فورماتلار ئاددىيلىشىشى مۇمكىن. داۋاملاشتۇرامسىز؟')) return;
+    NAI.proofreadBlocks = blocks;
+    NAI.mode = 'proofread';
+    NAI.lastReq = () => naiProofread();
+    const segmented = blocks.map((b, i) => '⟦' + (i + 1) + '⟧ ' + (b.textContent || '').replace(/\s+/g, ' ').trim()).join('\n');
+    naiAbort();
+    naiOpenPanel('ئىملا تۈزىتىش'); naiActions(); naiExtra(null); naiChatbar(false);
+    naiResult(''); naiStatus('تەكشۈرۈلۈۋاتىدۇ…');
+    let buffer = '';
+    naiBusy(() => { naiAbort(); naiStatus('توختىتىلدى'); });
+    NAI.streamHandle = window.AI.askStream({ type: 'uy_proofread', context: segmented },
+      (delta) => { buffer += delta; const r = document.getElementById('nai-result'); if (r) r.textContent = buffer; },
+      (full, model) => { NAI.streamHandle = null; naiStatus(model ? ('مودېل: ' + model) : ''); naiProofreadResult(full); },
+      (res) => { NAI.streamHandle = null; naiStatus(''); naiRenderError(res); }
+    );
+  });
+}
+function naiProofreadResult(full) {
+  const blocks = NAI.proofreadBlocks || [];
+  const map = naiParseSegments(full);
+  // Every block index must be present — never apply partially.
+  let ok = Object.keys(map).length >= blocks.length;
+  for (let i = 1; i <= blocks.length && ok; i++) if (typeof map[i] !== 'string') ok = false;
+  if (!ok) {
+    naiResult('<p style="color:var(--text2);font-size:12px">جاۋاب فورماتى خاتا — قايتا سىناڭ</p>');
+    const a = naiActions(); if (a) { a.style.display = 'flex'; a.appendChild(naiBtn('قايتا سىناش', () => naiProofread())); }
+    return;
+  }
+  NAI.proofreadMap = map;
+  const preview = blocks.map((b, i) => '<p>' + sanitize(map[i + 1]) + '</p>').join('');
+  naiResult('<div style="font-size:11px;color:var(--text3);margin-bottom:6px">تۈزىتىلگەن نۇسخا (كۆرۈنۈش):</div>' + preview);
+  const a = naiActions(); if (a) {
+    a.style.display = 'flex';
+    a.appendChild(naiBtn('قوللىنىش', naiProofreadApply));
+    a.appendChild(naiBtn('ۋاز كېچىش', naiClose));
+  }
+}
+function naiProofreadApply() {
+  const blocks = NAI.proofreadBlocks || [], map = NAI.proofreadMap || {};
+  if (!blocks.length) return;
+  for (let i = 0; i < blocks.length; i++) {
+    const c = map[i + 1];
+    if (typeof c === 'string') blocks[i].textContent = c;   // formatting collapses to block base (disclosed)
+  }
+  naiMarkDirty();
+  toast('تۈزىتىش قوللىنىلدى', 's');
+  naiClose();
+}
+
+// --- (3) Free chatbot --------------------------------------------------------
+function naiChatOpen() {
+  naiGate(() => {
+    NAI.mode = 'chat';
+    naiOpenPanel('سۈنئىي ئىدراكتىن سوراش');
+    naiExtra(null); naiChatbar(true);
+    naiRenderChat();
+    const inp = document.getElementById('nai-chat-input'); if (inp) inp.focus();
+  });
+}
+function naiRenderChat(streamingText) {
+  const r = document.getElementById('nai-result'); if (!r) return;
+  const hist = (S.notes.chatHistory = S.notes.chatHistory || []);
+  let html = '';
+  if (!hist.length && streamingText == null) html = '<div class="nai-chat-empty">سوئالىڭىزنى يېزىپ باشلاڭ</div>';
+  for (let i = 0; i < hist.length; i++) {
+    const m = hist[i]; const who = m.role === 'model' ? 'model' : 'user';
+    html += '<div class="nai-bubble nai-bubble-' + who + '">'
+          + (who === 'model' ? aiMdToHtml(m.text) : sanitize(m.text).replace(/\n/g, '<br>'))
+          + '</div>';
+    if (who === 'model') {
+      html += '<div class="nai-bubble-acts">'
+            + '<button type="button" class="hbtn" onclick="window.naiChatCopy(' + i + ')">كۆچۈرۈش</button>'
+            + '<button type="button" class="hbtn" onclick="window.naiChatInsert(' + i + ')">خاتىرىگە قىستۇرۇش</button>'
+            + '</div>';
+    }
+  }
+  if (streamingText != null) html += '<div class="nai-bubble nai-bubble-model">' + aiMdToHtml(streamingText) + '</div>';
+  r.innerHTML = html;
+  const a = naiActions(); if (a) { a.style.display = 'flex'; a.appendChild(naiBtn('سۆھبەتنى تازىلاش', naiChatClear)); }
+  const p = document.getElementById('nai-panel'); if (p) p.scrollTop = p.scrollHeight;
+}
+function naiChatSend() {
+  const inp = document.getElementById('nai-chat-input'); if (!inp) return;
+  const q = (inp.value || '').trim(); if (!q) return;
+  const hist = (S.notes.chatHistory = S.notes.chatHistory || []);
+  hist.push({ role: 'user', text: q });
+  inp.value = '';
+  naiRenderChat();
+  const messages = hist.slice(-20).map(m => ({ role: m.role, text: m.text }));
+  naiAbort();
+  let buffer = '', rafPending = false;
+  const schedule = () => { if (!rafPending) { rafPending = true; requestAnimationFrame(() => { rafPending = false; naiRenderChat(buffer); }); } };
+  naiBusy(() => { naiAbort(); if (buffer) { hist.push({ role: 'model', text: buffer }); } naiStatus('توختىتىلدى'); naiRenderChat(); });
+  NAI.streamHandle = window.AI.chatStream(messages,
+    (delta) => { buffer += delta; schedule(); },
+    (full, model) => { NAI.streamHandle = null; hist.push({ role: 'model', text: full || buffer }); naiStatus(model ? ('مودېل: ' + model) : ''); naiRenderChat(); },
+    (res) => { NAI.streamHandle = null; naiStatus(''); const r = document.getElementById('nai-result'); if (r) { const e = document.createElement('div'); e.className = 'nai-bubble nai-bubble-model'; e.style.color = 'var(--text2)'; e.textContent = (res && res.error) || 'سوراش مەغلۇپ بولدى'; r.appendChild(e); } }
+  );
+}
+function naiChatClear() { S.notes.chatHistory = []; naiRenderChat(); }
+window.naiChatCopy = async function (i) {
+  const m = (S.notes.chatHistory || [])[i]; if (!m) return;
+  try { await navigator.clipboard.writeText(m.text); toast('كۆچۈرۈلدى', 's'); } catch (e) { toast('خاتالىق', 'e'); }
+};
+window.naiChatInsert = function (i) {
+  const m = (S.notes.chatHistory || [])[i]; if (!m) return;
+  const ed = naiEditor(); if (!ed) return;
+  ed.focus();
+  const sel = window.getSelection();
+  if (!sel.rangeCount || !ed.contains(sel.anchorNode)) naiPlaceCaretEnd(ed);
+  document.execCommand('insertText', false, m.text);
+  naiMarkDirty(); toast('قىستۇرۇلدى', 's');
+};
+
+// --- (4) Ask about the current page ------------------------------------------
+function naiPageQA(kind) {
+  naiGate(() => {
+    const ed = naiEditor(); const noteText = (ed && ed.innerText || '').trim();
+    if (!noteText) { toast('خاتىرە قۇرۇق', 'e'); return; }
+    NAI.pageNoteText = noteText;
+    if (kind === 'other') {
+      naiOpenPanel('كۆرۈنمە بەت ھەققىدە سوئال');
+      naiActions(); naiChatbar(false); naiResult('');
+      naiExtra('<textarea id="nai-page-q" placeholder="بۇ بەت ھەققىدە سوئالىڭىزنى يېزىڭ..." style="width:100%;min-height:60px;box-sizing:border-box"></textarea>'
+             + '<button type="button" class="hbtn p" style="margin-top:6px" onclick="window.naiPageAsk()">سوراش</button>');
+      const t = document.getElementById('nai-page-q'); if (t) t.focus();
+      return;
+    }
+    const q = (kind === 'summary') ? 'بۇ تېكىستنىڭ خۇلاسىسىنى تۈزۈپ بەرگىن' : 'بۇ تېكىستنى ئاددىي قىلىپ چۈشەندۈرۈپ بەرگىن';
+    NAI.lastReq = () => naiPageQA(kind);
+    naiStream({ type: 'general', context: noteText, question: q }, 'كۆرۈنمە بەت', naiPageActions);
+  });
+}
+window.naiPageAsk = function () {
+  const t = document.getElementById('nai-page-q'); const q = (t && t.value || '').trim();
+  if (!q) { toast('سوئال يېزىڭ', 'e'); return; }
+  const noteText = NAI.pageNoteText || ((naiEditor() || {}).innerText || '').trim();
+  if (!noteText) { toast('خاتىرە قۇرۇق', 'e'); return; }
+  NAI.lastReq = () => { const tt = document.getElementById('nai-page-q'); if (tt) tt.value = q; window.naiPageAsk(); };
+  naiStream({ type: 'general', context: noteText, question: q }, 'كۆرۈنمە بەت', naiPageActions);
+};
+function naiPageActions() {
+  const a = naiActions(); if (!a) return; a.style.display = 'flex';
+  a.appendChild(naiBtn('كۆچۈرۈش', naiCopy));
+  a.appendChild(naiBtn('نۇقتىغا قىستۇرۇش', naiInsertAtCaret));
+}
+
+// Expose the menu/drawer entry points used by notes.js-rendered markup.
+window.naiToggleMenu = naiToggleMenu;
+window.naiTranslate = naiTranslate;
+window.naiProofread = naiProofread;
+window.naiChatOpen = naiChatOpen;
+window.naiChatSend = naiChatSend;
+window.naiPageQA = naiPageQA;
+window.naiClose = naiClose;
+window.naiReopen = naiReopen;
+window.naiAbort = naiAbort;
+
+// Track the editor's last non-collapsed selection so the menu (which steals
+// focus) can still translate/replace the text the user had selected. One
+// document-level listener, added once.
+document.addEventListener('selectionchange', () => {
+  if (S.mode !== 'notes') return;
+  const ed = document.getElementById('notes-editor'); if (!ed) return;
+  const sel = window.getSelection();
+  if (sel && !sel.isCollapsed && sel.anchorNode && ed.contains(sel.anchorNode)) {
+    try { NAI.lastSel = { text: sel.toString(), range: sel.getRangeAt(0).cloneRange() }; } catch (e) {}
+  }
+});
+// Close the flyout on outside click.
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('notes-ai-menu-wrap');
+  const f = document.getElementById('notes-ai-flyout');
+  if (f && f.classList.contains('on') && wrap && !wrap.contains(e.target)) f.classList.remove('on');
+});
 
 // --- example chips / answer actions ------------------------------------------
 
@@ -3409,6 +3807,9 @@ function setupKeyboardShortcuts() {
       }
     }
     if (e.key === 'Escape') {
+      // Notes AI flyout closes first if open.
+      const naiFly = document.getElementById('notes-ai-flyout');
+      if (naiFly && naiFly.classList.contains('on')) { naiFly.classList.remove('on'); return; }
       // If the reader AI panel is open, Escape closes IT first (not the reader).
       const raip = document.getElementById('rai-panel');
       if (raip && raip.classList.contains('on') && document.getElementById('rdr').classList.contains('on')) {
