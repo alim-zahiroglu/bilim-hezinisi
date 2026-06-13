@@ -742,6 +742,22 @@ function modelUnavailableMessage(model) {
   return '«' + model + '» مودېلى ئىشلىمىدى. ئۇ ھەقسىز ئاچقۇچتا يوق بولۇشى مۇمكىن (مەسىلەن Pro مودېلى billing تەلەپ قىلىدۇ). باشقا مودېل تاللاڭ ياكى Google billing نى ئېچىڭ.';
 }
 
+// Was the request rejected because Google's model is momentarily BUSY (HTTP
+// 503 UNAVAILABLE / 500), not because of the key? A 503 means auth succeeded
+// and the key is valid — the model was overloaded. An invalid key returns
+// 400/403, never 503, so this is checked AFTER isModelUnavailableError (which
+// owns 403/404) but it never overlaps with it. Lets test()/ask()/… show a
+// "try again shortly" message instead of a hard failure or a fake key error.
+function isServerBusyError(err) {
+  if (!err) return false;
+  if (err.status === 503 || err.status === 500) return true;
+  return /\bHTTP 50[03]\b|UNAVAILABLE|overloaded|high demand/i.test(String(err.message || ''));
+}
+
+// Friendly Uyghur message for a momentarily busy model (used by ask/askStream/
+// translateStream/chatStream — test() has its own key-reassuring variant).
+const SERVER_BUSY_MESSAGE = 'مودېل ھازىر ئالدىراش (بەك كۆپ تەلەپ بار). بىردەمدىن كېيىن قايتا سىناڭ.';
+
 // Did Gemini reject the request because the INPUT was too large (token/size
 // limit)? Used to drive the reactive "book too large" fallback — never a
 // pre-emptive guess. We require a size-related phrase, and for a bare HTTP
@@ -858,6 +874,11 @@ async function ask(opts) {
     return { ok: false, error: modelUnavailableMessage(requestedModel) };
   }
 
+  // Model momentarily busy (HTTP 503/500) — not a quota problem, just retry.
+  if (isServerBusyError(lastErr)) {
+    return { ok: false, busy: true, error: SERVER_BUSY_MESSAGE };
+  }
+
   // Map 429 ("quota exhausted" or "rate limited") onto a friendly Uyghur
   // message. Both Gemini's per-minute rate limit and its per-day free-tier
   // quota return 429; we treat both the same from the user's perspective —
@@ -910,6 +931,12 @@ async function test() {
     // explanation; a genuine 429 keeps the friendly quota message.
     if (isModelUnavailableError(e)) {
       return { ok: false, message: modelUnavailableMessage(model) };
+    }
+    // HTTP 503/500 means the key is VALID — auth succeeded, the model is just
+    // busy. Reassure the user the key is saved; don't render a hard ✗.
+    if (isServerBusyError(e)) {
+      return { ok: false, busy: true,
+        message: '✓ ئاچقۇچىڭىز توغرا قوبۇل قىلىندى. بىراق «' + model + '» مودېلى ھازىر بەك ئالدىراش (HTTP 503). ئاچقۇچىڭىز ساقلاندى — بىردەمدىن كېيىن قايتا سىناڭ.' };
     }
     if (isQuotaError(e)) {
       return { ok: false, message: 'ھەقسىز ئىشلىتىش ھەققىڭىز توشۇپ قالدى. بىردەمدىن كېيىن قايتا سىناڭ.' };
@@ -1065,6 +1092,13 @@ function askStream(opts, onChunk, onDone, onError) {
     // surface the explicit Uyghur message now.
     if (isModelUnavailableError(lastErr)) {
       onError({ ok: false, error: modelUnavailableMessage(requestedModel) });
+      return;
+    }
+
+    // Model momentarily busy (HTTP 503/500) — don't re-send the whole body via
+    // ask(); just tell the user to retry shortly.
+    if (isServerBusyError(lastErr)) {
+      onError({ ok: false, busy: true, error: SERVER_BUSY_MESSAGE });
       return;
     }
 
@@ -1242,6 +1276,7 @@ function translateStream(opts, onChunk, onDone, onError) {
         } catch (e2) {
           if (aborted) return;
           if (isSizeError(e) || isSizeError(e2)) { onError({ ok: false, tooLargeFallback: true, error: 'بۇ تېكىست بەك چوڭ بولۇپ، API نى بىراقلا قوبۇل قىلمىدى.' }); return; }
+          if (isServerBusyError(e) || isServerBusyError(e2)) { onError({ ok: false, busy: true, error: SERVER_BUSY_MESSAGE }); return; }
           if (isQuotaError(e) || isQuotaError(e2)) { onError({ ok: false, quotaExhausted: true, error: 'ھەقسىز ئىشلىتىش ھەققىڭىز توشۇپ قالدى. بىردەمدىن كېيىن قايتا سىناڭ.' }); return; }
           onError({ ok: false, error: 'تەرجىمە مەغلۇپ بولدى: ' + ((e2 && e2.message) || (e && e.message) || 'نامەلۇم خاتالىق') }); return;
         }
@@ -1317,6 +1352,7 @@ function chatStream(messages, onChunk, onDone, onError) {
       } catch (e2) {
         if (aborted) return;
         if (isModelUnavailableError(e) || isModelUnavailableError(e2)) { onError({ ok: false, error: modelUnavailableMessage(model) }); return; }
+        if (isServerBusyError(e) || isServerBusyError(e2)) { onError({ ok: false, busy: true, error: SERVER_BUSY_MESSAGE }); return; }
         if (isQuotaError(e) || isQuotaError(e2)) { onError({ ok: false, quotaExhausted: true, error: 'ھەقسىز ئىشلىتىش ھەققىڭىز توشۇپ قالدى. بىردەمدىن كېيىن قايتا سىناڭ.' }); return; }
         onError({ ok: false, error: 'سوراش مەغلۇپ بولدى: ' + ((e2 && e2.message) || (e && e.message) || 'نامەلۇم خاتالىق') });
       }

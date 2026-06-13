@@ -2149,6 +2149,7 @@ async function aiTestConnection() {
   const out = document.getElementById('aiTestResult');
   if (!(await window.AI.hasApiKey())) { toast('ئالدى بىلەن ئاچقۇچ ساقلاڭ', 'e'); return; }
   btn.disabled = true;
+  out.style.color = '';
   out.textContent = 'سىنىلىۋاتىدۇ...';
   try {
     const r = await window.AI.test();
@@ -2168,6 +2169,21 @@ async function aiTestConnection() {
         sel.value = model;
       }
       document.getElementById('aiUsage').textContent = 'بۈگۈن ئىشلىتىلگەن: ' + (await window.AI.getTodayUsage());
+    } else if (r && r.busy) {
+      // HTTP 503/500: auth SUCCEEDED (the key is valid) — the model is just
+      // busy. Warn in amber (not a hard ✗) and offer a one-click retry.
+      out.innerHTML = '';
+      const span = document.createElement('span');
+      span.textContent = '⚠ ' + (r.message || '');
+      span.style.color = '#B8860B';
+      out.appendChild(span);
+      const retry = document.createElement('button');
+      retry.type = 'button'; retry.className = 'hbtn';
+      retry.textContent = 'قايتا سىناش';
+      retry.style.cssText = 'margin-inline-start:8px;padding:2px 10px;font-size:11px';
+      retry.addEventListener('click', () => aiTestConnection());
+      out.appendChild(retry);
+      toast('ئاچقۇچ ساقلاندى — مودېل ھازىر ئالدىراش', 'i');
     } else {
       out.textContent = '✗ ' + ((r && r.message) || 'سىناش مەغلۇپ بولدى');
       toast('سىناش مەغلۇپ بولدى', 'e');
