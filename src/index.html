@@ -680,6 +680,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
           <button type="button" class="rai-quick-btn" onclick="raiQuick('explain')">ئاددىي چۈشەندۈرۈش</button>
           <button type="button" class="rai-quick-btn" onclick="raiQuick('translation')">تەرجىمە ▾</button>
           <button type="button" class="rai-quick-btn" onclick="raiQuick('term_explain')">ئاتالغۇ چۈشەندۈرۈش</button>
+          <button type="button" id="rai-spellfix-btn" class="rai-quick-btn" style="display:none;grid-column:1/-1" onclick="raiSpellfixStart()">✨ Gemini ئىملا تۈزىتىش (تور)</button>
         </div>
         <div id="rai-tr-menu">
           <button type="button" class="rai-tr-opt" onclick="raiTranslate('uy','ar')">ئۇيغۇرچىدىن ئەرەبچىگە</button>
@@ -2241,6 +2242,17 @@ async function refreshAiReaderUI() {
   const btn = document.getElementById('aiReaderBtn');
   if (btn) btn.style.display = on ? '' : 'none';
   if (!on) { closeAiPanel(); hideAiSelChip(); }
+  raiUpdateSpellfixVisibility();
+}
+
+// The in-reader Gemini spell-correction is PDF-only (it must never touch text-
+// origin books) and needs AI. Show its menu button only when both hold.
+function raiCurrentBookIsPdf() {
+  return !!(S.curB && String(S.curB.format || '').toUpperCase() === 'PDF');
+}
+function raiUpdateSpellfixVisibility() {
+  const b = document.getElementById('rai-spellfix-btn');
+  if (b) b.style.display = (RAI.available && raiCurrentBookIsPdf()) ? '' : 'none';
 }
 
 function raiOnReaderOpen() {
@@ -2272,6 +2284,7 @@ function openAiPanel(scope, forcedText) {
   if (!RAI.available) return;
   document.getElementById('rai-panel').classList.add('on');
   RAI.typeUserSet = false;
+  raiUpdateSpellfixVisibility();
   raiSetScope(scope || (raiLiveSelection() ? 'selection' : 'page'), forcedText);
 }
 
@@ -3130,6 +3143,170 @@ function raiSaveNote() {
   renderNotesPanel();
   saveData();
   toast('ئىزاھات قوشۇلدى', 's');
+}
+
+// ===== In-reader Gemini spell-correction (PDF books ONLY) =====
+// Deep Uyghur orthography correction of the CURRENT reader page via the shared
+// ocr_cleanup prompt. Previewed in #rai-panel only; applied to the page (and
+// persisted, re-indexing FTS) only on explicit confirm / manual-edit. Strictly
+// PDF-origin books so it can never corrupt text-origin books. In-memory backups
+// give per-page revert + a one-time full-book snapshot.
+const RAI_SF = { orig: '', corrected: '', pageIdx: -1, bookBackup: {}, pageBackup: {} };
+
+function raiSfBtn(label, fn, primary) {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'hbtn' + (primary ? ' p' : '');
+  b.textContent = label; b.addEventListener('click', fn);
+  return b;
+}
+// Local ⟦N⟧ segment parser (self-contained — no cross-block dependency).
+function raiParseSeg(text) {
+  const map = {}; const re = /⟦(\d+)⟧/g; let m; const marks = [];
+  while ((m = re.exec(text))) marks.push({ n: parseInt(m[1], 10), s: m.index, e: re.lastIndex });
+  for (let i = 0; i < marks.length; i++) {
+    const seg = marks[i], nx = marks[i + 1];
+    map[seg.n] = text.slice(seg.e, nx ? nx.s : text.length).trim();
+  }
+  return map;
+}
+
+async function raiSpellfixStart() {
+  if (!RAI.available || !raiCurrentBookIsPdf()) return;
+  const b = S.curB;
+  const pageIdx = S.readerPage - 1;
+  const pageText = (S.readerPages && S.readerPages[pageIdx]) || '';
+  if (!pageText.trim()) { raiStatus('بۇ بەت قۇرۇق.'); return; }
+
+  // One-time full-book snapshot (hard recovery) before the first edit this session.
+  if (!(b.id in RAI_SF.bookBackup)) RAI_SF.bookBackup[b.id] = S.readerContent;
+  RAI_SF.pageIdx = pageIdx;
+  RAI_SF.orig = pageText;
+
+  raiAbort();
+  raiHideTranslateMenu();
+  const acts = document.getElementById('rai-answer-actions'); if (acts) acts.style.display = 'none';
+  const ans = document.getElementById('rai-answer'); if (ans) ans.innerHTML = '';
+  raiStatus('تۈزىتىلىۋاتىدۇ…');
+
+  // Segment the page into ⟦N⟧ paragraphs for the ocr_cleanup protocol.
+  const paras = pageText.split(/\n{2,}/);
+  const segmented = paras.map((p, i) => '⟦' + (i + 1) + '⟧ ' + String(p).replace(/[ \t]+/g, ' ').trim()).join('\n');
+
+  let res;
+  try { res = await window.AI.ask({ type: 'ocr_cleanup', context: segmented }); }
+  catch (e) { res = { ok: false, error: (e && e.message) || '' }; }
+  raiStatus('');
+  if (!res || !res.ok) {
+    if (ans) {
+      ans.innerHTML = '';
+      const p = document.createElement('p');
+      p.style.cssText = 'color:var(--text2);font-size:12px;margin-bottom:8px';
+      p.textContent = String((res && res.error) || 'تۈزىتىش مەغلۇپ بولدى. قايتا سىناڭ.').replace(/^HTTP\s+\d+\s*—\s*/, '');
+      ans.appendChild(p);
+      ans.appendChild(raiSfBtn('قايتا سىناش', raiSpellfixStart));
+    }
+    return;
+  }
+
+  // Rebuild the corrected page from the ⟦N⟧ markers (fallback: strip markers).
+  const map = raiParseSeg(res.text);
+  let ok = Object.keys(map).length >= paras.length;
+  for (let i = 1; i <= paras.length && ok; i++) if (typeof map[i] !== 'string') ok = false;
+  let corrected;
+  if (ok) { const arr = []; for (let i = 1; i <= paras.length; i++) arr.push(map[i]); corrected = arr.join('\n\n'); }
+  else { corrected = res.text.replace(/⟦\d+⟧/g, '').trim(); }
+
+  RAI_SF.corrected = corrected;
+  raiSpellfixRenderPreview(corrected);
+}
+
+function raiSpellfixRenderPreview(text) {
+  const ans = document.getElementById('rai-answer'); if (!ans) return;
+  ans.innerHTML = '';
+  const label = document.createElement('div');
+  label.style.cssText = 'font-size:11px;color:var(--text3);margin-bottom:6px';
+  label.textContent = 'تۈزىتىلگەن نۇسخا (بۇ بەت ئۈچۈن — كۆرۈنۈش):';
+  ans.appendChild(label);
+  const box = document.createElement('div');
+  box.style.cssText = 'font-size:13px;line-height:1.9;direction:rtl;white-space:pre-wrap;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius2);padding:8px;max-height:300px;overflow:auto';
+  box.textContent = text;
+  ans.appendChild(box);
+  const acts = document.createElement('div');
+  acts.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:8px';
+  acts.appendChild(raiSfBtn('قولدا تەھرىرلەش', raiSpellfixManualEdit));
+  acts.appendChild(raiSfBtn('بەت يۈزىگە جەزملەش', raiSpellfixApplyConfirm, true));
+  const key = (S.curB ? S.curB.id : '') + ':' + RAI_SF.pageIdx;
+  if (key in RAI_SF.pageBackup) acts.appendChild(raiSfBtn('ئەسلىگە قايتۇرۇش', raiSpellfixRevert));
+  ans.appendChild(acts);
+}
+
+function raiSpellfixManualEdit() {
+  const ans = document.getElementById('rai-answer'); if (!ans) return;
+  ans.innerHTML = '';
+  const lab = document.createElement('div');
+  lab.style.cssText = 'font-size:11px;color:var(--text3);margin-bottom:4px';
+  lab.textContent = 'تۈزىتىلگەن (تەھرىرلىگىلى بولىدۇ):';
+  ans.appendChild(lab);
+  const ta = document.createElement('textarea');
+  ta.id = 'rai-sf-edit';
+  ta.style.cssText = 'width:100%;box-sizing:border-box;min-height:140px;direction:rtl;font-family:var(--jf);font-size:13px;line-height:1.8;padding:8px;border:0.5px solid var(--border);border-radius:var(--radius2);background:var(--bg);color:var(--text);resize:vertical';
+  ta.value = RAI_SF.corrected;
+  ans.appendChild(ta);
+  const ol = document.createElement('div');
+  ol.style.cssText = 'font-size:11px;color:var(--text3);margin:8px 0 4px';
+  ol.textContent = 'ئەسلىي بەت (سېلىشتۇرۇش ئۈچۈن):';
+  ans.appendChild(ol);
+  const ob = document.createElement('div');
+  ob.style.cssText = 'font-size:12px;line-height:1.8;direction:rtl;white-space:pre-wrap;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius2);padding:8px;max-height:160px;overflow:auto;color:var(--text2)';
+  ob.textContent = RAI_SF.orig;
+  ans.appendChild(ob);
+  const acts = document.createElement('div');
+  acts.style.cssText = 'display:flex;gap:6px;margin-top:8px';
+  acts.appendChild(raiSfBtn('جەزملەش', () => {
+    const v = (document.getElementById('rai-sf-edit') || {}).value || '';
+    raiSpellfixApply(v);
+  }, true));
+  acts.appendChild(raiSfBtn('بىكار قىلىش', () => raiSpellfixRenderPreview(RAI_SF.corrected)));
+  ans.appendChild(acts);
+  ta.focus();
+}
+
+function raiSpellfixApplyConfirm() {
+  if (!confirm('دىققەت: ئەسلىي بەت يۈزىدىكى ئىملا مۇشۇنىڭغا ئالمىشىدۇ.')) return;
+  raiSpellfixApply(RAI_SF.corrected);
+}
+
+async function raiSpellfixApply(text) {
+  const b = S.curB;
+  if (!b || RAI_SF.pageIdx < 0 || !S.readerPages || RAI_SF.pageIdx >= S.readerPages.length) return;
+  text = String(text == null ? '' : text);
+  const key = b.id + ':' + RAI_SF.pageIdx;
+  // Per-page backup BEFORE replacing (enables revert).
+  if (!(key in RAI_SF.pageBackup)) RAI_SF.pageBackup[key] = S.readerPages[RAI_SF.pageIdx];
+  S.readerPages[RAI_SF.pageIdx] = text;
+  // Lossless rebuild — the page split joined paragraphs with '\n', so do the same.
+  S.readerContent = S.readerPages.join('\n');
+  try { await window.electron.dbSaveContent(b.id, S.readerContent); }
+  catch (e) { toast('ساقلاشتا خاتالىق', 'e'); return; }
+  if (S.readerPage - 1 === RAI_SF.pageIdx) renderReaderPage();
+  toast('بەت تۈزىتىلدى ۋە ساقلاندى', 's');
+  RAI_SF.corrected = text;
+  raiSpellfixRenderPreview(text);   // re-render so «ئەسلىگە قايتۇرۇش» appears
+}
+
+async function raiSpellfixRevert() {
+  const b = S.curB; if (!b) return;
+  const key = b.id + ':' + RAI_SF.pageIdx;
+  if (!(key in RAI_SF.pageBackup)) { toast('ئەسلىي نۇسخا يوق', 'i'); return; }
+  S.readerPages[RAI_SF.pageIdx] = RAI_SF.pageBackup[key];
+  S.readerContent = S.readerPages.join('\n');
+  try { await window.electron.dbSaveContent(b.id, S.readerContent); }
+  catch (e) { toast('ساقلاشتا خاتالىق', 'e'); return; }
+  delete RAI_SF.pageBackup[key];
+  if (S.readerPage - 1 === RAI_SF.pageIdx) renderReaderPage();
+  toast('بەت ئەسلىگە قايتۇرۇلدى', 's');
+  const ans = document.getElementById('rai-answer'); if (ans) ans.innerHTML = '';
+  raiStatus('ئەسلىگە قايتۇرۇلدى.');
 }
 
 // --- floating selection chip ---------------------------------------------------
