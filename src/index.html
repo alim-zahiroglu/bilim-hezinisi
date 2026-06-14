@@ -183,7 +183,7 @@ mark.reader-hit-flash { animation: readerHitFlash 1.5s ease-out 1; }
 #rai-quick { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .rai-quick-btn { padding: 8px 6px; border: 0.5px solid var(--border2); background: var(--bg); border-radius: var(--radius2); font-size: 12px; font-family: var(--jf); color: var(--text); cursor: pointer; transition: all .12s; }
 .rai-quick-btn:hover { border-color: var(--am); background: var(--ab); color: var(--at); }
-#rai-tr-menu { display: none; flex-wrap: wrap; gap: 5px; padding: 8px; border: 0.5px solid var(--border); border-radius: var(--radius2); background: var(--bg); }
+#rai-tr-menu, #rai-term-menu { display: none; flex-wrap: wrap; gap: 5px; padding: 8px; border: 0.5px solid var(--border); border-radius: var(--radius2); background: var(--bg); }
 .rai-tr-opt { padding: 5px 9px; border: 0.5px solid var(--border2); background: var(--bg2); border-radius: 12px; font-size: 11px; font-family: var(--jf); color: var(--text); cursor: pointer; }
 .rai-tr-opt:hover { border-color: var(--am); color: var(--at); background: var(--ab); }
 #rai-question { width: 100%; padding: 8px; border: 0.5px solid var(--border); border-radius: var(--radius2); font-family: var(--jf); font-size: 12px; color: var(--text); background: var(--bg); direction: rtl; resize: vertical; min-height: 56px; outline: none; }
@@ -677,9 +677,9 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
         </div>
         <div id="rai-quick">
           <button type="button" class="rai-quick-btn" onclick="raiQuick('summary')">خۇلاسىلەش</button>
-          <button type="button" class="rai-quick-btn" onclick="raiQuick('explain')">ئاددىي چۈشەندۈرۈش</button>
           <button type="button" class="rai-quick-btn" onclick="raiQuick('translation')">تەرجىمە ▾</button>
-          <button type="button" class="rai-quick-btn" onclick="raiQuick('term_explain')">ئاتالغۇ چۈشەندۈرۈش</button>
+          <button type="button" class="rai-quick-btn" onclick="raiQuick('central_idea')">مەركىزىي ئىدىيەسى</button>
+          <button type="button" class="rai-quick-btn" onclick="raiQuick('term_explain')">ئاتالغۇ چۈشەندۈرۈش ▾</button>
           <button type="button" id="rai-spellfix-btn" class="rai-quick-btn" style="display:none;grid-column:1/-1" onclick="raiSpellfixStart()">✨ Gemini ئىملا تۈزىتىش (تور)</button>
         </div>
         <div id="rai-tr-menu">
@@ -690,6 +690,11 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
           <button type="button" class="rai-tr-opt" onclick="raiTranslate('uy','tr')">ئۇيغۇرچىدىن تۈركچىگە</button>
           <button type="button" class="rai-tr-opt" onclick="raiTranslate('tr','uy')">تۈركچىدىن ئۇيغۇرچىگە</button>
           <button type="button" class="rai-tr-opt" onclick="raiHideTranslateMenu()">يېپىش</button>
+        </div>
+        <div id="rai-term-menu">
+          <button type="button" class="rai-tr-opt" onclick="raiTermManual()">ئاتالغۇنى يېزىڭ</button>
+          <button type="button" class="rai-tr-opt" onclick="raiTermAuto()">ئاپتوماتىك</button>
+          <button type="button" class="rai-tr-opt" onclick="raiHideTermMenu()">يېپىش</button>
         </div>
         <textarea id="rai-question" rows="3" placeholder="تېكىست مەزمۇنى ھەققىدە سۈنئىي ئىدراكتىن سوراڭ" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();raiAsk();}"></textarea>
         <div id="rai-chips"></div>
@@ -2292,6 +2297,7 @@ function closeAiPanel() {
   const p = document.getElementById('rai-panel');
   if (p) p.classList.remove('on');
   raiHideTranslateMenu();
+  raiHideTermMenu();
 }
 
 function raiAbort() {
@@ -2361,22 +2367,24 @@ function raiSetScope(scope, forcedText) {
 
 // --- quick actions + translate submenu --------------------------------------
 
+function raiDeep() {
+  const d = document.getElementById('rai-deep');
+  return !!(d && d.checked);
+}
+
 function raiQuick(kind) {
-  if (kind === 'translation') { raiToggleTranslateMenu(); return; }
-  raiHideTranslateMenu();
-  const sel = document.getElementById('rai-type');
-  const qa = document.getElementById('rai-question');
+  // Submenu toggles (translate / term-explain) — open and return.
+  if (kind === 'translation') { raiHideTermMenu(); raiToggleTranslateMenu(); return; }
+  if (kind === 'term_explain') { raiHideTranslateMenu(); raiToggleTermMenu(); return; }
+  raiHideTranslateMenu(); raiHideTermMenu();
+  // summary / central_idea are NOT options in #rai-type, so call raiExecute
+  // directly with the type (after refreshing the active scope) — never sel.value.
+  raiSetScope(RAI.scope);
   if (kind === 'summary') {
-    sel.value = 'general';
-    qa.value = 'بۇ تېكىستنىڭ خۇلاسىسىنى تۈزۈپ بەرگىن';
-  } else if (kind === 'explain') {
-    sel.value = 'general';
-    qa.value = 'بۇ تېكىستنى ئاددىي قىلىپ چۈشەندۈرۈپ بەرگىن';
-  } else if (kind === 'term_explain') {
-    sel.value = 'term_explain';
+    raiExecute({ type: 'summary', context: RAI.context, question: '', deepThink: raiDeep() });
+  } else if (kind === 'central_idea') {
+    raiExecute({ type: 'central_idea', context: RAI.context, question: '', deepThink: raiDeep() });
   }
-  RAI.typeUserSet = true;
-  raiAsk();
 }
 
 function raiToggleTranslateMenu() {
@@ -2387,6 +2395,31 @@ function raiToggleTranslateMenu() {
 function raiHideTranslateMenu() {
   const m = document.getElementById('rai-tr-menu');
   if (m) m.style.display = 'none';
+}
+
+// Term-explain submenu (mirrors the translate submenu): manual-typed term vs.
+// automatic term picking.
+function raiToggleTermMenu() {
+  const m = document.getElementById('rai-term-menu');
+  if (m) m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
+}
+function raiHideTermMenu() {
+  const m = document.getElementById('rai-term-menu');
+  if (m) m.style.display = 'none';
+}
+function raiTermManual() {
+  raiHideTermMenu();
+  const sel = document.getElementById('rai-type');
+  const qa = document.getElementById('rai-question');
+  // term_explain IS a #rai-type option — set it so the existing raiAsk() sends
+  // { type:'term_explain', question:<typed term> } when the user presses سوراش.
+  if (sel) { sel.value = 'term_explain'; RAI.typeUserSet = true; }
+  if (qa) { qa.placeholder = 'چۈشەندۈرمەكچى بولغان ئاتالغۇنى يېزىڭ'; qa.value = ''; qa.focus(); }
+}
+function raiTermAuto() {
+  raiHideTermMenu();
+  raiSetScope(RAI.scope);
+  raiExecute({ type: 'term_explain', context: RAI.context, question: '', deepThink: raiDeep() });
 }
 
 function raiTranslate(from, to) {
