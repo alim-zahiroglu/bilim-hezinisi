@@ -378,9 +378,9 @@
     // DB-backed and never affected by the AI tab's state.
     return `<div class="notes-right-panel">
       <div class="notes-right-panel-tabs">
-        <div class="notes-right-panel-tab ${tab==='quran'?'active':''}" data-tab="quran" onclick="window.notesSetTab('quran')">📖 قۇرئان · تورسىز</div>
-        <div class="notes-right-panel-tab ${tab==='refs'?'active':''}" data-tab="refs" onclick="window.notesSetTab('refs')">🔗 مەنبە · تورسىز</div>
-        <div class="notes-right-panel-tab ${tab==='ai'?'active':''}" data-tab="ai" onclick="window.notesSetTab('ai')">✨ AI · تورلۇق</div>
+        <div class="notes-right-panel-tab ${tab==='quran'?'active':''}" data-tab="quran" onclick="window.notesSetTab('quran')">📖 قۇرئان (تورسىز)</div>
+        <div class="notes-right-panel-tab ${tab==='refs'?'active':''}" data-tab="refs" onclick="window.notesSetTab('refs')">🔗 مەنبە (تورسىز)</div>
+        <div class="notes-right-panel-tab ${tab==='ai'?'active':''}" data-tab="ai" onclick="window.notesSetTab('ai')">✨ AI (تورلۇق)</div>
       </div>
       <div class="notes-right-panel-content" id="notes-right-content">
         <div class="notes-right-pane" data-pane="quran" style="${vis('quran')}">${renderQuranPicker()}</div>

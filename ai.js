@@ -1399,7 +1399,7 @@ async function ocrImages(imagesBase64, opts) {
   // ~2 images/request keeps payloads within the free tier while sending higher-
   // resolution pages (the renderer also caps Gemini batches at 2).
   const batch = Math.min(Math.max(parseInt(opts.batchSize, 10) || 2, 1), 4);
-  const FREE_TIER_MSG = 'ھەقسىز API بۇ كىتابنى ئايلاندۇرالمىدى. UKIJ OCR (تورسىز) نى تاللاڭ.';
+  const FREE_TIER_MSG = 'ھەقسىز API بۇ كىتابنى ئايلاندۇرالمىدى. UKIJ OCR (تورسىز) نى تاللاڭ ياكى سەل تۇرۇپ قايتا سىناڭ';
   const out = [];
 
   for (let i = 0; i < images.length; i += batch) {
