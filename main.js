@@ -659,7 +659,9 @@ let ocrCancelRequested = false;
 ipcMain.handle('ocr-recognize', async (event, opts) => {
   opts = opts || {};
   const images = Array.isArray(opts.images) ? opts.images : [];
-  let langs = (typeof opts.langs === 'string' && opts.langs.trim()) ? opts.langs.trim() : 'ukij+uig';
+  // Default to the custom UKIJ LSTM model ALONE — mixing a second model with a
+  // custom LSTM model commonly degrades or empties LSTM output (Gheyret parity).
+  let langs = (typeof opts.langs === 'string' && opts.langs.trim()) ? opts.langs.trim() : 'ukij';
   if (!images.length) return { success: false, error: 'رەسىم تېپىلمىدى' };
 
   // Verify at least the first requested model exists, else fail clearly
@@ -684,8 +686,10 @@ ipcMain.handle('ocr-recognize', async (event, opts) => {
       gzip: false,
       logger: () => {}
     });
-    // PSM 3 = fully automatic page segmentation (full-page documents).
-    await worker.setParameters({ tessedit_pageseg_mode: '3' });
+    // PSM 3 (auto) by default — matches UyghurOCR's "PSM Auto for full pages".
+    // Overridable (e.g. '6' = uniform block) via opts.psm for experimentation.
+    const psm = (opts.psm && /^\d+$/.test(String(opts.psm))) ? String(opts.psm) : '3';
+    await worker.setParameters({ tessedit_pageseg_mode: psm });
 
     const total = images.length;
     for (let i = 0; i < total; i++) {
@@ -693,7 +697,10 @@ ipcMain.handle('ocr-recognize', async (event, opts) => {
       const raw = String(images[i] || '').replace(/^data:image\/[a-zA-Z]+;base64,/, '');
       const buf = Buffer.from(raw, 'base64');
       const { data } = await worker.recognize(buf);
-      pages.push(cleanOcrPage((data && data.text) || ''));
+      const rawText = (data && data.text) || '';
+      // Per-page length — the key diagnostic for "blank book" (empty OCR).
+      console.log('[ocr] ' + langs + ' page ' + (i + 1) + '/' + total + ' chars=' + rawText.length);
+      pages.push(cleanOcrPage(rawText));
       try {
         if (!event.sender.isDestroyed()) {
           event.sender.send('ocr-progress', { page: i + 1, total, progress: (i + 1) / total });
