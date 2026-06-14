@@ -2943,9 +2943,16 @@ function naiPageQA(kind) {
       const t = document.getElementById('nai-page-q'); if (t) t.focus();
       return;
     }
-    const q = (kind === 'summary') ? 'بۇ تېكىستنىڭ خۇلاسىسىنى تۈزۈپ بەرگىن' : 'بۇ تېكىستنى ئاددىي قىلىپ چۈشەندۈرۈپ بەرگىن';
     NAI.lastReq = () => naiPageQA(kind);
-    naiStream({ type: 'general', context: noteText, question: q }, 'كۆرۈنمە بەت', naiPageActions);
+    // summary / central_idea use the dedicated prompt types (same as the reader);
+    // explain keeps the generic path with its canned question.
+    if (kind === 'summary') {
+      naiStream({ type: 'summary', context: noteText }, 'كۆرۈنمە بەت', naiPageActions);
+    } else if (kind === 'central_idea') {
+      naiStream({ type: 'central_idea', context: noteText }, 'كۆرۈنمە بەت', naiPageActions);
+    } else {
+      naiStream({ type: 'general', context: noteText, question: 'بۇ تېكىستنى ئاددىي قىلىپ چۈشەندۈرۈپ بەرگىن' }, 'كۆرۈنمە بەت', naiPageActions);
+    }
   });
 }
 window.naiPageAsk = function () {

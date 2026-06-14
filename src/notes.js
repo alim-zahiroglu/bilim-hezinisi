@@ -291,6 +291,7 @@
               <div class="notes-ai-submenu">
                 <button type="button" onclick="window.naiPageQA('summary')">خۇلاسىلەش</button>
                 <button type="button" onclick="window.naiPageQA('explain')">ئاددىي چۈشەندۈرۈش</button>
+                <button type="button" onclick="window.naiPageQA('central_idea')">مەركىزىي ئىدىيەسى</button>
                 <button type="button" onclick="window.naiPageQA('other')">باشقا...</button>
               </div>
             </div>
@@ -403,7 +404,7 @@
       <div id="nai-extra" style="display:none"></div>
       <div id="nai-actions" style="display:none"></div>
       <div id="nai-chatbar" style="display:none">
-        <textarea id="nai-chat-input" placeholder="سوئالىڭىزنى يېزىڭ..."
+        <textarea id="nai-chat-input" rows="3" placeholder="سۈنئىي ئىدراكتىن خالىغان سوئالنى سوراڭ. مەزكۇر بەت مەزمۇنى بىلەن مۇناسىۋەتسىز"
           oninput="window.naiAutoGrow && window.naiAutoGrow(this)"
           onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();window.naiChatSend();}"></textarea>
         <button type="button" onclick="window.naiChatSend()">ئەۋەت</button>
