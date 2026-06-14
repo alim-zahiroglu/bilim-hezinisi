@@ -456,22 +456,24 @@ String(segmented || '')
   ].join('\n');
 }
 
-// OCR cleanup prompt (Phase 5.2). Repairs Tesseract OCR artifacts on numbered
-// ⟦N⟧ segments, same marker contract as proofread. Bypasses SYSTEM_BASE.
+// OCR cleanup prompt. Repairs OCR/orthography artifacts on numbered ⟦N⟧
+// segments, same marker contract as proofread. Bypasses SYSTEM_BASE. Shared by
+// import-time cleanup AND the in-reader "Gemini ئىملا تۈزىتىش" feature.
 function buildOcrCleanupPrompt(segmented) {
   return [
-'TASK: Repair OCR errors in modern Uyghur text (Arabic script) recognized by Tesseract. Fix ONLY recognition artifacts. Output the repaired text and NOTHING else.',
+'TASK: Repair OCR/orthography errors in UYGHUR text (kona yëziq, Uyghur Arabic alphabet). Fix ONLY recognition and orthography errors. Output the repaired text and NOTHING else.',
 '',
-'You are an expert in Uyghur orthography and in the typical failure modes of OCR on Arabic-script print: lost or doubled dots (ب/پ/ت/ث، ج/چ/خ، ر/ز)، confused vowel letters (ى/ي، و/ۇ/ۆ/ۈ)، ه/ە confusion، broken ligatures, words split or merged at wrong points, hyphenated line-break splits, stray punctuation/garbage glyphs, Latin lookalikes (l/1, O/0) inside numbers.',
+'You are an expert in modern Uyghur orthography and in OCR failure modes on Uyghur print — including engines that wrongly "normalize" Uyghur toward Arabic/Persian.',
 '',
 'The input consists of numbered segments marked ⟦1⟧, ⟦2⟧ … Return the SAME segments, SAME markers, SAME order — none added, merged, split, or dropped.',
 '',
 'RULES:',
-'1. Reconstruct the most plausible intended Uyghur word for each garbled token, judged by context. Fix split/merged words and rejoin hyphen-broken words.',
-'2. Normalize characters to Uyghur forms: ی→ي، ه as vowel→ە. Keep genuinely Arabic quotations (Quran, hadith) in correct Arabic — repair their OCR damage too, but never translate or alter their wording.',
-'3. Fix punctuation damaged by OCR («,»→«،» etc.) per Uyghur conventions.',
-'4. NEVER rephrase, modernize, summarize, or add content. If a token is unreadable beyond repair, keep it as-is rather than inventing text.',
-'5. Keep numbers, dates, and proper names; repair them only when the OCR error is obvious.',
+'1. This is UYGHUR — do NOT normalize toward Arabic or Persian. Restore Uyghur letters the OCR mis-read: ك that should be ڭ → ڭ; ژ that should be ۋە → ۋە; ه used as a Uyghur vowel → ە; ی → ي. Keep ئـ ھ ڭ گ ق ك خ غ ژ چ پ and the vowels ا ە و ۇ ۆ ۈ ې ى ي correct.',
+'2. Remove spurious spaces INSIDE a word (a common OCR artifact) — e.g. «سە ككىز» → «سەككىز». Reconstruct the intended Uyghur word for each garbled token by context — e.g. «توركنىك» → «توركنىڭ». Rejoin hyphenated line-break splits; fix split/merged words.',
+'3. Fix lost or doubled dots (ب/پ/ت/ث، ج/چ/خ، ر/ز) and confused vowels (ى/ي، و/ۇ/ۆ/ۈ); remove stray garbage glyphs; fix Latin lookalikes (l/1, O/0) inside numbers.',
+'4. Fix punctuation damaged by OCR («,»→«،» etc.) per Uyghur conventions.',
+'5. Keep genuinely Arabic quotations (Quran, hadith) in correct Arabic — repair their OCR damage but never translate or alter their wording. Keep numbers, dates, and proper names; repair only when the OCR error is obvious.',
+'6. Change ONLY recognition/orthography errors. NEVER reword, rephrase, modernize, summarize, translate, or add/remove content. If a token is unreadable beyond repair, keep it as-is rather than inventing text.',
 '',
 'OUTPUT: only the repaired segments with their ⟦N⟧ markers. No commentary.',
 '',
