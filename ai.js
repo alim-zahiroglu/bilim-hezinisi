@@ -1371,9 +1371,19 @@ function chatStream(messages, onChunk, onDone, onError) {
 // OCR instead. Returns { ok:true, text } or { ok:false, error, freeTierLimit?,
 // pages? } (pages = whatever was transcribed before the failure).
 // ----------------------------------------------------------------
-const OCR_IMAGE_INSTRUCTION =
-  'Transcribe the Uyghur/Arabic text in these page images exactly. Output only ' +
-  'the transcribed text, preserve paragraph breaks, add no commentary.';
+// Strong Uyghur-specific OCR prompt. Vision models tend to "normalize" Uyghur
+// (kona yëziq) toward Arabic/Persian — these rules forbid that explicitly.
+// Vision quality is best on the Pro model (the user's STRICT choice still wins).
+const OCR_IMAGE_INSTRUCTION = [
+  'These page images contain UYGHUR text written in the Uyghur Arabic alphabet (kona yëziq).',
+  'Transcribe the text EXACTLY as printed, in correct modern Uyghur orthography.',
+  'CRITICAL RULES:',
+  '- Do NOT normalize, "correct", or convert anything toward Arabic or Persian spelling.',
+  '- Preserve the Uyghur letters exactly: ئـ ھ ڭ گ ق ك خ غ ژ چ پ and the vowels ا ە و ۇ ۆ ۈ ې ى ي.',
+  '- NEVER replace ڭ with ك, NEVER replace ۋە with ژ, NEVER replace ە with ه.',
+  '- Do NOT insert spaces inside a word; keep each word as one token.',
+  '- Output plain Unicode Uyghur text only. Preserve paragraph breaks. No transliteration, no commentary, no translation.'
+].join('\n');
 
 async function ocrImages(imagesBase64, opts) {
   opts = opts || {};
@@ -1384,7 +1394,9 @@ async function ocrImages(imagesBase64, opts) {
   if (!images.length) return { ok: false, error: 'رەسىم تېپىلمىدى' };
 
   const model = getModel();   // STRICT — multimodal, never substituted
-  const batch = Math.min(Math.max(parseInt(opts.batchSize, 10) || 3, 1), 4);
+  // ~2 images/request keeps payloads within the free tier while sending higher-
+  // resolution pages (the renderer also caps Gemini batches at 2).
+  const batch = Math.min(Math.max(parseInt(opts.batchSize, 10) || 2, 1), 4);
   const FREE_TIER_MSG = 'ھەقسىز API بۇ كىتابنى ئايلاندۇرالمىدى. UKIJ OCR (تورسىز) نى تاللاڭ.';
   const out = [];
 
