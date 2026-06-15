@@ -34,35 +34,64 @@
   font-style: normal;
 }
 :root {
-  --am: #BA7517; --ab: #FAEEDA; --ab2: rgba(186,117,23,0.2); --at: #633806;
-  --bg: #FFFBF5; --bg2: #F5F0E8; --bg3: #EDE8DF;
-  --text: #1A1208; --text2: #6B5A3E; --text3: #A0916F;
-  --border: rgba(139,100,40,0.15); --border2: rgba(139,100,40,0.28);
+  /* ── DAY theme — warm ivory / parchment / walnut / antique-gold ── */
+  --am: #B0832F; --at: #5A4327; --ab: rgba(176,131,47,0.14); --ab2: rgba(176,131,47,0.24);
+  --bg: #FBF6EC; --bg2: #F4EAD7; --bg3: #EADFC8;
+  --text: #2A2012; --text2: #6B5840; --text3: #9A8A70;
+  --border: rgba(90,70,40,0.16); --border2: rgba(90,70,40,0.30);
+  --gold: #C9A24B; --walnut: #5A4632;
+  --shadow-1: 0 2px 10px rgba(70,50,20,0.08);
+  --shadow-2: 0 14px 38px rgba(70,50,20,0.18);
+  --glow: 0 0 0 2px var(--am), 0 6px 20px rgba(201,162,75,0.25);
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  /* ── shared tokens (inherited by every theme) ── */
   --jf: 'UKIJ Ekran', 'Traditional Arabic', 'Arabic Typesetting', serif;
-  --radius: 10px; --radius2: 6px;
+  /* spacing scale: 4 · 8 · 12 · 16 · 24 · 32 */
+  --radius: 10px; --radius2: 6px; --radius-lg: 14px;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not(.dark) {
-    --am: #EF9F27; --ab: rgba(99,56,6,0.22); --ab2: rgba(239,159,39,0.25); --at: #FAC775;
-    --bg: #1A1208; --bg2: #231A0C; --bg3: #2E2210;
-    --text: #F5EDD8; --text2: #C4A97A; --text3: #7A6444;
-    --border: rgba(200,150,60,0.15); --border2: rgba(200,150,60,0.28);
+  :root:not(.dark):not(.sepia) {
+    --am: #CDA24E; --at: #241C12; --ab: rgba(205,162,78,0.16); --ab2: rgba(205,162,78,0.26);
+    --bg: #15120C; --bg2: #1F1A11; --bg3: #2A2216;
+    --text: #EFE4CC; --text2: #C2AA7E; --text3: #8A7858;
+    --border: rgba(205,162,78,0.14); --border2: rgba(205,162,78,0.28);
+    --gold: #E0B85E; --walnut: #3E2F1E;
+    --shadow-1: 0 2px 12px rgba(0,0,0,0.45);
+    --shadow-2: 0 16px 44px rgba(0,0,0,0.6);
+    --glow: 0 0 0 2px var(--am), 0 6px 22px rgba(224,184,94,0.3);
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
   }
 }
 html.dark {
-  --am: #EF9F27; --ab: rgba(99,56,6,0.22); --ab2: rgba(239,159,39,0.25); --at: #FAC775;
-  --bg: #1A1208; --bg2: #231A0C; --bg3: #2E2210;
-  --text: #F5EDD8; --text2: #C4A97A; --text3: #7A6444;
-  --border: rgba(200,150,60,0.15); --border2: rgba(200,150,60,0.28);
+  /* ── NIGHT theme — charcoal / dark leather / walnut / antique-gold ── */
+  --am: #CDA24E; --at: #241C12; --ab: rgba(205,162,78,0.16); --ab2: rgba(205,162,78,0.26);
+  --bg: #15120C; --bg2: #1F1A11; --bg3: #2A2216;
+  --text: #EFE4CC; --text2: #C2AA7E; --text3: #8A7858;
+  --border: rgba(205,162,78,0.14); --border2: rgba(205,162,78,0.28);
+  --gold: #E0B85E; --walnut: #3E2F1E;
+  --shadow-1: 0 2px 12px rgba(0,0,0,0.45);
+  --shadow-2: 0 16px 44px rgba(0,0,0,0.6);
+  --glow: 0 0 0 2px var(--am), 0 6px 22px rgba(224,184,94,0.3);
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
 }
 html.sepia {
-  --am: #A0621A; --ab: rgba(160,98,26,0.15); --ab2: rgba(160,98,26,0.2); --at: #7B4A10;
-  --bg: #F4EADB; --bg2: #EDE0CC; --bg3: #E4D5BD;
-  --text: #3B2A10; --text2: #6B5030; --text3: #998060;
-  --border: rgba(139,100,40,0.2); --border2: rgba(139,100,40,0.35);
+  /* ── SEPIA — warm parchment reading mode, aligned to the Day family ── */
+  --am: #9A6B24; --at: #4A3318; --ab: rgba(154,107,36,0.16); --ab2: rgba(154,107,36,0.26);
+  --bg: #EFE3CC; --bg2: #E7D8BC; --bg3: #DCCBA9;
+  --text: #2E2310; --text2: #6A5734; --text3: #9A8763;
+  --border: rgba(90,70,40,0.20); --border2: rgba(90,70,40,0.34);
+  --gold: #BC9445; --walnut: #5A4632;
+  --shadow-1: 0 2px 10px rgba(70,50,20,0.10);
+  --shadow-2: 0 14px 38px rgba(70,50,20,0.20);
+  --glow: 0 0 0 2px var(--am), 0 6px 20px rgba(188,148,69,0.28);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font-family: var(--jf); font-size: 15px; overflow: hidden; height: 100vh; display: flex; flex-direction: column; direction: rtl; }
+body { background-color: var(--bg); background-image: var(--grain); color: var(--text); font-family: var(--jf); font-size: 15px; overflow: hidden; height: 100vh; display: flex; flex-direction: column; direction: rtl; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+/* Paper-grain helper — layers the faint feTurbulence texture over a panel's own colour. */
+.grain { background-image: var(--grain); }
+/* Global focus ring (keyboard only) + smooth theme transitions */
+:focus-visible { outline: 2px solid var(--am); outline-offset: 2px; border-radius: 3px; }
+button, .hbtn, .vb, .ci, .mt, input, select, textarea { transition: background-color .15s, border-color .15s, color .15s, box-shadow .15s; }
 #titlebar { height: 36px; background: var(--bg2); border-bottom: 0.5px solid var(--border); display: flex; align-items: center; padding: 0 12px; gap: 10px; flex-shrink: 0; -webkit-app-region: drag; user-select: none; }
 #titlebar .logo { font-size: 13px; font-weight: 600; color: var(--am); }
 #titlebar .ver { font-size: 10px; color: var(--text3); font-family: monospace; }
@@ -246,8 +275,11 @@ mark.reader-hit-flash { animation: readerHitFlash 1.5s ease-out 1; }
 .stat-bar-track { flex: 1; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
 .stat-bar-fill { height: 100%; background: var(--am); border-radius: 3px; transition: width .3s; }
 .stat-bar-val { color: var(--text3); font-family: sans-serif; font-size: 10px; min-width: 40px; text-align: left; }
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 6px; border: 2.5px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--am); background-clip: padding-box; }
+* { scrollbar-width: thin; scrollbar-color: var(--border2) transparent; }
 /* Hide number input spinners */
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
