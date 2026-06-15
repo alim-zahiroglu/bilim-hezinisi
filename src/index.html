@@ -145,29 +145,46 @@ button, .hbtn, .vb, .ci, .mt, input, select, textarea { transition: background-c
 .vb.on { background: var(--bg); color: var(--am); box-shadow: var(--shadow-1); }
 #srt { font-size: 12px; padding: 6px 10px; background: var(--bg2); border: 0.5px solid var(--border2); color: var(--text2); border-radius: 9px; direction: rtl; cursor: pointer; outline: none; font-family: var(--jf); transition: border-color .15s; }
 #srt:hover { border-color: var(--am); }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 20px; }
 .rows { display: flex; flex-direction: column; gap: 6px; }
-.card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 10px; cursor: pointer; transition: transform .15s, box-shadow .15s, border-color .15s; position: relative; }
+.card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 12px; cursor: pointer; transition: transform .15s, box-shadow .15s, border-color .15s; position: relative; }
 .card:hover { transform: translateY(-3px); border-color: var(--border2); box-shadow: var(--shadow-1); }
 .card.sel { border-color: var(--am); box-shadow: var(--glow); }
 .cprog { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--am); border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
-/* Portrait book-cover thumbnail (3:4) */
-.ccov { position: relative; width: 100%; aspect-ratio: 3 / 4; border-radius: 9px; overflow: hidden; margin-bottom: 10px; background: var(--bg2); box-shadow: 0 4px 12px rgba(40,28,10,.28); }
-.bcover { display: block; width: 100%; height: 100%; }
-.bc-title { font-family: var(--jf); font-weight: 700; font-size: 13px; fill: var(--gold); direction: rtl; }
-.bc-title-ink { font-family: var(--jf); font-weight: 700; font-size: 13px; fill: #2A1F0E; direction: rtl; }
-.bc-auth { font-family: var(--jf); font-size: 9px; fill: #ffffff; fill-opacity: .62; direction: rtl; }
-.cfmt { position: absolute; bottom: 6px; inset-inline-start: 6px; font-size: 8.5px; background: rgba(20,14,6,.66); color: #F0D89A; padding: 2px 6px; border-radius: 5px; font-family: monospace; font-weight: 700; letter-spacing: .4px; backdrop-filter: blur(2px); }
-.ct { font-size: 12.5px; font-weight: 700; color: var(--text); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 5px; }
-.cmeta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 2px; }
-.ccat { font-size: 10px; color: var(--at); background: var(--ab); padding: 2px 7px; border-radius: 10px; display: inline-block; }
-.cmd { font-size: 10.5px; color: var(--text3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-.cbac { display: flex; gap: 6px; margin-top: 10px; }
-.cbac button { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 6px; border-radius: 7px; border: 0.5px solid var(--border2); cursor: pointer; font-size: 12px; font-family: var(--jf); background: none; color: var(--text2); transition: background .12s, color .12s, border-color .12s; }
-.cbac button:hover { background: var(--ab); color: var(--at); border-color: var(--ab2); }
-.cbac .del { max-width: 36px; color: var(--text3); }
-.cbac .del:hover { color: #B5462F; border-color: rgba(181,70,47,.4); background: rgba(181,70,47,.08); }
-.cbac .ic { width: 14px; height: 14px; }
+/* ── Book cover (category-driven; matches bilim-ui-preview.html) ── */
+.cover { aspect-ratio: 3/4; border-radius: 7px; position: relative; overflow: hidden; box-shadow: var(--shadow-1); margin-bottom: 10px; }
+.cover .frame { position: absolute; inset: 9px; border: 1.5px solid var(--gold); border-radius: 4px; opacity: .85; }
+.cover .frame:after { content: ""; position: absolute; inset: 4px; border: .5px solid var(--gold); border-radius: 2px; opacity: .5; }
+.cover .ttl { position: absolute; inset: 22px 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; }
+.cover .ttl b { font-size: 15px; line-height: 1.35; color: var(--gold); text-shadow: 0 1px 2px rgba(0,0,0,.3); }
+.cover .ttl small { font-size: 10px; color: rgba(255,255,255,.75); }
+.cover .spine { position: absolute; top: 0; bottom: 0; right: 0; width: 13px; background: linear-gradient(to left, rgba(0,0,0,.32), transparent); }
+.cover .sheen { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,.20), transparent 42%); pointer-events: none; }
+.cover .fmt { position: absolute; bottom: 8px; left: 8px; font: 700 9px monospace; background: rgba(0,0,0,.5); color: #F4E4B8; border: .5px solid rgba(244,228,184,.4); padding: 2px 6px; border-radius: 3px; letter-spacing: .5px; }
+.c-teal { background: linear-gradient(var(--cang,150deg), #256B5C, #123B33); }
+.c-walnut { background: linear-gradient(var(--cang,150deg), #5A4024, #321F0E); }
+.c-navy { background: linear-gradient(var(--cang,150deg), #2A3F63, #16213A); }
+.c-oxblood { background: linear-gradient(var(--cang,150deg), #7A3030, #421A1A); }
+.c-ink { background: linear-gradient(var(--cang,150deg), #2B2620, #15110C); }
+.c-parch { background: linear-gradient(var(--cang,150deg), #EBDFC2, #D8C39A); }
+.c-parch .ttl b { color: #5A4327; text-shadow: none; }
+.c-parch .ttl small { color: #8a774f; }
+.c-parch .frame { border-color: #b9954e; }
+.doc { background: linear-gradient(150deg, #FBF5E9, #EFE4CC); }
+.doc .lines { position: absolute; inset: 30px 20px; display: flex; flex-direction: column; gap: 7px; }
+.doc .lines i { height: 5px; border-radius: 3px; background: rgba(90,70,40,.16); }
+.doc .lines i:nth-child(4) { width: 60%; }
+.doc .corner { position: absolute; top: 0; left: 0; border-width: 0 0 22px 22px; border-style: solid; border-color: transparent transparent transparent var(--bg3); }
+.doc .ttl b { color: #5A4327; text-shadow: none; }
+.card .meta { direction: rtl; }
+.card .meta .t { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card .meta .s { font-size: 12px; color: var(--text2); margin-bottom: 9px; }
+.cbac { display: flex; gap: 6px; }
+.cbac button { flex: 1; height: 30px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; border: 0.5px solid var(--border); background: var(--bg2); color: var(--text2); border-radius: 7px; cursor: pointer; font-size: 12px; font-family: var(--jf); transition: background .12s, color .12s, border-color .12s; }
+.cbac button:hover { color: var(--am); border-color: var(--border2); }
+.cbac .del { max-width: 38px; color: var(--text3); }
+.cbac .del:hover { color: #B5462F; border-color: rgba(181,70,47,.4); }
+.cbac .ic { width: 15px; height: 15px; }
 .row { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 11px 14px; display: flex; align-items: center; gap: 13px; cursor: pointer; transition: border-color .15s, background .15s, box-shadow .15s; position: relative; }
 .row:hover { border-color: var(--border2); background: var(--bg2); box-shadow: var(--shadow-1); }
 .rowt { font-size: 13.5px; font-weight: 600; color: var(--text); }
@@ -963,96 +980,41 @@ const ICONS = {
 // Usage: icon('search'), icon('trash','danger'). Unknown names fall back to 'book'.
 function icon(name, extra){ return `<svg class="ic ${extra||''}" aria-hidden="true"><use href="#i-${name||'book'}"></use></svg>`; }
 
-// ── Realistic book-cover system (Phase 3) ──────────────────────────────────
-// Per-book inline SVG covers, generated once and cached. Material colours are
-// intrinsic to the "book"; the gold frame/title use var(--gold) so they shift
-// with the active Day/Night theme. Two variants: a leather/cloth book cover and
-// a parchment "document page" for plain text-like files.
-const COVER_MATERIALS = {
-  oxblood:['#7A3030','#481B1B'], teal:['#246A5B','#123A31'],
-  walnut:['#553B25','#2E1B10'], navy:['#27395C','#131F36'],
-  inkgold:['#272018','#100E09']
+// ── Book-cover system (category-driven, matches bilim-ui-preview.html) ──────
+// bookCover(b) returns the .cover HTML (CSS-driven leather book OR parchment
+// document page), cached per book. Material is chosen by CATEGORY (not format),
+// so a hadith DOCX/PDF/WEB still gets a real leather cover; the document-page
+// look is reserved for the generic «باشقا» / uncategorised category on plain
+// text files only.
+const COVER_MATERIAL = {
+  'قۇرئان ۋە تەپسىر':'c-teal','ھەدىسلەر':'c-walnut','فىقھى كىتابلار':'c-parch',
+  'تەۋھىد ۋە ئەقىدە':'c-ink','تارىخ':'c-navy','ئەدەبىي ئەسەرلەر':'c-oxblood',
+  'تىل-ئەدەبىيات':'c-oxblood','سىيرەت':'c-teal','ئۇيغۇرچە ئوقۇشلۇق كىتابلار':'c-navy',
+  'بالىلار كىتابلىرى':'c-parch','لازىملىق كىتابلار':'c-ink','مۇھىم ئەسەرلەر':'c-oxblood','باشقا':'c-ink'
 };
-const CAT_COVER = {
-  'قۇرئان ۋە تەپسىر':'teal','ھەدىسلەر':'inkgold','فىقھى كىتابلار':'navy',
-  'تەۋھىد ۋە ئەقىدە':'oxblood','تارىخ':'walnut','ئەدەبىي ئەسەرلەر':'oxblood',
-  'تىل-ئەدەبىيات':'navy','سىيرەت':'teal','ئۇيغۇرچە ئوقۇشلۇق كىتابلار':'walnut',
-  'بالىلار كىتابلىرى':'navy','لازىملىق كىتابلار':'inkgold','مۇھىم ئەسەرلەر':'oxblood','باشقا':'walnut'
-};
-const COVER_HASH_KEYS = ['oxblood','teal','walnut','navy','inkgold'];
+const COVER_HASH_KEYS = ['c-teal','c-walnut','c-navy','c-oxblood','c-ink'];
 const PAGE_FORMATS = new Set(['TXT','MD','DOC','DOCX']);
 const _coverCache = new Map();
 
 function hashStr(s){ let h=0; s=String(s||''); for(let i=0;i<s.length;i++){ h=((h<<5)-h+s.charCodeAt(i))|0; } return Math.abs(h); }
 
-// Greedy word-wrap into up to maxLines lines of ~maxChars; ellipsis if clipped.
-function coverWrap(title, maxChars, maxLines){
-  const words=String(title||'').trim().split(/\s+/).filter(Boolean);
-  const lines=[]; let cur='';
-  for(const word of words){
-    const w = word.length>maxChars ? word.slice(0,maxChars-1)+'…' : word;
-    if(!cur){ cur=w; }
-    else if((cur+' '+w).length<=maxChars){ cur+=' '+w; }
-    else { lines.push(cur); cur=w; if(lines.length>=maxLines){ cur=''; break; } }
-  }
-  if(cur && lines.length<maxLines) lines.push(cur);
-  if(lines.length>=maxLines){
-    const fit=lines.join(' ').split(/\s+/).filter(Boolean).length;
-    if(fit<words.length){ let last=lines[maxLines-1]; if(last.length>maxChars-1) last=last.slice(0,maxChars-1); lines[maxLines-1]=last.replace(/…?$/,'…'); }
-  }
-  return lines.length?lines:[''];
-}
-
 function bookCover(b){
   const key=b.id+'|'+(b.title||'')+'|'+(b.category||'')+'|'+(b.format||'');
   let v=_coverCache.get(key); if(v) return v;
-  v=PAGE_FORMATS.has(String(b.format||'').toUpperCase()) ? pageCoverSVG(b) : leatherCoverSVG(b);
+  const cat=b.category||'';
+  const fmt=sanitize(String(b.format||'').toUpperCase());
+  const title=sanitize(b.title||'');
+  const sub=sanitize(cat);
+  // Document-page look ONLY for the generic «باشقا»/uncategorised text files.
+  const isDoc=(cat==='باشقا'||!cat) && PAGE_FORMATS.has(String(b.format||'').toUpperCase());
+  if(isDoc){
+    v=`<div class="cover doc"><div class="corner"></div><div class="lines"><i></i><i></i><i></i><i></i></div><div class="ttl"><b>${title}</b></div><span class="fmt">${fmt}</span></div>`;
+  } else {
+    const mk=COVER_MATERIAL[cat] || COVER_HASH_KEYS[hashStr(b.title||cat)%COVER_HASH_KEYS.length];
+    const ang=140 + (hashStr(b.title||cat)%24); // subtle per-book light-direction variation
+    v=`<div class="cover ${mk}" style="--cang:${ang}deg"><div class="spine"></div><div class="frame"></div><div class="sheen"></div><div class="ttl"><b>${title}</b>${sub?`<small>${sub}</small>`:''}</div><span class="fmt">${fmt}</span></div>`;
+  }
   _coverCache.set(key,v); return v;
-}
-
-function leatherCoverSVG(b){
-  let mk=CAT_COVER[b.category];
-  if(!mk) mk=COVER_HASH_KEYS[hashStr(b.title||b.category)%COVER_HASH_KEYS.length];
-  const [c1,c2]=COVER_MATERIALS[mk]||COVER_MATERIALS.walnut;
-  const uid='bc'+b.id;
-  const lines=coverWrap(b.title,11,3);
-  const lh=18, blockH=lines.length*lh, startY=98-blockH/2+13;
-  const tspans=lines.map((ln,i)=>`<tspan x="67" dy="${i===0?0:lh}">${sanitize(ln)}</tspan>`).join('');
-  const auth=b.author?`<text x="67" y="${startY+blockH+8}" text-anchor="middle" class="bc-auth">${sanitize(b.author)}</text>`:'';
-  const dia=[[18,18],[116,18],[18,182],[116,182]].map(([x,y])=>`<path d="M${x} ${y-3} L${x+3} ${y} L${x} ${y+3} L${x-3} ${y} Z" fill="var(--gold)" opacity="0.85"/>`).join('');
-  return `<svg class="bcover" viewBox="0 0 150 200" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">`
-    +`<defs><linearGradient id="${uid}m" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient>`
-    +`<linearGradient id="${uid}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/><stop offset="0.55" stop-color="#ffffff" stop-opacity="0"/></linearGradient></defs>`
-    +`<rect x="0" y="0" width="150" height="200" rx="5" fill="url(#${uid}m)"/>`
-    +`<path d="M0 0 H86 L0 128 Z" fill="url(#${uid}s)"/>`
-    +`<rect x="131" y="0" width="19" height="200" fill="#000000" opacity="0.20"/>`
-    +`<rect x="130.5" y="0" width="1" height="200" fill="var(--gold)" opacity="0.45"/>`
-    +`<rect x="9" y="9" width="113" height="182" rx="2" fill="none" stroke="var(--gold)" stroke-opacity="0.9" stroke-width="1.2"/>`
-    +`<rect x="13" y="13" width="105" height="174" rx="1" fill="none" stroke="var(--gold)" stroke-opacity="0.4" stroke-width="0.6"/>`
-    +dia
-    +`<text x="67" y="${startY}" text-anchor="middle" class="bc-title">${tspans}</text>`
-    +auth
-    +`</svg>`;
-}
-
-function pageCoverSVG(b){
-  const uid='pc'+b.id;
-  const lines=coverWrap(b.title,12,3);
-  const lh=17, startY=48;
-  const tspans=lines.map((ln,i)=>`<tspan x="75" dy="${i===0?0:lh}">${sanitize(ln)}</tspan>`).join('');
-  const tEnd=startY+(lines.length-1)*lh;
-  let body=''; const ws=[88,96,72,90,84,94,64,86,78];
-  for(let i=0;i<9;i++){ const y=tEnd+18+i*12; if(y>184) break; const w=ws[i%ws.length]; body+=`<rect x="${75-w/2}" y="${y}" width="${w}" height="2.6" rx="1.3" fill="#3A2C12" opacity="0.12"/>`; }
-  return `<svg class="bcover" viewBox="0 0 150 200" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">`
-    +`<defs><linearGradient id="${uid}p" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F4EACF"/><stop offset="1" stop-color="#E2D2A6"/></linearGradient></defs>`
-    +`<rect x="0" y="0" width="150" height="200" rx="5" fill="url(#${uid}p)"/>`
-    +`<rect x="7" y="7" width="136" height="186" rx="3" fill="none" stroke="#3A2C12" stroke-opacity="0.16" stroke-width="0.8"/>`
-    +`<path d="M7 7 L33 7 L7 33 Z" fill="#DAC79E"/>`
-    +`<path d="M33 7 L7 33 L33 33 Z" fill="#C7B083" opacity="0.65"/>`
-    +`<line x1="33" y1="7" x2="7" y2="33" stroke="#3A2C12" stroke-opacity="0.18"/>`
-    +`<text x="75" y="${startY}" text-anchor="middle" class="bc-title-ink">${tspans}</text>`
-    +body
-    +`</svg>`;
 }
 
 const S = {
@@ -1338,11 +1300,13 @@ function cardHTML(b) {
   const progressBar = progress > 0 ? `<div class="cprog" style="width:${progress}%"></div>` : '';
   const year = b.date ? new Date(b.date).getFullYear() : '';
   const sel = (S.recent && S.recent[0] && S.recent[0].id === b.id) ? ' sel' : '';
-  const meta = [sanitize(b.author||''), year].filter(Boolean).join(' · ');
+  const sub = [sanitize(b.category||''), year].filter(Boolean).join(' · ');
   return `<div class="card${sel}">
-    <div class="ccov">${bookCover(b)}<span class="cfmt">${b.format}</span></div>
-    <div class="ct">${sanitize(b.title)}</div>
-    <div class="cmeta"><span class="ccat">${sanitize(b.category)}</span>${meta?`<span class="cmd">${meta}</span>`:''}</div>
+    ${bookCover(b)}
+    <div class="meta">
+      <div class="t">${sanitize(b.title)}</div>
+      <div class="s">${sub}</div>
+    </div>
     <div class="cbac">
       <button onclick="openReader(${b.id})">${icon('book-open')} ئوقۇش</button>
       <button onclick="showEditBook(${b.id})" title="تەھرىرلەش">${icon('pencil')}</button>
