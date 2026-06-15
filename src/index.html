@@ -121,23 +121,29 @@ button, .hbtn, .vb, .ci, .mt, input, select, textarea { transition: background-c
 .hbtn.icob { padding: 7px; }
 .hbtn.icob .ic { width: 16px; height: 16px; }
 #layout { display: flex; flex: 1; overflow: hidden; }
-#side { width: 200px; background: var(--bg2); border-left: 0.5px solid var(--border); overflow-y: auto; flex-shrink: 0; padding-bottom: 12px; }
-#main { flex: 1; overflow-y: auto; padding: 14px 16px; }
-.sec { font-size: 10px; color: var(--text3); padding: 10px 12px 4px; letter-spacing: 0.8px; font-family: sans-serif; text-transform: uppercase; }
-.ci { display: flex; align-items: center; justify-content: space-between; padding: 7px 12px; cursor: pointer; font-size: 13px; color: var(--text2); transition: background .12s; gap: 4px; border-right: 2.5px solid transparent; }
+#side { width: 210px; background-color: var(--bg2); background-image: var(--grain); border-left: 0.5px solid var(--border); overflow-y: auto; flex-shrink: 0; padding: 6px 8px 12px; }
+#main { flex: 1; overflow-y: auto; padding: 16px 18px; }
+.sec { font-size: 9.5px; color: var(--text3); padding: 13px 8px 5px; letter-spacing: 1.2px; font-family: sans-serif; text-transform: uppercase; font-weight: 700; }
+.ci { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; cursor: pointer; font-size: 13px; color: var(--text2); transition: background .15s, color .15s; gap: 6px; border-radius: var(--radius2); margin: 1px 0; position: relative; }
 .ci:hover { background: var(--bg3); color: var(--text); }
-.ci.on { background: var(--ab); color: var(--at); border-right-color: var(--am); }
-.ci .cn { font-size: 10px; color: var(--text3); background: var(--bg); padding: 1px 6px; border-radius: 8px; font-family: sans-serif; flex-shrink: 0; }
+.ci.on { background: var(--ab); color: var(--at); }
+.ci.on::before { content: ""; position: absolute; inset-inline-start: 0; top: 6px; bottom: 6px; width: 3px; border-radius: 3px; background: var(--am); }
+.ci .cn { font-size: 10px; color: var(--text3); background: var(--bg); padding: 1px 7px; border-radius: 8px; font-family: sans-serif; flex-shrink: 0; }
 .ci.on .cn { background: var(--ab2); color: var(--at); }
 .ci-label { display: inline-flex; align-items: center; gap: 9px; min-width: 0; overflow: hidden; }
 .ci-label .ic { width: 16px; height: 16px; color: var(--text3); flex-shrink: 0; }
 .ci:hover .ci-label .ic { color: var(--text2); }
 .ci.on .ci-label .ic { color: var(--am); }
-.tb { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-.tvt { font-size: 14px; font-weight: 600; color: var(--text); }
-.vb { background: none; border: 0.5px solid var(--border2); color: var(--text2); padding: 4px 10px; border-radius: var(--radius2); font-size: 13px; cursor: pointer; transition: all .12s; }
-.vb.on { background: var(--ab); border-color: var(--ab2); color: var(--at); }
-#srt { font-size: 12px; padding: 4px 8px; background: var(--bg2); border: 0.5px solid var(--border2); color: var(--text2); border-radius: var(--radius2); direction: rtl; cursor: pointer; outline: none; font-family: var(--jf); }
+.side-foot { display: flex; align-items: center; gap: 8px; margin: 10px 2px 0; padding: 10px 8px 2px; font-size: 11px; color: var(--text3); border-top: 0.5px solid var(--border); font-family: sans-serif; }
+.side-foot .ic { width: 14px; height: 14px; color: var(--am); }
+.tb { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.tvt { font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: .2px; }
+.vbg { display: flex; gap: 4px; background: var(--bg2); border: 0.5px solid var(--border); border-radius: 9px; padding: 3px; }
+.vb { background: none; border: none; color: var(--text3); padding: 5px 9px; border-radius: 6px; font-size: 13px; cursor: pointer; transition: background .12s, color .12s; display: inline-flex; align-items: center; }
+.vb .ic { width: 16px; height: 16px; }
+.vb.on { background: var(--bg); color: var(--am); box-shadow: var(--shadow-1); }
+#srt { font-size: 12px; padding: 6px 10px; background: var(--bg2); border: 0.5px solid var(--border2); color: var(--text2); border-radius: 9px; direction: rtl; cursor: pointer; outline: none; font-family: var(--jf); transition: border-color .15s; }
+#srt:hover { border-color: var(--am); }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
 .rows { display: flex; flex-direction: column; gap: 6px; }
 .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 10px; cursor: pointer; transition: transform .15s, box-shadow .15s, border-color .15s; position: relative; }
@@ -343,8 +349,8 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
 @font-face{font-family:'UKIJ Tuz Tom';src:url('../assets/fonts/UKIJTuzTom.ttf') format('truetype');font-weight:normal;font-display:swap;}
 
 /* Mode tabs (library / quran / notes) */
-.mode-tabs { display:flex; flex-direction:column; padding:8px; gap:4px; border-bottom:0.5px solid var(--border); margin-bottom:6px; }
-.mt { padding:8px 12px; border-radius:var(--radius2); cursor:pointer; font-size:13px; color:var(--text2); transition:background .12s; display:flex; align-items:center; gap:8px; user-select:none; }
+.mode-tabs { display:flex; flex-direction:column; padding:4px 0 10px; gap:4px; border-bottom:0.5px solid var(--border); margin-bottom:6px; }
+.mt { padding:9px 11px; border-radius:var(--radius2); cursor:pointer; font-size:13px; font-weight:600; color:var(--text2); transition:background .15s, color .15s; display:flex; align-items:center; gap:9px; user-select:none; }
 .mt:hover { background:var(--bg3); color:var(--text); }
 .mt.on { background:var(--am); color:#fff; font-weight:600; }
 .mt .ic { width:17px; height:17px; color:var(--text3); }
@@ -488,9 +494,9 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
   <main id="main">
     <div class="tb">
       <span class="tvt" id="vtitle">بارلىق كىتابلار</span>
-      <div style="margin-right:auto;display:flex;gap:4px">
-        <button class="vb on" id="gvb" onclick="setView('g')" title="تور كۆرۈنۈشى">⊞</button>
-        <button class="vb" id="lvb" onclick="setView('l')" title="تىزىملىك كۆرۈنۈشى">☰</button>
+      <div class="vbg" style="margin-inline-start:auto">
+        <button class="vb on" id="gvb" onclick="setView('g')" title="تور كۆرۈنۈشى"><svg class="ic"><use href="#i-grid"></use></svg></button>
+        <button class="vb" id="lvb" onclick="setView('l')" title="تىزىملىك كۆرۈنۈشى"><svg class="ic"><use href="#i-list"></use></svg></button>
       </div>
       <select id="srt" onchange="S.sort=this.value;S.page=1;renderBooks()">
         <option value="d">يېڭى قوشۇلغانلىرى بويىچە</option>
@@ -1192,6 +1198,7 @@ function renderSide() {
         }
       });
     }
+    h += `<div class="side-foot">${icon('book')}<span>جەمئىي ${S.books.length} كىتاب</span></div>`;
   } else if (S.mode === 'quran') {
     h += (typeof renderQuranSidebar === 'function') ? renderQuranSidebar() : '<div style="padding:20px;color:var(--text3)">يۈكلىنىۋاتىدۇ...</div>';
   } else if (S.mode === 'notes') {
