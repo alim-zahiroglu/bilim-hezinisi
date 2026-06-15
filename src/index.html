@@ -223,19 +223,21 @@ mark.reader-hit-flash { animation: readerHitFlash 1.5s ease-out 1; }
 .pagination button:disabled { opacity: 0.45; cursor: not-allowed; }
 .pagination span { color: var(--text3); font-family: sans-serif; }
 /* Overlays */
-.ov { position: fixed; inset: 0; z-index: 50; display: none; align-items: flex-start; justify-content: center; background: rgba(0,0,0,0.5); padding: 20px; overflow-y: auto; }
+.ov { position: fixed; inset: 0; z-index: 50; display: none; align-items: flex-start; justify-content: center; background: rgba(20,14,6,0.55); backdrop-filter: blur(3px); padding: 24px; overflow-y: auto; }
 .ov.on { display: flex; }
-.mbox { background: var(--bg); border: 0.5px solid var(--border2); border-radius: var(--radius); width: 100%; max-width: 480px; margin: auto; }
-.mh { padding: 14px 18px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-.mh h2 { font-size: 15px; font-weight: 600; color: var(--text); }
+.mbox { background-color: var(--bg); background-image: var(--grain); border: 1px solid var(--ab2); border-radius: var(--radius-lg); width: 100%; max-width: 480px; margin: auto; box-shadow: var(--shadow-2); }
+.mh { padding: 15px 18px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.mh h2 { font-size: 15.5px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 9px; }
+.mh h2 .ic { width: 18px; height: 18px; color: var(--am); }
 .mc { padding: 16px 18px; }
 .fl { margin-bottom: 12px; }
 .fl label { display: block; font-size: 11px; color: var(--text2); margin-bottom: 5px; }
-.inp { width: 100%; padding: 8px 12px; border: 0.5px solid var(--border2); border-radius: var(--radius2); font-size: 13px; color: var(--text); background: var(--bg2); font-family: var(--jf); direction: rtl; outline: none; transition: border-color .15s; }
-.inp:focus { border-color: var(--am); }
-.fz { border: 1.5px dashed var(--border2); border-radius: var(--radius); padding: 20px; text-align: center; cursor: pointer; position: relative; transition: all .15s; }
+.inp { width: 100%; padding: 9px 12px; border: 0.5px solid var(--border2); border-radius: 9px; font-size: 13px; color: var(--text); background: var(--bg2); font-family: var(--jf); direction: rtl; outline: none; transition: border-color .15s, box-shadow .15s; }
+.inp:focus { border-color: var(--am); box-shadow: 0 0 0 3px var(--ab); }
+.fz { border: 1.5px dashed var(--border2); border-radius: var(--radius-lg); padding: 24px 20px; text-align: center; cursor: pointer; position: relative; transition: border-color .15s, background .15s; background: var(--bg2); }
 .fz:hover, .fz.dg { border-color: var(--am); background: var(--ab); }
-.fz .file-icon { font-size: 28px; margin-bottom: 6px; }
+.fz .file-icon { font-size: 28px; margin-bottom: 8px; display: flex; justify-content: center; }
+.fz .file-icon .ic { width: 30px; height: 30px; color: var(--am); }
 .fz .fz-t { font-size: 13px; color: var(--text2); }
 .fz .fz-s { font-size: 11px; color: var(--text3); margin-top: 4px; font-family: monospace; }
 .finfo { font-size: 12px; color: var(--at); padding: 6px 10px; background: var(--ab); border-radius: 4px; margin-top: 6px; display: none; }
@@ -304,7 +306,7 @@ mark.reader-hit-flash { animation: readerHitFlash 1.5s ease-out 1; }
 #progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: var(--am); z-index: 9999; transition: width .3s, opacity .3s; opacity: 0; }
 /* Toast */
 #toast { position: fixed; bottom: 16px; left: 16px; z-index: 9000; display: flex; flex-direction: column; gap: 5px; }
-.tk { padding: 9px 14px; border-radius: var(--radius2); font-size: 12px; background: var(--bg); border: 0.5px solid; max-width: 280px; font-family: var(--jf); animation: tin .2s; }
+.tk { padding: 11px 15px; border-radius: 10px; font-size: 12px; background-color: var(--bg); background-image: var(--grain); border: 0.5px solid; max-width: 300px; font-family: var(--jf); animation: tin .2s; box-shadow: var(--shadow-2); }
 .tk.s { border-color: #3B6D11; color: #3B6D11; }
 .tk.e { border-color: #A32D2D; color: #A32D2D; }
 .tk.i { border-color: var(--am); color: var(--am); }
@@ -312,7 +314,7 @@ mark.reader-hit-flash { animation: readerHitFlash 1.5s ease-out 1; }
 /* About panel */
 #about { position: fixed; inset: 0; z-index: 200; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); }
 #about.on { display: flex; }
-#abox { background: var(--bg); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 28px; max-width: 360px; width: 100%; text-align: center; }
+#abox { background-color: var(--bg); background-image: var(--grain); border: 1px solid var(--ab2); border-radius: var(--radius-lg); padding: 30px; max-width: 360px; width: 100%; text-align: center; box-shadow: var(--shadow-2); }
 /* Stats modal */
 #statsov { max-width: 500px; }
 .stat-group { margin-bottom: 16px; padding: 12px; background: var(--bg2); border-radius: var(--radius2); }
@@ -414,6 +416,12 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
 <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></symbol>
 <symbol id="i-select-all" viewBox="0 0 24 24"><path d="M5 3a2 2 0 0 0-2 2"/><path d="M19 3a2 2 0 0 1 2 2"/><path d="M21 19a2 2 0 0 1-2 2"/><path d="M5 21a2 2 0 0 1-2-2"/><path d="M9 3h1"/><path d="M9 21h1"/><path d="M14 3h1"/><path d="M14 21h1"/><path d="M3 9v1"/><path d="M21 9v1"/><path d="M3 14v1"/><path d="M21 14v1"/><path d="M7 8h8"/><path d="M7 12h10"/><path d="M7 16h6"/></symbol>
 <symbol id="i-power" viewBox="0 0 24 24"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></symbol>
+<symbol id="i-file-text" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+<symbol id="i-languages" viewBox="0 0 24 24"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></symbol>
+<symbol id="i-key-points" viewBox="0 0 24 24"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></symbol>
+<symbol id="i-idea" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></symbol>
 </defs></svg>
 
 <div id="progress" style="width:0"></div>
@@ -534,14 +542,14 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
 <div class="ov" id="addov">
   <div class="mbox">
     <div class="mh">
-      <h2 id="addTitle">📥 يېڭى كىتاب قوشۇش</h2>
+      <h2><svg class="ic"><use href="#i-plus"></use></svg><span id="addTitle">يېڭى كىتاب قوشۇش</span></h2>
       <button onclick="hideAdd()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
     </div>
     <div class="mc">
       <div class="fl">
         <label>كىتاب ھۆججىتى</label>
         <div class="fz" id="fz">
-          <div class="file-icon">📄</div>
+          <div class="file-icon"><svg class="ic"><use href="#i-file-text"></use></svg></div>
           <div class="fz-t">ھۆججەتنى سۆرەپ تاشلاڭ ياكى چېكىڭ</div>
           <div class="fz-s">PDF · TXT · DOCX · DOC · MD</div>
         </div>
@@ -584,7 +592,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
       <div class="fl"><label>قىسقىچە چۈشەندۈرۈش</label><textarea id="bdesc" rows="3" class="inp" style="resize:vertical" placeholder="كىتاب ھەققىدە قىسقىچە..."></textarea></div>
       <div class="fa">
         <button onclick="hideAdd()" class="hbtn">بىكار قىلىش</button>
-        <button onclick="addBook()" class="hbtn p">📚 كۈتۈپخانىغا قوشۇش</button>
+        <button onclick="addBook()" class="hbtn p"><svg class="ic"><use href="#i-book"></use></svg> كۈتۈپخانىغا قوشۇش</button>
       </div>
     </div>
   </div>
@@ -594,7 +602,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
 <div class="ov" id="editov">
   <div class="mbox">
     <div class="mh">
-      <h2>✏️ كىتابنى تەھرىرلە</h2>
+      <h2><svg class="ic"><use href="#i-pencil"></use></svg>كىتابنى تەھرىرلە</h2>
       <button onclick="hideEdit()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
     </div>
     <div class="mc">
@@ -614,7 +622,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
 <div class="ov" id="batchov">
   <div class="mbox" style="max-width: 520px;">
     <div class="mh">
-      <h2>📁 توپلاپ كىتاب قوشۇش</h2>
+      <h2><svg class="ic"><use href="#i-folder-plus"></use></svg>توپلاپ كىتاب قوشۇش</h2>
       <button onclick="hideBatchImport()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
     </div>
     <div class="mc">
@@ -637,7 +645,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
 <div class="ov" id="webov">
   <div class="mbox" style="max-width: 480px;">
     <div class="mh">
-      <h2>🌐 تور بەت قوشۇش</h2>
+      <h2><svg class="ic"><use href="#i-globe"></use></svg>تور بەت قوشۇش</h2>
       <button onclick="hideWebImport()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
     </div>
     <div class="mc">
@@ -660,7 +668,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
 <div class="ov" id="setov">
   <div class="mbox" style="max-width: 520px;">
     <div class="mh">
-      <h2>⚙️ تەڭشەكلەر</h2>
+      <h2><svg class="ic"><use href="#i-settings"></use></svg>تەڭشەكلەر</h2>
       <button onclick="hideSettings()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
     </div>
     <div class="mc">
@@ -718,7 +726,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
 <div class="ov" id="statsov">
   <div class="mbox">
     <div class="mh">
-      <h2>📊 ئاماللىق سانلار</h2>
+      <h2><svg class="ic"><use href="#i-chart"></use></svg>ئاماللىق سانلار</h2>
       <button onclick="hideStats()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
     </div>
     <div class="mc">
@@ -861,7 +869,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
 <div class="ov" id="renov">
   <div class="mbox" style="max-width:360px">
     <div class="mh">
-      <h2>✏️ تۈر ئىسمىنى ئۆزگەرتىش</h2>
+      <h2><svg class="ic"><use href="#i-pencil"></use></svg>تۈر ئىسمىنى ئۆزگەرتىش</h2>
       <button onclick="hideRename()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
     </div>
     <div class="mc">
@@ -4075,7 +4083,7 @@ async function delBook(id, e) {
 
 function showAdd(){
   S.editingBookId = null;
-  document.getElementById('addTitle').textContent = '📥 يېڭى كىتاب قوشۇش';
+  document.getElementById('addTitle').textContent = 'يېڭى كىتاب قوشۇش';
   document.getElementById('bcat').innerHTML=S.cats.map(c=>`<option value="${sanitize(c)}">${sanitize(c)}</option>`).join('');
   document.getElementById('btitle').value='';document.getElementById('bauth').value='';document.getElementById('bdesc').value='';
   document.getElementById('finfo').style.display='none';document.getElementById('pb').style.display='none';document.getElementById('pf').style.width='0';
