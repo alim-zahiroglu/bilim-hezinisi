@@ -133,14 +133,14 @@
     return `<div class="quran-toolbar">
       <div class="quran-search-wrap">
         <button class="quran-search-icon" id="quran-search-btn" onclick="window.quranRunSearchNow()"
-          title="ئىزدەش">🔍</button>
+          title="ئىزدەش">${icon('search')}</button>
         <input type="text" class="quran-search" id="quran-search"
           placeholder="سۈرە نامى، ئەرەبچە ئايەت ياكى ئۇيغۇرچە تەرجىمە بويىچە ئىزدەش..."
           value="${escAttr(q)}"
           oninput="window.quranOnSearchInput(this.value)"
           onkeydown="if(event.key==='Enter'){event.preventDefault();window.quranRunSearchNow();}else if(event.key==='Escape'){window.quranClearSearch();}">
         <button class="quran-search-clear" onclick="window.quranClearSearch()"
-          style="display:${q?'inline':'none'}" id="quran-search-clear">✕</button>
+          style="display:${q?'inline-flex':'none'}" id="quran-search-clear">${icon('x','ic-sm')}</button>
       </div>
 
       <select class="quran-lang" id="quran-lang" onchange="window.quranSetSearchLang(this.value)" title="ئىزدەش تىلى">
@@ -339,7 +339,7 @@
       const arHtml = r.snip_ar ? r.snip_ar : escHtml(r.text_ar);
       const ugHtml = r.snip_ug ? r.snip_ug : escHtml(r.text_ug);
       h += `<div class="quran-search-result" onclick="window.quranOpenAya(${r.sura}, ${r.aya})">
-        <div class="quran-search-meta">📖 ${escHtml(suraLabel)} — ئايەت ${r.aya}</div>
+        <div class="quran-search-meta">${icon('book-open')} ${escHtml(suraLabel)} — ئايەت ${r.aya}</div>
         <div class="quran-search-result-ar">${arHtml}</div>
         ${ugHtml ? `<div class="quran-search-result-ug">${ugHtml}</div>` : ''}
       </div>`;
