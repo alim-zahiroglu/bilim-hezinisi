@@ -28,14 +28,16 @@
 }
 .notes-splitter:hover::after, .notes-splitter.dragging::after { background: var(--am); }
 .notes-collapse-btn {
-  flex-shrink: 0; width: 28px; height: 28px;
+  flex-shrink: 0; min-width: 34px; height: 34px;
   background: var(--bg2); border: 0.5px solid var(--border);
-  color: var(--text2); border-radius: var(--radius2); cursor: pointer;
-  font-size: 14px; line-height: 1; display: flex; align-items: center;
-  justify-content: center; transition: background .12s, color .12s, border-color .12s;
+  color: var(--text2); border-radius: 7px; cursor: pointer;
+  font-size: 15px; line-height: 1; display: inline-flex; align-items: center;
+  justify-content: center; gap: 6px; font-family: var(--jf); font-weight: 600;
+  transition: color .12s, border-color .12s, background .12s;
 }
-.notes-collapse-btn:hover { background: var(--bg3); color: var(--text); border-color: var(--border2); }
-.notes-collapse-btn.active { background: var(--am); color: #fff; border-color: var(--am); }
+.notes-collapse-btn:hover { color: var(--am); border-color: var(--border2); }
+.notes-collapse-btn.active { background: var(--ab); color: var(--am); border-color: var(--am); }
+.notes-collapse-btn .ic { width: 15px; height: 15px; }
 /* Slim floating edge handle shown only when its panel is collapsed. */
 .notes-edge-handle {
   position: fixed; top: 50%; transform: translateY(-50%);
@@ -52,32 +54,42 @@
 /* Document list sidebar */
 .notes-sidebar-inner { display: flex; flex-direction: column; height: 100%; }
 .notes-sidebar-header {
-  padding: 10px; border-bottom: 0.5px solid var(--border);
-  display: flex; gap: 6px; align-items: center; flex-shrink: 0;
+  padding: 12px 8px 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
 }
+.notes-sidebar-header .nl-title { font-size: 15px; font-weight: 800; color: var(--text); }
 .notes-sidebar-header button {
-  background: var(--am); color: #fff; border: none;
-  border-radius: var(--radius2); padding: 7px 12px;
-  cursor: pointer; font-family: var(--jf); font-size: 12px;
-  flex: 1; transition: opacity .12s;
+  background: linear-gradient(135deg, var(--gold), var(--am)); color: #fff; border: none;
+  border-radius: 8px; padding: 7px 11px; cursor: pointer;
+  font-family: var(--jf); font-size: 12px; font-weight: 700;
+  display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+  box-shadow: var(--shadow-1); transition: filter .12s;
 }
-.notes-sidebar-header button:hover { opacity: 0.9; }
-.notes-list { flex: 1; overflow-y: auto; padding: 4px; }
+.notes-sidebar-header button:hover { filter: brightness(1.07); }
+.notes-sidebar-header button .ic { width: 13px; height: 13px; }
+.notes-search {
+  display: flex; align-items: center; gap: 6px; margin: 0 4px 10px;
+  padding: 0 12px; height: 34px; background: var(--bg);
+  border: 0.5px solid var(--border2); border-radius: 18px;
+}
+.notes-search .ic { width: 14px; height: 14px; color: var(--text3); flex-shrink: 0; }
+.notes-search input { flex: 1; min-width: 0; border: none; background: none; outline: none; color: var(--text); font-family: var(--jf); font-size: 13px; direction: rtl; }
+.notes-search input::placeholder { color: var(--text3); }
+.notes-list { flex: 1; overflow-y: auto; padding: 2px 4px 8px; }
 .notes-item {
-  padding: 9px 10px; cursor: pointer;
-  border-radius: var(--radius2); margin-bottom: 3px;
-  transition: background .12s;
-  font-size: 12.5px; color: var(--text2);
+  padding: 10px 11px; cursor: pointer;
+  border-radius: 10px; margin-bottom: 5px;
+  transition: background .12s, border-color .12s;
   position: relative; border: 0.5px solid transparent;
 }
-.notes-item:hover { background: var(--bg3); color: var(--text); }
-.notes-item.active { background: var(--ab); color: var(--text); border-color: var(--ab2); }
-.notes-item.active::before { content: ""; position: absolute; inset-inline-start: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 3px; background: var(--am); }
+.notes-item:hover { background: var(--bg3); }
+.notes-item.active { background: var(--ab); border-color: var(--ab2); }
 .notes-item-title {
-  font-weight: 600; overflow: hidden; text-overflow: ellipsis;
-  white-space: nowrap; margin-bottom: 3px;
+  font-size: 14px; font-weight: 700; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; margin-bottom: 4px; padding-inline-end: 22px;
 }
-.notes-item-meta { font-size: 10px; color: var(--text3); font-family: sans-serif; }
+.notes-item-meta { font-size: 11px; color: var(--text3); font-family: monospace; }
 .notes-item.active .notes-item-meta { color: var(--text2); }
 .notes-item-delete {
   position: absolute; top: 50%; left: 8px; transform: translateY(-50%);
@@ -103,53 +115,60 @@
 .notes-collapse-btn .ic { width: 15px; height: 15px; }
 .notes-item-delete .ic { width: 13px; height: 13px; }
 
-/* Toolbar */
+/* Toolbar — grouped rounded buttons with thin separators (matches reference) */
 .notes-toolbar {
-  display: flex; align-items: center; gap: 4px;
-  padding: 8px 14px; border-bottom: 0.5px solid var(--border);
-  background: var(--bg); flex-wrap: wrap; flex-shrink: 0;
+  display: flex; align-items: center; gap: 5px;
+  padding: 8px 16px; border-bottom: 0.5px solid var(--border);
+  background: var(--bg2); flex-wrap: wrap; flex-shrink: 0;
 }
 .notes-toolbar-group {
-  display: flex; gap: 2px; padding: 0 6px;
-  border-left: 0.5px solid var(--border);
+  display: flex; align-items: center; gap: 4px; padding-inline-start: 8px;
+  border-inline-start: 1px solid var(--border);
 }
-.notes-toolbar-group:first-child { border-left: none; padding-left: 0; }
+.notes-toolbar-group:first-child { border-inline-start: none; padding-inline-start: 0; }
 .notes-toolbar button, .notes-toolbar select {
   background: var(--bg2); border: 0.5px solid var(--border);
-  color: var(--text); padding: 5px 10px;
-  border-radius: 8px; cursor: pointer;
+  color: var(--text); padding: 0 10px;
+  border-radius: 7px; cursor: pointer;
   font-family: var(--jf); font-size: 13px; font-weight: 600;
-  transition: background .12s, color .12s, border-color .12s;
-  min-width: 32px; height: 32px;
-  display: inline-flex; align-items: center; justify-content: center;
+  transition: color .12s, border-color .12s, background .12s;
+  min-width: 34px; height: 34px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
 }
+.notes-toolbar select { font-weight: 400; color: var(--text2); }
 .notes-toolbar button .ic { width: 16px; height: 16px; }
 .notes-toolbar button:hover, .notes-toolbar select:hover {
-  background: var(--bg3); color: var(--text); border-color: var(--am);
+  color: var(--am); border-color: var(--border2);
 }
-.notes-toolbar button.active { background: var(--am); color: #fff; border-color: var(--am); box-shadow: var(--shadow-1); }
+.notes-toolbar button.active { background: var(--ab); color: var(--am); border-color: var(--am); }
 
 /* Title bar */
 .notes-title-bar {
-  padding: 10px 20px; border-bottom: 0.5px solid var(--border);
+  padding: 10px 16px; border-bottom: 0.5px solid var(--border);
   background: var(--bg); flex-shrink: 0;
-  display: flex; align-items: center; gap: 12px;
+  display: flex; align-items: center; gap: 10px;
 }
 .notes-title-input {
   flex: 1; background: none; border: none; outline: none;
-  font-family: var(--jf); font-size: 18px; font-weight: 600;
+  font-family: var(--jf); font-size: 17px; font-weight: 800;
   color: var(--text); padding: 4px 0; direction: rtl;
 }
-.notes-status { font-size: 10px; color: var(--text3); font-family: sans-serif; white-space: nowrap; }
+.notes-title-input::placeholder { color: var(--text3); }
+.notes-status { font-size: 11px; color: var(--text3); white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
 .notes-status.saving { color: var(--am); }
-.notes-status.saved { color: #3B6D11; }
-.notes-status.error { color: #A32D2D; }
+.notes-status.saved { color: #6BA83A; }
+.notes-status.saved::before { content: "✓"; font-weight: 700; }
+.notes-status.error { color: #E0695F; }
+/* Gold header save button (matches reference .tbtn.p) */
+.notes-savebtn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border: none; border-radius: 7px; background: linear-gradient(135deg, var(--gold), var(--am)); color: #fff; font: 700 13px var(--jf); cursor: pointer; box-shadow: var(--shadow-1); transition: filter .12s; }
+.notes-savebtn:hover { filter: brightness(1.07); }
+.notes-savebtn .ic { width: 15px; height: 15px; }
 
 /* Editor */
 .notes-editor-wrap { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 .notes-editor {
   flex: 1; overflow-y: auto;
-  padding: 36px max(40px, calc((100% - 760px) / 2));
+  padding: 32px max(40px, calc((100% - 720px) / 2));
   background-color: var(--bg); background-image: var(--grain);
   outline: none; color: var(--text);
   font-family: 'UKIJ Ekran', var(--jf);
@@ -186,17 +205,17 @@
 }
 .notes-right-panel-tabs { display: flex; border-bottom: 0.5px solid var(--border); }
 .notes-right-panel-tab {
-  flex: 1; padding: 10px 4px;
-  cursor: pointer; font-size: 10.5px; color: var(--text2);
+  flex: 1; padding: 11px 4px;
+  cursor: pointer; font-size: 12.5px; color: var(--text);
   transition: background .12s, color .12s;
   border-bottom: 2px solid transparent; user-select: none;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   display: flex; align-items: center; justify-content: center; gap: 5px;
 }
-.notes-right-panel-tab .ic { width: 13px; height: 13px; flex-shrink: 0; }
+.notes-right-panel-tab .ic { width: 14px; height: 14px; flex-shrink: 0; }
 .notes-right-panel-tab:hover { background: var(--bg3); }
 .notes-right-panel-tab.active {
-  color: var(--am); border-bottom-color: var(--am); font-weight: 600;
+  color: var(--am); border-bottom-color: var(--am); font-weight: 700;
 }
 .notes-right-panel-content { flex: 1; overflow-y: auto; padding: 10px; }
 .notes-right-pane { min-height: 0; }
@@ -398,21 +417,25 @@ button.notes-ai-item:hover, .notes-ai-has-sub:hover > .notes-ai-item-label {
 
 /* AI output — docked inside the right panel's AI tab (Phase 3). */
 #nai-tab { display: flex; flex-direction: column; gap: 8px; }
-.nai-tab-title { font-size: 12px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 6px; }
+.nai-tab-title { font-size: 12.5px; font-weight: 700; color: var(--text2); display: flex; align-items: center; gap: 6px; }
 .nai-tab-title .ic { width: 14px; height: 14px; color: var(--am); }
 .nai-tab-gate {
-  font-size: 12px; color: var(--text2); line-height: 1.7;
+  font-size: 12.5px; color: var(--text2); line-height: 1.7;
   background: var(--bg); border: 0.5px dashed var(--border2);
-  border-radius: var(--radius2); padding: 14px; text-align: center;
+  border-radius: 10px; padding: 16px; text-align: center;
 }
 #nai-status { font-size: 11px; color: var(--text2); min-height: 16px; display: flex; align-items: center; gap: 8px; }
-#nai-result { font-family: var(--jf); font-size: 13px; line-height: 1.9; color: var(--text); direction: rtl; }
-#nai-result h1, #nai-result h2, #nai-result h3, #nai-result h4 { font-size: 13.5px; font-weight: 700; color: var(--at); margin: 8px 0 4px; }
+/* AI answer card (matches reference .aicard) */
+#nai-result { font-family: var(--jf); font-size: 13px; line-height: 1.9; color: var(--text); direction: rtl; background: var(--bg); border: 0.5px solid var(--border); border-radius: 10px; padding: 12px; }
+#nai-result:empty { display: none; }
+#nai-result h1, #nai-result h2, #nai-result h3, #nai-result h4 { font-size: 13.5px; font-weight: 700; color: var(--am); margin: 8px 0 4px; }
 #nai-result p { margin-bottom: 6px; }
 #nai-result ul, #nai-result ol { margin: 4px 18px 6px 0; padding: 0; }
 #nai-result li { margin-bottom: 3px; }
 #nai-result code { font-family: monospace; font-size: 11px; background: var(--bg3); padding: 1px 4px; border-radius: 3px; }
-#nai-actions { gap: 6px; flex-wrap: wrap; padding-top: 6px; border-top: 0.5px solid var(--border); }
+#nai-actions { display: flex; gap: 6px; flex-wrap: wrap; padding-top: 8px; }
+#nai-actions button { flex: 1; justify-content: center; height: 30px; border: 0.5px solid var(--border); background: var(--bg2); color: var(--text2); border-radius: 7px; cursor: pointer; font: 600 11.5px var(--jf); display: inline-flex; align-items: center; gap: 5px; transition: color .12s, border-color .12s; }
+#nai-actions button:hover { color: var(--am); border-color: var(--border2); }
 #nai-extra textarea {
   width: 100%; box-sizing: border-box; padding: 8px; border: 0.5px solid var(--border);
   border-radius: var(--radius2); font-family: var(--jf); font-size: 12px;

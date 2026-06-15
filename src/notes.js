@@ -23,8 +23,10 @@
   window.renderNotesSidebar = function renderNotesSidebar() {
     const h = `<div class="notes-sidebar-inner">
       <div class="notes-sidebar-header">
-        <button onclick="window.notesCreate()">+ يېڭى خاتىرە</button>
+        <span class="nl-title">خاتىرە دەپتىرىم</span>
+        <button onclick="window.notesCreate()">${icon('plus')} يېڭى خاتىرە</button>
       </div>
+      <div class="notes-search">${icon('search')}<input type="text" id="notes-list-search" placeholder="خاتىرە ئىزدەش…" oninput="window.notesListFilter(this.value)"></div>
       <div class="notes-list" id="notes-list-inner">
         <div class="notes-sidebar-empty">يۈكلىنىۋاتىدۇ...</div>
       </div>
@@ -54,8 +56,12 @@
       return;
     }
 
+    list.innerHTML = buildNoteItems(r.docs);
+  }
+
+  function buildNoteItems(docs) {
     let h = '';
-    for (const d of r.docs) {
+    for (const d of docs) {
       const active = (_s().curDoc && d.id === _s().curDoc.id) ? 'active' : '';
       const updated = formatDate(d.updated_at);
       h += `<div class="notes-item ${active}" onclick="window.notesOpen(${d.id})">
@@ -64,8 +70,17 @@
         <button class="notes-item-delete" onclick="window.notesDelete(${d.id}, event)" title="ئۆچۈرۈش">${icon('trash','ic-sm')}</button>
       </div>`;
     }
-    list.innerHTML = h;
+    return h;
   }
+
+  // Client-side title filter for the notes list (transient; does not re-fetch).
+  window.notesListFilter = function (q) {
+    const list = document.getElementById('notes-list-inner');
+    if (!list) return;
+    q = (q || '').trim().toLowerCase();
+    const docs = (_s().docs || []).filter(d => !q || (d.title || '').toLowerCase().includes(q));
+    list.innerHTML = docs.length ? buildNoteItems(docs) : '<div class="notes-sidebar-empty">نەتىجە تېپىلمىدى</div>';
+  };
 
   function formatDate(iso) {
     try {
@@ -256,6 +271,7 @@
         <span class="notes-status saved" id="notes-status">ساقلاندى</span>
         <button class="notes-collapse-btn" type="button" onclick="window.notesExportDocx()"
           title="Word قا چىقىرىش" style="width:auto;padding:0 10px;gap:6px">${icon('file-text')} Word</button>
+        <button class="notes-savebtn" type="button" onclick="window.notesSaveNow()" title="ساقلاش (Ctrl+S)">${icon('save')} ساقلاش</button>
         <button class="notes-collapse-btn" id="notes-collapse-panel-btn" type="button"
           onclick="window.notesTogglePanel()"
           title="قۇرئان/مەنبە تاختىسىنى يىغىش/ئېچىش (Ctrl+Shift+\\)">◧</button>
