@@ -61,7 +61,7 @@
       h += `<div class="notes-item ${active}" onclick="window.notesOpen(${d.id})">
         <div class="notes-item-title">${escHtml(d.title || 'يېڭى خاتىرە')}</div>
         <div class="notes-item-meta">${updated} · ${d.size} ھەرپ</div>
-        <button class="notes-item-delete" onclick="window.notesDelete(${d.id}, event)" title="ئۆچۈرۈش">🗑</button>
+        <button class="notes-item-delete" onclick="window.notesDelete(${d.id}, event)" title="ئۆچۈرۈش">${icon('trash','ic-sm')}</button>
       </div>`;
     }
     list.innerHTML = h;
@@ -236,7 +236,7 @@
     if (!_s().curDoc) {
       return `<div class="notes-main">
         <div class="notes-empty">
-          <div class="notes-empty-icon">📝</div>
+          <div class="notes-empty-icon">${icon('notebook-pen')}</div>
           <h3 style="font-size:16px;font-weight:600;color:var(--text2);margin-bottom:8px">خاتىرە يوق</h3>
           <p style="font-size:13px">يان تەرەپتىن بىر خاتىرە تاللاڭ<br>ياكى «+ يېڭى خاتىرە» بىلەن باشلاڭ</p>
         </div>
@@ -255,7 +255,7 @@
           oninput="window.notesOnTitleInput(this.value)">
         <span class="notes-status saved" id="notes-status">ساقلاندى</span>
         <button class="notes-collapse-btn" type="button" onclick="window.notesExportDocx()"
-          title="Word قا چىقىرىش" style="width:auto;padding:0 8px;font-size:12px">📄 Word</button>
+          title="Word قا چىقىرىش" style="width:auto;padding:0 10px;gap:6px">${icon('file-text')} Word</button>
         <button class="notes-collapse-btn" id="notes-collapse-panel-btn" type="button"
           onclick="window.notesTogglePanel()"
           title="قۇرئان/مەنبە تاختىسىنى يىغىش/ئېچىش (Ctrl+Shift+\\)">◧</button>
@@ -271,7 +271,7 @@
           <span>ئىملانى تەكشۈرۈش (تورسىز)</span>
         </label>
         <div class="notes-ai-menu-wrap" id="notes-ai-menu-wrap">
-          <button type="button" class="notes-ai-trigger" id="notes-ai-trigger" onclick="window.naiToggleMenu(event)">✨ سۈنئىي ئىدراك ئىقتىدارلىرى (Gemini API — تور ھالىتىدە) ▾</button>
+          <button type="button" class="notes-ai-trigger" id="notes-ai-trigger" onclick="window.naiToggleMenu(event)">${icon('sparkles')} سۈنئىي ئىدراك ئىقتىدارلىرى (Gemini API — تور ھالىتىدە) ▾</button>
           <div class="notes-ai-flyout" id="notes-ai-flyout">
             <div class="notes-ai-item notes-ai-has-sub">
               <span class="notes-ai-item-label">تەرجىمە قىلىش ◂</span>
@@ -307,7 +307,7 @@
         <input type="text" id="notes-replace-input" placeholder="ئالماشتۇرۇش..." style="display:none">
         <button type="button" id="notes-replace-btn" onclick="window.notesReplaceOne()" style="display:none">ئالماشتۇرۇش</button>
         <button type="button" id="notes-replace-all-btn" onclick="window.notesReplaceAll()" style="display:none">ھەممىنى ئالماشتۇرۇش</button>
-        <button type="button" onclick="window.notesFindClose()" title="تاقاش (Esc)">✕</button>
+        <button type="button" onclick="window.notesFindClose()" title="تاقاش (Esc)">${icon('x','ic-sm')}</button>
       </div>
       <div class="notes-editor-wrap">
         <div class="notes-editor" id="notes-editor"
@@ -316,7 +316,7 @@
       <div class="notes-wordcount" id="notes-wordcount">
         <span id="notes-wc-text">سۆز: 0 · ھەرپ: 0</span>
         <button type="button" id="notes-ocr-cleanup-btn" class="notes-wc-action" style="display:none"
-          onclick="window.naiOcrCleanupNote()">✨ OCR نەتىجىسىنى AI بىلەن تۈزىتىش (تور)</button>
+          onclick="window.naiOcrCleanupNote()">${icon('sparkles')} OCR نەتىجىسىنى AI بىلەن تۈزىتىش (تور)</button>
       </div>
     </div>`;
   }
@@ -349,24 +349,24 @@
         </select>
       </div>
       <div class="notes-toolbar-group">
-        <button onclick="window.notesExec('insertUnorderedList')" title="نۇقتىلىق تىزىملىك">•</button>
-        <button onclick="window.notesExec('insertOrderedList')" title="نومۇرلۇق تىزىملىك">1.</button>
-        <button onclick="window.notesExec('formatBlock','blockquote')" title="نەقىل">❝</button>
+        <button onclick="window.notesExec('insertUnorderedList')" title="نۇقتىلىق تىزىملىك">${icon('list')}</button>
+        <button onclick="window.notesExec('insertOrderedList')" title="نومۇرلۇق تىزىملىك">${icon('list-ordered')}</button>
+        <button onclick="window.notesExec('formatBlock','blockquote')" title="نەقىل">${icon('quote')}</button>
       </div>
       <div class="notes-toolbar-group">
-        <button onclick="window.notesExec('justifyRight')" title="ئوڭغا">⟹</button>
-        <button onclick="window.notesExec('justifyCenter')" title="ئوتتۇرىدا">≡</button>
-        <button onclick="window.notesExec('justifyLeft')" title="سولغا">⟸</button>
+        <button onclick="window.notesExec('justifyRight')" title="ئوڭغا">${icon('align-right')}</button>
+        <button onclick="window.notesExec('justifyCenter')" title="ئوتتۇرىدا">${icon('align-center')}</button>
+        <button onclick="window.notesExec('justifyLeft')" title="سولغا">${icon('align-left')}</button>
       </div>
       <div class="notes-toolbar-group">
         <button id="notes-fp-btn" type="button" onmousedown="window.notesFpPress(event)"
-          title="فورمات سۈپۈرگىسى (Alt+Ctrl+C / Alt+Ctrl+V)">🖌</button>
+          title="فورمات سۈپۈرگىسى (Alt+Ctrl+C / Alt+Ctrl+V)">${icon('brush')}</button>
         <button type="button" onclick="window.notesImageOcr()"
-          title="رەسىمدىن تېكىست (OCR، تورسىز)">📷</button>
+          title="رەسىمدىن تېكىست (OCR، تورسىز)">${icon('camera')}</button>
       </div>
       <div class="notes-toolbar-group">
-        <button onclick="window.notesExec('removeFormat')" title="فورماتنى ئۆچۈرۈش">✕</button>
-        <button onclick="window.notesSaveNow()" title="ھازىرلا ساقلاش (Ctrl+S)">💾</button>
+        <button onclick="window.notesExec('removeFormat')" title="فورماتنى ئۆچۈرۈش">${icon('eraser')}</button>
+        <button onclick="window.notesSaveNow()" title="ھازىرلا ساقلاش (Ctrl+S)">${icon('save')}</button>
       </div>
     </div>`;
   }
@@ -379,9 +379,9 @@
     // DB-backed and never affected by the AI tab's state.
     return `<div class="notes-right-panel">
       <div class="notes-right-panel-tabs">
-        <div class="notes-right-panel-tab ${tab==='quran'?'active':''}" data-tab="quran" onclick="window.notesSetTab('quran')">📖 قۇرئان (تورسىز)</div>
-        <div class="notes-right-panel-tab ${tab==='refs'?'active':''}" data-tab="refs" onclick="window.notesSetTab('refs')">🔗 مەنبە (تورسىز)</div>
-        <div class="notes-right-panel-tab ${tab==='ai'?'active':''}" data-tab="ai" onclick="window.notesSetTab('ai')">✨ AI (تورلۇق)</div>
+        <div class="notes-right-panel-tab ${tab==='quran'?'active':''}" data-tab="quran" onclick="window.notesSetTab('quran')">${icon('book-open')} قۇرئان (تورسىز)</div>
+        <div class="notes-right-panel-tab ${tab==='refs'?'active':''}" data-tab="refs" onclick="window.notesSetTab('refs')">${icon('link')} مەنبە (تورسىز)</div>
+        <div class="notes-right-panel-tab ${tab==='ai'?'active':''}" data-tab="ai" onclick="window.notesSetTab('ai')">${icon('sparkles')} AI (تورلۇق)</div>
       </div>
       <div class="notes-right-panel-content" id="notes-right-content">
         <div class="notes-right-pane" data-pane="quran" style="${vis('quran')}">${renderQuranPicker()}</div>
@@ -397,7 +397,7 @@
   // (#nai-result) never disappears on a tab switch.
   function renderAiTab() {
     return `<div id="nai-tab">
-      <div id="nai-title" class="nai-tab-title">✨ سۈنئىي ئىدراك</div>
+      <div id="nai-title" class="nai-tab-title">${icon('sparkles')} سۈنئىي ئىدراك</div>
       <div id="nai-gate" class="nai-tab-gate" style="display:none">تەڭشەكتىن AI نى ئېچىڭ</div>
       <div id="nai-status"></div>
       <div id="nai-result"></div>
@@ -970,8 +970,8 @@
         <div class="notes-quran-preview-ar">${escHtml(a.text_ar)}</div>
         ${a.text_ug && withTr ? `<div class="notes-quran-preview-ug">${escHtml(a.text_ug)}</div>` : ''}
         <div class="notes-quran-preview-actions">
-          <button onclick="window.notesInsertAya(${sura}, ${aya}, ${withTr})">📝 قىستۇرۇش</button>
-          <button onclick="window.notesCopyAya(${sura}, ${aya}, ${withTr})">📋 كۆچۈرۈش</button>
+          <button onclick="window.notesInsertAya(${sura}, ${aya}, ${withTr})">${icon('plus')} قىستۇرۇش</button>
+          <button onclick="window.notesCopyAya(${sura}, ${aya}, ${withTr})">${icon('copy')} كۆچۈرۈش</button>
         </div>
       </div>`;
   };
@@ -1303,16 +1303,16 @@
           let gotoBtn;
           if (isQuran && sn.sura && sn.aya) {
             gotoBtn = `<button class="notes-ref-act notes-ref-goto"
-              onclick="window.notesGoToQuranAya(${sn.sura}, ${sn.aya})">📖 ئايەتكە بېرىش (${sn.sura}:${sn.aya})</button>`;
+              onclick="window.notesGoToQuranAya(${sn.sura}, ${sn.aya})">${icon('book-open')}ئايەتكە بېرىش (${sn.sura}:${sn.aya})</button>`;
           } else {
             gotoBtn = `<button class="notes-ref-act notes-ref-goto"
-              onclick="window.notesGoToBook(${bm.bookId}, '${encodeURIComponent(word)}')">📖 كىتابقا بېرىش</button>`;
+              onclick="window.notesGoToBook(${bm.bookId}, '${encodeURIComponent(word)}')">${icon('book-open')}كىتابقا بېرىش</button>`;
           }
 
           // Source label includes sura:aya for Quran
           const sourceLabel = isQuran
-            ? `📖 ${escHtml(bookTitle)}${(sn.sura && sn.aya) ? ` · ${sn.sura}:${sn.aya}` : ''}${sn.lang === 'ar' ? ' (عربي)' : ''}`
-            : `📘 ${escHtml(bookTitle)}`;
+            ? `${icon('book-open')}${escHtml(bookTitle)}${(sn.sura && sn.aya) ? ` · ${sn.sura}:${sn.aya}` : ''}${sn.lang === 'ar' ? ' (عربي)' : ''}`
+            : `${icon('book-open')}${escHtml(bookTitle)}`;
 
           html += `<div class="notes-ref-item" id="${itemId}">
             <div class="notes-ref-word">${escHtml(word)}</div>
@@ -1323,7 +1323,7 @@
                 onclick="window.notesToggleSnippet('${itemId}')">＋</button>
               ${gotoBtn}
               <button class="notes-ref-act notes-ref-insert"
-                onclick="window.notesInsertRef(${bm.bookId}, '${encSnip}')">📝 قىستۇرۇش</button>
+                onclick="window.notesInsertRef(${bm.bookId}, '${encSnip}')">${icon('plus')} قىستۇرۇش</button>
             </div>
           </div>`;
         }

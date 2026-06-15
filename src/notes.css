@@ -72,6 +72,7 @@
 }
 .notes-item:hover { background: var(--bg3); color: var(--text); }
 .notes-item.active { background: var(--ab); color: var(--at); border-color: var(--ab2); }
+.notes-item.active::before { content: ""; position: absolute; inset-inline-start: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 3px; background: var(--am); }
 .notes-item-title {
   font-weight: 600; overflow: hidden; text-overflow: ellipsis;
   white-space: nowrap; margin-bottom: 3px;
@@ -97,7 +98,10 @@
   flex: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center; color: var(--text3);
 }
-.notes-empty-icon { font-size: 54px; margin-bottom: 14px; opacity: 0.35; }
+.notes-empty-icon { margin-bottom: 14px; opacity: 0.35; display: flex; }
+.notes-empty-icon .ic { width: 54px; height: 54px; color: var(--text3); stroke-width: 1.3; }
+.notes-collapse-btn .ic { width: 15px; height: 15px; }
+.notes-item-delete .ic { width: 13px; height: 13px; }
 
 /* Toolbar */
 .notes-toolbar {
@@ -113,15 +117,17 @@
 .notes-toolbar button, .notes-toolbar select {
   background: var(--bg2); border: 0.5px solid var(--border);
   color: var(--text2); padding: 5px 10px;
-  border-radius: var(--radius2); cursor: pointer;
+  border-radius: 8px; cursor: pointer;
   font-family: var(--jf); font-size: 12px;
   transition: background .12s, color .12s, border-color .12s;
-  min-width: 28px; height: 28px;
+  min-width: 30px; height: 30px;
+  display: inline-flex; align-items: center; justify-content: center;
 }
+.notes-toolbar button .ic { width: 16px; height: 16px; }
 .notes-toolbar button:hover, .notes-toolbar select:hover {
-  background: var(--bg3); color: var(--text); border-color: var(--border2);
+  background: var(--bg3); color: var(--text); border-color: var(--am);
 }
-.notes-toolbar button.active { background: var(--am); color: #fff; border-color: var(--am); }
+.notes-toolbar button.active { background: var(--am); color: #fff; border-color: var(--am); box-shadow: var(--shadow-1); }
 
 /* Title bar */
 .notes-title-bar {
@@ -143,10 +149,11 @@
 .notes-editor-wrap { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 .notes-editor {
   flex: 1; overflow-y: auto;
-  padding: 28px 36px; background: var(--bg);
+  padding: 36px max(40px, calc((100% - 760px) / 2));
+  background-color: var(--bg); background-image: var(--grain);
   outline: none; color: var(--text);
   font-family: 'UKIJ Ekran', var(--jf);
-  font-size: 15px; line-height: 1.9;
+  font-size: 15.5px; line-height: 2;
   direction: rtl; text-align: right;
 }
 .notes-editor:focus { outline: none; }
@@ -179,12 +186,14 @@
 }
 .notes-right-panel-tabs { display: flex; border-bottom: 0.5px solid var(--border); }
 .notes-right-panel-tab {
-  flex: 1; padding: 9px 4px; text-align: center;
+  flex: 1; padding: 10px 4px;
   cursor: pointer; font-size: 10.5px; color: var(--text2);
   transition: background .12s, color .12s;
   border-bottom: 2px solid transparent; user-select: none;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
 }
+.notes-right-panel-tab .ic { width: 13px; height: 13px; flex-shrink: 0; }
 .notes-right-panel-tab:hover { background: var(--bg3); }
 .notes-right-panel-tab.active {
   color: var(--am); border-bottom-color: var(--am); font-weight: 600;
@@ -297,7 +306,7 @@
   /* This region is OUTSIDE the user's own text for scan purposes */
 }
 .notes-editor blockquote.notes-inserted-ref::before {
-  content: "📘 نەقىل";
+  content: "نەقىل";
   display: block;
   font-size: 10px;
   color: var(--text3);
@@ -334,16 +343,19 @@
 .notes-ai-menu-wrap { position: relative; margin-inline-start: auto; }
 .notes-ai-trigger {
   background: var(--ab); color: var(--at); border: 0.5px solid var(--am);
-  border-radius: var(--radius2); padding: 4px 10px; cursor: pointer;
+  border-radius: 9px; padding: 5px 12px; cursor: pointer;
   font-family: var(--jf); font-size: 12px; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px;
 }
 .notes-ai-trigger:hover { background: var(--am); color: #fff; }
+.notes-ai-trigger .ic { width: 14px; height: 14px; }
 .notes-ai-flyout {
   display: none; position: absolute; top: 100%; inset-inline-start: 0;
-  margin-top: 4px; min-width: 250px; z-index: 200;
-  background: var(--bg2); border: 0.5px solid var(--border2);
-  border-radius: var(--radius2); box-shadow: 0 6px 24px rgba(0,0,0,0.18);
-  padding: 4px; direction: rtl;
+  margin-top: 6px; min-width: 254px; z-index: 200;
+  background-color: var(--bg); background-image: var(--grain);
+  border: 1px solid var(--ab2);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-2);
+  padding: 6px; direction: rtl;
 }
 .notes-ai-flyout.on { display: block; }
 .notes-ai-item, .notes-ai-item-label {
@@ -369,9 +381,10 @@ button.notes-ai-item:hover, .notes-ai-has-sub:hover > .notes-ai-item-label {
 .notes-ai-has-sub { position: relative; }
 .notes-ai-submenu {
   display: none; position: absolute; top: 0; inset-inline-end: 100%;
-  margin-inline-end: 2px; min-width: 215px;
-  background: var(--bg2); border: 0.5px solid var(--border2);
-  border-radius: var(--radius2); box-shadow: 0 6px 24px rgba(0,0,0,0.18); padding: 4px;
+  margin-inline-end: 4px; min-width: 215px;
+  background-color: var(--bg); background-image: var(--grain);
+  border: 1px solid var(--ab2);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-2); padding: 6px;
 }
 .notes-ai-has-sub:hover > .notes-ai-submenu { display: block; }
 .notes-ai-submenu button {
@@ -384,7 +397,8 @@ button.notes-ai-item:hover, .notes-ai-has-sub:hover > .notes-ai-item-label {
 
 /* AI output — docked inside the right panel's AI tab (Phase 3). */
 #nai-tab { display: flex; flex-direction: column; gap: 8px; }
-.nai-tab-title { font-size: 12px; font-weight: 600; color: var(--text); }
+.nai-tab-title { font-size: 12px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 6px; }
+.nai-tab-title .ic { width: 14px; height: 14px; color: var(--am); }
 .nai-tab-gate {
   font-size: 12px; color: var(--text2); line-height: 1.7;
   background: var(--bg); border: 0.5px dashed var(--border2);
