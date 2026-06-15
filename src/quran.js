@@ -415,8 +415,8 @@
     const menu = document.createElement('div');
     menu.className = 'quran-aya-menu';
     menu.innerHTML = `
-      <button onclick="window.quranMenuCopy(${sura}, ${aya}, false, event)">📋 يالغۇز ئايەتنى كۆچۈرۈش</button>
-      <button onclick="window.quranMenuCopy(${sura}, ${aya}, true, event)">📋 تەرجىمىسى بىلەن كۆچۈرۈش</button>
+      <button onclick="window.quranMenuCopy(${sura}, ${aya}, false, event)">${icon('copy')}يالغۇز ئايەتنى كۆچۈرۈش</button>
+      <button onclick="window.quranMenuCopy(${sura}, ${aya}, true, event)">${icon('copy')}تەرجىمىسى بىلەن كۆچۈرۈش</button>
     `;
 
     // Append first so we can measure its real size

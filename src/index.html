@@ -593,12 +593,12 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
         </div>
         <!-- AI cleanup of OCR output (online, optional, never automatic). -->
         <div id="ocrCleanupBox" style="display:none;margin-top:8px">
-          <button type="button" class="hbtn" id="ocrCleanupBtn" onclick="window.naiOcrCleanupStaged()">✨ OCR نەتىجىسىنى AI بىلەن تۈزىتىش (تور)</button>
+          <button type="button" class="hbtn" id="ocrCleanupBtn" onclick="window.naiOcrCleanupStaged()"><svg class="ic"><use href="#i-sparkles"></use></svg> OCR نەتىجىسىنى AI بىلەن تۈزىتىش (تور)</button>
           <span id="ocrCleanupStatus" style="font-size:11px;color:var(--text2);margin-inline-start:8px"></span>
         </div>
       </div>
       <div class="fl"><label>كىتاب نامى *</label><input id="btitle" class="inp" placeholder="كىتاب نامىنى كىرگۈزۈڭ">
-        <button type="button" id="aiMetaBtn" class="hbtn" style="display:none;margin-top:6px;font-size:11px" onclick="window.aiFillMetadata()">✨ AI بىلەن ئۇچۇرلارنى تولدۇرۇش</button>
+        <button type="button" id="aiMetaBtn" class="hbtn" style="display:none;margin-top:6px;font-size:11px" onclick="window.aiFillMetadata()"><svg class="ic"><use href="#i-sparkles"></use></svg> AI بىلەن ئۇچۇرلارنى تولدۇرۇش</button>
       </div>
       <div class="fl"><label>ئاپتور</label><input id="bauth" class="inp" placeholder="ئاپتور ئىسمى"></div>
       <div class="fl"><label>تۈر</label><select id="bcat" class="inp" style="cursor:pointer"></select></div>
@@ -625,7 +625,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
       <div class="fl"><label>قىسقىچە چۈشەندۈرۈش</label><textarea id="edesc" rows="3" class="inp" style="resize:vertical" placeholder="كىتاب ھەققىدە قىسقىچە..."></textarea></div>
       <div class="fa">
         <button onclick="hideEdit()" class="hbtn">بىكار قىلىش</button>
-        <button onclick="saveEditBook()" class="hbtn p">💾 ساقلاش</button>
+        <button onclick="saveEditBook()" class="hbtn p"><svg class="ic"><use href="#i-save"></use></svg> ساقلاش</button>
       </div>
     </div>
   </div>
@@ -641,7 +641,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
     <div class="mc">
       <p style="font-size:12px;color:var(--text2);margin-bottom:12px">ئىچىدە PDF · TXT · DOCX · DOC · MD ھۆججەتلىرى بار ھۆججەتخانىنى تاللاڭ:</p>
       <div class="fl"><label>تۈرى</label><select id="batchcat" class="inp" style="cursor:pointer"></select></div>
-      <button onclick="selectBatchFolder()" class="hbtn p" style="width:100%;margin-bottom:12px">📁 ھۆججەتخانا تاللاش</button>
+      <button onclick="selectBatchFolder()" class="hbtn p" style="width:100%;margin-bottom:12px"><svg class="ic"><use href="#i-folder"></use></svg> ھۆججەتخانا تاللاش</button>
       <div id="batchlist" style="max-height:300px;overflow-y:auto;border:0.5px solid var(--border);border-radius:var(--radius2);padding:8px;display:none;margin-bottom:12px">
       </div>
       <p id="batchinfo" style="font-size:11px;color:var(--text3);margin-bottom:12px;display:none"></p>
@@ -722,7 +722,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
 <div class="ov" id="catov">
   <div class="mbox">
     <div class="mh">
-      <h2>📂 تۈر باشقۇرۇش</h2>
+      <h2><svg class="ic"><use href="#i-folder"></use></svg>تۈر باشقۇرۇش</h2>
       <button onclick="hideCatsMgr()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
     </div>
     <div class="mc">
@@ -899,7 +899,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
 <div class="ov" id="exportov">
   <div class="mbox" style="max-width:420px">
     <div class="mh">
-      <h2>📤 تۈر بويىچە توپلاپ چۈشۈرۈش</h2>
+      <h2><svg class="ic"><use href="#i-download"></use></svg>تۈر بويىچە توپلاپ چۈشۈرۈش</h2>
       <button onclick="hideExport()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text3)">✕</button>
     </div>
     <div class="mc">
@@ -911,7 +911,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
       <div id="exportInfo" style="font-size:12px;color:var(--text2);padding:8px;background:var(--bg2);border-radius:var(--radius2);margin-bottom:12px;display:none"></div>
       <div class="fa">
         <button onclick="hideExport()" class="hbtn">بىكار قىلىش</button>
-        <button onclick="doBulkExport()" class="hbtn p">📤 چۈشۈرۈشنى باشلاش</button>
+        <button onclick="doBulkExport()" class="hbtn p"><svg class="ic"><use href="#i-download"></use></svg> چۈشۈرۈشنى باشلاش</button>
       </div>
     </div>
   </div>
@@ -920,7 +920,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
 <!-- About -->
 <div id="about">
   <div id="abox">
-    <div style="font-size:44px;margin-bottom:10px">📚</div>
+    <img src="../assets/icon.png" alt="" style="width:64px;height:64px;border-radius:14px;margin-bottom:12px;box-shadow:var(--shadow-1),0 0 0 1px var(--border)">
     <h2 style="font-size:20px;font-weight:700;color:var(--am);margin-bottom:6px">بىلىم خەزىنىسى</h2>
     <p style="font-size:13px;color:var(--at);margin-bottom:4px;font-weight:600">ئۆزىڭىزگە تەۋە رەقەملىك كۇتۇپخانا</p>
     <p style="font-size:11px;color:var(--text3);font-family:monospace;margin-bottom:12px" id="aver"></p>
@@ -1353,7 +1353,7 @@ function cardHTML(b) {
 }
 
 function rowHTML(b) {
-  const ic = ICONS[b.category]||'📚';
+  const ic = ICONS[b.category]||'book';
   const progress = S.readPos[b.id] || 0;
   const progressBar = progress > 0 ? `<div style="position:absolute;bottom:0;left:0;height:2px;background:var(--am);width:${progress}%;border-radius:0 0 5px 5px"></div>` : '';
   return `<div class="row" onclick="openReader(${b.id})" style="position:relative">
@@ -2034,8 +2034,8 @@ function renderNotesPanel() {
   const header = document.getElementById('rnotes-header');
   header.innerHTML = `
     <div style="display:flex;gap:0;border-bottom:0.5px solid var(--border)">
-      <button onclick="switchNotesTab('notes')" style="flex:1;padding:8px;border:none;background:${tab==='notes'?'var(--ab)':'none'};color:${tab==='notes'?'var(--at)':'var(--text2)'};cursor:pointer;font-family:var(--jf);font-size:12px;font-weight:${tab==='notes'?'600':'400'}">📝 ئىزاھاتلار (${notes.length})</button>
-      <button onclick="switchNotesTab('bookmarks')" style="flex:1;padding:8px;border:none;background:${tab==='bookmarks'?'var(--ab)':'none'};color:${tab==='bookmarks'?'var(--at)':'var(--text2)'};cursor:pointer;font-family:var(--jf);font-size:12px;font-weight:${tab==='bookmarks'?'600':'400'}">🔖 خەتكۈشلەر (${bookmarks.length})</button>
+      <button onclick="switchNotesTab('notes')" style="flex:1;padding:8px;border:none;background:${tab==='notes'?'var(--ab)':'none'};color:${tab==='notes'?'var(--at)':'var(--text2)'};cursor:pointer;font-family:var(--jf);font-size:12px;font-weight:${tab==='notes'?'600':'400'}">${icon('notebook-pen')} ئىزاھاتلار (${notes.length})</button>
+      <button onclick="switchNotesTab('bookmarks')" style="flex:1;padding:8px;border:none;background:${tab==='bookmarks'?'var(--ab)':'none'};color:${tab==='bookmarks'?'var(--at)':'var(--text2)'};cursor:pointer;font-family:var(--jf);font-size:12px;font-weight:${tab==='bookmarks'?'600':'400'}">${icon('bookmark')} خەتكۈشلەر (${bookmarks.length})</button>
     </div>`;
 
   const inputArea = document.getElementById('rnotes-input-area');
@@ -2045,12 +2045,12 @@ function renderNotesPanel() {
       ? '<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px">خەتكۈش يوق<br>تۆۋەندىكى كۇنۇپكىنى بېسىپ خەتكۈش قوشۇڭ</div>'
       : bookmarks.map(bm => `
         <div class="rnote" onclick="jumpToBookmark(${bm.pos})">
-          <div class="rnote-text">🔖 ${sanitize(bm.name)}</div>
+          <div class="rnote-text">${icon('bookmark')} ${sanitize(bm.name)}</div>
           <div class="rnote-date">${bm.pos}% · ${new Date(bm.date).toLocaleDateString('ug-CN')}</div>
-          <button class="rnote-del" onclick="deleteBookmark(${bookId}, '${bm.id}', event)">✕</button>
+          <button class="rnote-del" onclick="deleteBookmark(${bookId}, '${bm.id}', event)">${icon('x','ic-sm')}</button>
         </div>
       `).join('');
-    inputArea.innerHTML = `<button onclick="addBookmark()" style="width:100%;padding:8px;background:var(--am);color:#fff;border:none;border-radius:var(--radius2);cursor:pointer;font-size:12px;font-family:var(--jf)">🔖 بۇ يەرگە خەتكۈش قوشۇش</button>`;
+    inputArea.innerHTML = `<button onclick="addBookmark()" style="width:100%;padding:8px;background:var(--am);color:#fff;border:none;border-radius:var(--radius2);cursor:pointer;font-size:12px;font-family:var(--jf);display:inline-flex;align-items:center;justify-content:center;gap:6px">${icon('bookmark')} بۇ يەرگە خەتكۈش قوشۇش</button>`;
   } else {
     notesList.innerHTML = notes.length === 0
       ? '<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px">ئىزاھات يوق</div>'
@@ -2896,7 +2896,7 @@ function naiOpenPanel(title) {
   // Phase 3: the AI output is a tab in the right panel — switch to it (and
   // expand the panel if collapsed) instead of opening a floating drawer.
   if (typeof window.notesShowAiTab === 'function') window.notesShowAiTab();
-  if (title) { const t = document.getElementById('nai-title'); if (t) t.textContent = '✨ ' + title; }
+  if (title) { const t = document.getElementById('nai-title'); if (t) t.innerHTML = icon('sparkles') + ' ' + sanitize(title); }
   naiCloseMenu();
 }
 function naiClose() {
@@ -3369,11 +3369,11 @@ window.aiFillMetadata = async function () {
   if (!content.trim()) { toast('ئالدى بىلەن ھۆججەت يۈكلەڭ', 'e'); return; }
   const cats = Array.from(document.getElementById('bcat').options).map(o => o.value);
   const btn = document.getElementById('aiMetaBtn');
-  if (btn) { btn.disabled = true; btn.textContent = '✨ تولدۇرۇلۇۋاتىدۇ...'; }
+  if (btn) { btn.disabled = true; btn.innerHTML = icon('sparkles') + ' تولدۇرۇلۇۋاتىدۇ...'; }
   let res;
   try { res = await window.AI.ask({ type: 'metadata', context: content, categories: cats }); }
   catch (e) { res = { ok: false }; }
-  if (btn) { btn.disabled = false; btn.textContent = '✨ AI بىلەن ئۇچۇرلارنى تولدۇرۇش'; }
+  if (btn) { btn.disabled = false; btn.innerHTML = icon('sparkles') + ' AI بىلەن ئۇچۇرلارنى تولدۇرۇش'; }
   if (!res || !res.ok) { toast('AI جاۋابىنى ئوقۇغىلى بولمىدى', 'e'); return; }
   let data = null;
   try { data = JSON.parse(naiExtractJson(res.text)); } catch (e) { data = null; }
@@ -4470,7 +4470,7 @@ function showBulkExport() {
   const sel = document.getElementById('exportCat');
   const counts = {};
   S.books.forEach(b => counts[b.category] = (counts[b.category]||0)+1);
-  sel.innerHTML = `<option value="all">📚 بارلىق كىتابلار (${S.books.length})</option>` +
+  sel.innerHTML = `<option value="all">بارلىق كىتابلار (${S.books.length})</option>` +
     S.cats.filter(c => counts[c] > 0).map(c =>
       `<option value="${sanitize(c)}">${sanitize(c)} (${counts[c] || 0})</option>`
     ).join('');
