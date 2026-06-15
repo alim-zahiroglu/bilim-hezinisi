@@ -71,14 +71,14 @@
   position: relative; border: 0.5px solid transparent;
 }
 .notes-item:hover { background: var(--bg3); color: var(--text); }
-.notes-item.active { background: var(--ab); color: var(--at); border-color: var(--ab2); }
+.notes-item.active { background: var(--ab); color: var(--text); border-color: var(--ab2); }
 .notes-item.active::before { content: ""; position: absolute; inset-inline-start: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 3px; background: var(--am); }
 .notes-item-title {
   font-weight: 600; overflow: hidden; text-overflow: ellipsis;
   white-space: nowrap; margin-bottom: 3px;
 }
 .notes-item-meta { font-size: 10px; color: var(--text3); font-family: sans-serif; }
-.notes-item.active .notes-item-meta { color: var(--at); opacity: 0.7; }
+.notes-item.active .notes-item-meta { color: var(--text2); }
 .notes-item-delete {
   position: absolute; top: 50%; left: 8px; transform: translateY(-50%);
   background: none; border: none; color: var(--text3);
@@ -116,11 +116,11 @@
 .notes-toolbar-group:first-child { border-left: none; padding-left: 0; }
 .notes-toolbar button, .notes-toolbar select {
   background: var(--bg2); border: 0.5px solid var(--border);
-  color: var(--text2); padding: 5px 10px;
+  color: var(--text); padding: 5px 10px;
   border-radius: 8px; cursor: pointer;
-  font-family: var(--jf); font-size: 12px;
+  font-family: var(--jf); font-size: 13px; font-weight: 600;
   transition: background .12s, color .12s, border-color .12s;
-  min-width: 30px; height: 30px;
+  min-width: 32px; height: 32px;
   display: inline-flex; align-items: center; justify-content: center;
 }
 .notes-toolbar button .ic { width: 16px; height: 16px; }
@@ -169,7 +169,7 @@
   margin: 0.8em 0; padding: 0.3em 12px;
   color: var(--text2); background: var(--bg2);
 }
-.notes-editor mark { background: var(--ab2); color: var(--at); padding: 0 2px; border-radius: 2px; }
+.notes-editor mark { background: var(--ab2); color: var(--text); padding: 0 2px; border-radius: 2px; }
 .notes-editor .ref-match {
   background: rgba(186,117,23,0.12);
   border-bottom: 1.5px dotted var(--am);
@@ -243,7 +243,7 @@
   transition: background .12s;
 }
 .notes-quran-preview-actions button:hover {
-  background: var(--ab); color: var(--at); border-color: var(--am);
+  background: var(--ab); color: var(--text); border-color: var(--am);
 }
 
 /* References list (Prompt 6 populates it) */
@@ -281,7 +281,7 @@
   font-family: var(--jf); transition: background .12s, color .12s;
   white-space: nowrap;
 }
-.notes-ref-act:hover { background: var(--ab); color: var(--at); border-color: var(--am); }
+.notes-ref-act:hover { background: var(--ab); color: var(--text); border-color: var(--am); }
 .notes-ref-expand {
   flex: 0 0 28px; font-weight: 700; font-size: 14px;
 }
@@ -341,13 +341,14 @@
 
 /* ===== Notebook AI menu + drawer (Phase 4) ===== */
 .notes-ai-menu-wrap { position: relative; margin-inline-start: auto; }
+/* Gold text on a NEUTRAL surface (never gold-on-gold) — readable in both themes. */
 .notes-ai-trigger {
-  background: var(--ab); color: var(--at); border: 0.5px solid var(--am);
-  border-radius: 9px; padding: 5px 12px; cursor: pointer;
-  font-family: var(--jf); font-size: 12px; white-space: nowrap;
-  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--bg3); color: var(--am); border: 1px solid var(--am);
+  border-radius: 9px; padding: 8px 13px; cursor: pointer;
+  font-family: var(--jf); font-size: 13px; font-weight: 700; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 7px;
 }
-.notes-ai-trigger:hover { background: var(--am); color: #fff; }
+.notes-ai-trigger:hover { background: var(--ab); color: var(--am); }
 .notes-ai-trigger .ic { width: 14px; height: 14px; }
 .notes-ai-flyout {
   display: none; position: absolute; top: 100%; inset-inline-start: 0;
@@ -365,7 +366,7 @@
   border-radius: var(--radius2); cursor: pointer; white-space: nowrap;
 }
 button.notes-ai-item:hover, .notes-ai-has-sub:hover > .notes-ai-item-label {
-  background: var(--ab); color: var(--at);
+  background: var(--ab); color: var(--text);
 }
 /* Leading bullet on the four TOP-LEVEL menu items only. The submenu parents
    carry both .notes-ai-item AND .notes-ai-has-sub, so target button.notes-ai-
@@ -393,7 +394,7 @@ button.notes-ai-item:hover, .notes-ai-has-sub:hover > .notes-ai-item-label {
   font-family: var(--jf); font-size: 12px; padding: 7px 10px;
   border-radius: var(--radius2); cursor: pointer; white-space: nowrap;
 }
-.notes-ai-submenu button:hover { background: var(--ab); color: var(--at); }
+.notes-ai-submenu button:hover { background: var(--ab); color: var(--text); }
 
 /* AI output — docked inside the right panel's AI tab (Phase 3). */
 #nai-tab { display: flex; flex-direction: column; gap: 8px; }
@@ -430,7 +431,7 @@ button.notes-ai-item:hover, .notes-ai-has-sub:hover > .notes-ai-item-label {
 }
 .nai-chat-empty { color: var(--text3); font-size: 12px; text-align: center; padding: 20px; }
 .nai-bubble { padding: 8px 10px; border-radius: var(--radius2); margin-bottom: 6px; font-size: 12.5px; line-height: 1.8; direction: rtl; }
-.nai-bubble-user { background: var(--ab); color: var(--at); margin-inline-start: 20px; }
+.nai-bubble-user { background: var(--ab); color: var(--text); margin-inline-start: 20px; }
 .nai-bubble-model { background: var(--bg); border: 0.5px solid var(--border); color: var(--text); margin-inline-end: 12px; }
 .nai-bubble-acts { display: flex; gap: 6px; margin: -2px 0 8px; }
 
@@ -464,11 +465,11 @@ button.notes-ai-item:hover, .notes-ai-has-sub:hover > .notes-ai-item-label {
   font-family: sans-serif; direction: rtl;
 }
 .notes-wc-action {
-  background: var(--ab); color: var(--at); border: 0.5px solid var(--am);
-  border-radius: var(--radius2); padding: 3px 10px; cursor: pointer;
-  font-family: var(--jf); font-size: 11px; margin-inline-start: auto;
+  background: var(--bg3); color: var(--am); border: 0.5px solid var(--am);
+  border-radius: var(--radius2); padding: 4px 11px; cursor: pointer;
+  font-family: var(--jf); font-size: 12px; margin-inline-start: auto;
 }
-.notes-wc-action:hover { background: var(--am); color: #fff; }
+.notes-wc-action:hover { background: var(--ab); color: var(--am); }
 
 /* Spell check — wavy red underline + suggestion popup */
 .spell-error {

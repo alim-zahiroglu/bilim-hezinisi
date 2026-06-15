@@ -148,7 +148,7 @@
   font-family: var(--jf); font-size: 13px; color: var(--text);
   cursor: pointer; transition: background .12s; direction: rtl;
 }
-.quran-aya-menu button:hover { background: var(--ab); color: var(--at); }
+.quran-aya-menu button:hover { background: var(--ab); color: var(--text); }
 
 /* Sidebar (sura list) */
 .quran-sidebar-inner { display: flex; flex-direction: column; height: 100%; }
@@ -170,7 +170,7 @@
   transition: background .15s; font-size: 13px;
 }
 .quran-sura-item:hover { background: var(--bg3); }
-.quran-sura-item.active { background: var(--ab); color: var(--at); }
+.quran-sura-item.active { background: var(--ab); color: var(--text); }
 .quran-sura-item.active::before { content: ""; position: absolute; inset-inline-start: -6px; top: 6px; bottom: 6px; width: 3px; border-radius: 3px; background: var(--am); }
 .quran-sura-num {
   display: inline-flex; align-items: center; justify-content: center;
