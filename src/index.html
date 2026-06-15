@@ -138,22 +138,29 @@ button, .hbtn, .vb, .ci, .mt, input, select, textarea { transition: background-c
 .vb { background: none; border: 0.5px solid var(--border2); color: var(--text2); padding: 4px 10px; border-radius: var(--radius2); font-size: 13px; cursor: pointer; transition: all .12s; }
 .vb.on { background: var(--ab); border-color: var(--ab2); color: var(--at); }
 #srt { font-size: 12px; padding: 4px 8px; background: var(--bg2); border: 0.5px solid var(--border2); color: var(--text2); border-radius: var(--radius2); direction: rtl; cursor: pointer; outline: none; font-family: var(--jf); }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 10px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
 .rows { display: flex; flex-direction: column; gap: 6px; }
-.card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 12px; cursor: pointer; transition: all .15s; border-top: 3px solid transparent; position: relative; }
-.card:hover { border-color: var(--border2); border-top-color: var(--am); box-shadow: 0 2px 12px rgba(186,117,23,0.08); }
-.cprog { position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--am); border-radius: 0 0 10px 10px; }
-.cico { height: 82px; background: var(--bg2); border-radius: var(--radius2); display: flex; align-items: center; justify-content: center; font-size: 30px; margin-bottom: 8px; position: relative; }
-.cfmt { position: absolute; bottom: 4px; left: 4px; font-size: 9px; background: var(--bg); border: 0.5px solid var(--border); color: var(--am); padding: 1px 5px; border-radius: 2px; font-family: monospace; font-weight: 700; }
-.ct { font-size: 12.5px; font-weight: 600; color: var(--text); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 4px; }
-.ca { font-size: 11px; color: var(--text2); margin-bottom: 5px; }
+.card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 10px; cursor: pointer; transition: transform .15s, box-shadow .15s, border-color .15s; position: relative; }
+.card:hover { transform: translateY(-3px); border-color: var(--border2); box-shadow: var(--shadow-1); }
+.card.sel { border-color: var(--am); box-shadow: var(--glow); }
+.cprog { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--am); border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+/* Portrait book-cover thumbnail (3:4) */
+.ccov { position: relative; width: 100%; aspect-ratio: 3 / 4; border-radius: 9px; overflow: hidden; margin-bottom: 10px; background: var(--bg2); box-shadow: 0 4px 12px rgba(40,28,10,.28); }
+.bcover { display: block; width: 100%; height: 100%; }
+.bc-title { font-family: var(--jf); font-weight: 700; font-size: 13px; fill: var(--gold); direction: rtl; }
+.bc-title-ink { font-family: var(--jf); font-weight: 700; font-size: 13px; fill: #2A1F0E; direction: rtl; }
+.bc-auth { font-family: var(--jf); font-size: 9px; fill: #ffffff; fill-opacity: .62; direction: rtl; }
+.cfmt { position: absolute; bottom: 6px; inset-inline-start: 6px; font-size: 8.5px; background: rgba(20,14,6,.66); color: #F0D89A; padding: 2px 6px; border-radius: 5px; font-family: monospace; font-weight: 700; letter-spacing: .4px; backdrop-filter: blur(2px); }
+.ct { font-size: 12.5px; font-weight: 700; color: var(--text); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 5px; }
+.cmeta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 2px; }
 .ccat { font-size: 10px; color: var(--at); background: var(--ab); padding: 2px 7px; border-radius: 10px; display: inline-block; }
-.cbac { display: flex; gap: 5px; margin-top: 9px; }
-.cbac button { flex: 1; padding: 5px; border-radius: 5px; border: 0.5px solid var(--border2); cursor: pointer; font-size: 12px; font-family: var(--jf); background: none; color: var(--text2); transition: all .12s; }
+.cmd { font-size: 10.5px; color: var(--text3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.cbac { display: flex; gap: 6px; margin-top: 10px; }
+.cbac button { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 6px; border-radius: 7px; border: 0.5px solid var(--border2); cursor: pointer; font-size: 12px; font-family: var(--jf); background: none; color: var(--text2); transition: background .12s, color .12s, border-color .12s; }
 .cbac button:hover { background: var(--ab); color: var(--at); border-color: var(--ab2); }
-.cbac .del { max-width: 34px; color: var(--text3); }
+.cbac .del { max-width: 36px; color: var(--text3); }
+.cbac .del:hover { color: #B5462F; border-color: rgba(181,70,47,.4); background: rgba(181,70,47,.08); }
 .cbac .ic { width: 14px; height: 14px; }
-.cico .ic { width: 38px; height: 38px; color: var(--text3); stroke-width: 1.4; }
 .row { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius2); padding: 10px 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all .12s; position: relative; }
 .row:hover { border-color: var(--border2); background: var(--bg2); }
 .rowt { font-size: 13.5px; font-weight: 600; color: var(--text); }
@@ -909,6 +916,98 @@ const ICONS = {
 // Usage: icon('search'), icon('trash','danger'). Unknown names fall back to 'book'.
 function icon(name, extra){ return `<svg class="ic ${extra||''}" aria-hidden="true"><use href="#i-${name||'book'}"></use></svg>`; }
 
+// ── Realistic book-cover system (Phase 3) ──────────────────────────────────
+// Per-book inline SVG covers, generated once and cached. Material colours are
+// intrinsic to the "book"; the gold frame/title use var(--gold) so they shift
+// with the active Day/Night theme. Two variants: a leather/cloth book cover and
+// a parchment "document page" for plain text-like files.
+const COVER_MATERIALS = {
+  oxblood:['#7A3030','#481B1B'], teal:['#246A5B','#123A31'],
+  walnut:['#553B25','#2E1B10'], navy:['#27395C','#131F36'],
+  inkgold:['#272018','#100E09']
+};
+const CAT_COVER = {
+  'قۇرئان ۋە تەپسىر':'teal','ھەدىسلەر':'inkgold','فىقھى كىتابلار':'navy',
+  'تەۋھىد ۋە ئەقىدە':'oxblood','تارىخ':'walnut','ئەدەبىي ئەسەرلەر':'oxblood',
+  'تىل-ئەدەبىيات':'navy','سىيرەت':'teal','ئۇيغۇرچە ئوقۇشلۇق كىتابلار':'walnut',
+  'بالىلار كىتابلىرى':'navy','لازىملىق كىتابلار':'inkgold','مۇھىم ئەسەرلەر':'oxblood','باشقا':'walnut'
+};
+const COVER_HASH_KEYS = ['oxblood','teal','walnut','navy','inkgold'];
+const PAGE_FORMATS = new Set(['TXT','MD','DOC','DOCX']);
+const _coverCache = new Map();
+
+function hashStr(s){ let h=0; s=String(s||''); for(let i=0;i<s.length;i++){ h=((h<<5)-h+s.charCodeAt(i))|0; } return Math.abs(h); }
+
+// Greedy word-wrap into up to maxLines lines of ~maxChars; ellipsis if clipped.
+function coverWrap(title, maxChars, maxLines){
+  const words=String(title||'').trim().split(/\s+/).filter(Boolean);
+  const lines=[]; let cur='';
+  for(const word of words){
+    const w = word.length>maxChars ? word.slice(0,maxChars-1)+'…' : word;
+    if(!cur){ cur=w; }
+    else if((cur+' '+w).length<=maxChars){ cur+=' '+w; }
+    else { lines.push(cur); cur=w; if(lines.length>=maxLines){ cur=''; break; } }
+  }
+  if(cur && lines.length<maxLines) lines.push(cur);
+  if(lines.length>=maxLines){
+    const fit=lines.join(' ').split(/\s+/).filter(Boolean).length;
+    if(fit<words.length){ let last=lines[maxLines-1]; if(last.length>maxChars-1) last=last.slice(0,maxChars-1); lines[maxLines-1]=last.replace(/…?$/,'…'); }
+  }
+  return lines.length?lines:[''];
+}
+
+function bookCover(b){
+  const key=b.id+'|'+(b.title||'')+'|'+(b.category||'')+'|'+(b.format||'');
+  let v=_coverCache.get(key); if(v) return v;
+  v=PAGE_FORMATS.has(String(b.format||'').toUpperCase()) ? pageCoverSVG(b) : leatherCoverSVG(b);
+  _coverCache.set(key,v); return v;
+}
+
+function leatherCoverSVG(b){
+  let mk=CAT_COVER[b.category];
+  if(!mk) mk=COVER_HASH_KEYS[hashStr(b.title||b.category)%COVER_HASH_KEYS.length];
+  const [c1,c2]=COVER_MATERIALS[mk]||COVER_MATERIALS.walnut;
+  const uid='bc'+b.id;
+  const lines=coverWrap(b.title,11,3);
+  const lh=18, blockH=lines.length*lh, startY=98-blockH/2+13;
+  const tspans=lines.map((ln,i)=>`<tspan x="67" dy="${i===0?0:lh}">${sanitize(ln)}</tspan>`).join('');
+  const auth=b.author?`<text x="67" y="${startY+blockH+8}" text-anchor="middle" class="bc-auth">${sanitize(b.author)}</text>`:'';
+  const dia=[[18,18],[116,18],[18,182],[116,182]].map(([x,y])=>`<path d="M${x} ${y-3} L${x+3} ${y} L${x} ${y+3} L${x-3} ${y} Z" fill="var(--gold)" opacity="0.85"/>`).join('');
+  return `<svg class="bcover" viewBox="0 0 150 200" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">`
+    +`<defs><linearGradient id="${uid}m" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient>`
+    +`<linearGradient id="${uid}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/><stop offset="0.55" stop-color="#ffffff" stop-opacity="0"/></linearGradient></defs>`
+    +`<rect x="0" y="0" width="150" height="200" rx="5" fill="url(#${uid}m)"/>`
+    +`<path d="M0 0 H86 L0 128 Z" fill="url(#${uid}s)"/>`
+    +`<rect x="131" y="0" width="19" height="200" fill="#000000" opacity="0.20"/>`
+    +`<rect x="130.5" y="0" width="1" height="200" fill="var(--gold)" opacity="0.45"/>`
+    +`<rect x="9" y="9" width="113" height="182" rx="2" fill="none" stroke="var(--gold)" stroke-opacity="0.9" stroke-width="1.2"/>`
+    +`<rect x="13" y="13" width="105" height="174" rx="1" fill="none" stroke="var(--gold)" stroke-opacity="0.4" stroke-width="0.6"/>`
+    +dia
+    +`<text x="67" y="${startY}" text-anchor="middle" class="bc-title">${tspans}</text>`
+    +auth
+    +`</svg>`;
+}
+
+function pageCoverSVG(b){
+  const uid='pc'+b.id;
+  const lines=coverWrap(b.title,12,3);
+  const lh=17, startY=48;
+  const tspans=lines.map((ln,i)=>`<tspan x="75" dy="${i===0?0:lh}">${sanitize(ln)}</tspan>`).join('');
+  const tEnd=startY+(lines.length-1)*lh;
+  let body=''; const ws=[88,96,72,90,84,94,64,86,78];
+  for(let i=0;i<9;i++){ const y=tEnd+18+i*12; if(y>184) break; const w=ws[i%ws.length]; body+=`<rect x="${75-w/2}" y="${y}" width="${w}" height="2.6" rx="1.3" fill="#3A2C12" opacity="0.12"/>`; }
+  return `<svg class="bcover" viewBox="0 0 150 200" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">`
+    +`<defs><linearGradient id="${uid}p" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F4EACF"/><stop offset="1" stop-color="#E2D2A6"/></linearGradient></defs>`
+    +`<rect x="0" y="0" width="150" height="200" rx="5" fill="url(#${uid}p)"/>`
+    +`<rect x="7" y="7" width="136" height="186" rx="3" fill="none" stroke="#3A2C12" stroke-opacity="0.16" stroke-width="0.8"/>`
+    +`<path d="M7 7 L33 7 L7 33 Z" fill="#DAC79E"/>`
+    +`<path d="M33 7 L7 33 L33 33 Z" fill="#C7B083" opacity="0.65"/>`
+    +`<line x1="33" y1="7" x2="7" y2="33" stroke="#3A2C12" stroke-opacity="0.18"/>`
+    +`<text x="75" y="${startY}" text-anchor="middle" class="bc-title-ink">${tspans}</text>`
+    +body
+    +`</svg>`;
+}
+
 const S = {
   books:[], cats:[], cat:'all', sort:'d', view:'g',
   srch:false, res:[], nid:1, curB:null, fs:17,
@@ -1189,14 +1288,15 @@ function renderBooks() {
 function esc(t) { return t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
 
 function cardHTML(b) {
-  const ic = ICONS[b.category]||'📚';
   const progress = S.readPos[b.id] || 0;
   const progressBar = progress > 0 ? `<div class="cprog" style="width:${progress}%"></div>` : '';
-  return `<div class="card">
-    <div class="cico">${icon(ic,'cico-ic')}<span class="cfmt">${b.format}</span></div>
+  const year = b.date ? new Date(b.date).getFullYear() : '';
+  const sel = (S.recent && S.recent[0] && S.recent[0].id === b.id) ? ' sel' : '';
+  const meta = [sanitize(b.author||''), year].filter(Boolean).join(' · ');
+  return `<div class="card${sel}">
+    <div class="ccov">${bookCover(b)}<span class="cfmt">${b.format}</span></div>
     <div class="ct">${sanitize(b.title)}</div>
-    <div class="ca">${sanitize(b.author||'—')}</div>
-    <div class="ccat">${sanitize(b.category)}</div>
+    <div class="cmeta"><span class="ccat">${sanitize(b.category)}</span>${meta?`<span class="cmd">${meta}</span>`:''}</div>
     <div class="cbac">
       <button onclick="openReader(${b.id})">${icon('book-open')} ئوقۇش</button>
       <button onclick="showEditBook(${b.id})" title="تەھرىرلەش">${icon('pencil')}</button>
