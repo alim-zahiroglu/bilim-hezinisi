@@ -1,0 +1,11 @@
+NIGHT MODE PROMPT — Library Dashboard
+
+Create a premium night-mode desktop application UI redesign for the “Bilim Xezinisi / بىلىم خەزىنىسى” library dashboard. This screen should show only the main book library page, not multiple app screens combined.
+
+Design a high-end right-to-left Uyghur / Arabic-style digital library interface with deep charcoal-black backgrounds, dark leather-like panels, subtle paper texture, polished walnut-brown surfaces, muted antique-gold accents, and warm ivory typography. The mood should feel luxurious, scholarly, calm, and focused, like a private study room at night.
+
+The layout should include a refined top navigation bar with the app logo and name, a dark glass search bar for searching book titles and internal book text, upload/add-book controls, folder buttons, filter controls, and elegant small view-toggle icons. On the right side, show a vertical navigation sidebar with premium gold line icons and Uyghur/Arabic-style labels for library, Quran reader, notes, favorites, search, history, downloads, and settings. The selected “Library” item should glow softly with a warm bronze-gold highlight.
+
+The main area should display a spacious grid of realistic book and document cards. Each card should have handcrafted book-cover thumbnails, document previews, file-type badges such as PDF, DOCX, EPUB, TXT, favorite stars, dates, and subtle action icons. The book covers should use leather, cloth, embossed gold ornaments, muted teal, deep brown, navy, parchment, and black-gold details. Include one selected card with a refined warm-gold rim light.
+
+Use soft cinematic lighting from the upper left, faint golden reflections, gentle shadows, and subtle depth. Avoid flat black UI, neon colors, clutter, cartoon style, messy fake UI, and low-quality icons. The screen should feel like premium desktop software for serious reading and knowledge management.

@@ -1,0 +1,142 @@
+<!doctype html><html lang="ug" dir="rtl"><head><meta charset="utf-8">
+<title>بىلىم خەزىنىسى — خاتىرە دەپتىرىم (ئۈلگە)</title>
+<style>
+:root{--bg:#FBF6EC;--bg2:#F4EAD7;--bg3:#EADFC8;--text:#2A2012;--text2:#6B5840;--text3:#9A8A70;
+ --am:#B0832F;--at:#5A4327;--ab:rgba(176,131,47,.14);--ab2:rgba(176,131,47,.24);
+ --border:rgba(90,70,40,.16);--border2:rgba(90,70,40,.30);--gold:#C9A24B;--paper:#FFFDF8;--paper-bd:rgba(90,70,40,.14);
+ --shadow-1:0 2px 10px rgba(70,50,20,.10);--shadow-2:0 12px 30px rgba(70,50,20,.16);
+ --jf:'UKIJ Ekran','Scheherazade New','Traditional Arabic','Noto Naskh Arabic',serif;
+ --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.28'/%3E%3C/svg%3E");}
+/* improved NIGHT contrast */
+html.dark{--bg:#14110B;--bg2:#1E1910;--bg3:#2A2215;--text:#F3E9D2;--text2:#D8C195;--text3:#A8906690;
+ --text2:#D8C195;--text3:#AC9468;--am:#E0B85E;--at:#241C12;--ab:rgba(224,184,94,.18);--ab2:rgba(224,184,94,.30);
+ --border:rgba(224,184,94,.16);--border2:rgba(224,184,94,.30);--gold:#E8C879;--paper:#221B11;--paper-bd:rgba(224,184,94,.14);
+ --shadow-1:0 2px 12px rgba(0,0,0,.5);--shadow-2:0 14px 34px rgba(0,0,0,.62);}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);background-image:var(--grain);background-blend-mode:multiply;color:var(--text);font-family:var(--jf);height:100vh;overflow:hidden;transition:background .25s,color .25s}
+.app{display:flex;flex-direction:column;height:100vh}
+.topbar{direction:ltr;display:flex;align-items:center;gap:12px;height:58px;padding:0 14px;background:var(--bg2);border-bottom:.5px solid var(--border);flex-shrink:0;box-shadow:var(--shadow-1)}
+.brand{display:flex;align-items:center;gap:10px}.brand b{font-size:17px;font-weight:800}.brand small{font-size:9px;letter-spacing:3px;color:var(--am);font-family:Georgia,serif;display:block;line-height:1}
+.logo{width:42px;height:42px;border-radius:12px;background:radial-gradient(120% 120% at 50% 30%,#1B5A4C,#0A2C26 70%,#062019);display:flex;align-items:center;justify-content:center}
+.sp{flex:1}
+.iconbtn{width:36px;height:36px;border-radius:9px;border:.5px solid var(--border);background:var(--bg);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.body{flex:1;display:flex;min-height:0}
+/* notes list (right) */
+.nlist{width:248px;background:var(--bg2);border-inline-start:.5px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;padding:12px 10px}
+.nlhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.nlhead b{font-size:14px}
+.newbtn{display:flex;align-items:center;gap:5px;background:linear-gradient(135deg,var(--gold),var(--am));color:#fff;border:none;border-radius:8px;padding:6px 10px;font:700 12px var(--jf);cursor:pointer}
+.nsearch{display:flex;align-items:center;gap:6px;background:var(--bg);border:.5px solid var(--border2);border-radius:18px;padding:0 10px;height:32px;margin-bottom:10px}
+.nsearch input{flex:1;border:none;background:none;outline:none;color:var(--text);font-family:var(--jf);font-size:12px;direction:rtl}
+.note{padding:10px 11px;border-radius:10px;cursor:pointer;margin-bottom:5px;border:.5px solid transparent}
+.note:hover{background:var(--bg3)}
+.note.on{background:var(--ab);border-color:var(--ab2)}
+.note .nt{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+.note .nt b{font-size:14px;color:var(--text);font-weight:700}.note .nt time{font:10px monospace;color:var(--text3)}
+.note .snip{font-size:12.5px;color:var(--text2);line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.note .tag{display:inline-block;margin-top:6px;font-size:11px;color:var(--am);background:var(--bg3);border:.5px solid var(--ab2);border-radius:8px;padding:2px 9px}
+.note .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-inline-end:5px}
+/* editor (center) */
+.ed{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg)}
+.edhead{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:.5px solid var(--border)}
+.edhead .ttl{font-size:16px;font-weight:800;flex:1}
+.edhead .st{font-size:11px;color:var(--text3)}
+.tbtn{height:34px;min-width:34px;padding:0 10px;border:.5px solid var(--border);background:var(--bg2);color:var(--text);border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font:600 13px var(--jf)}
+.tbtn:hover{color:var(--am);border-color:var(--border2)}
+.tbtn.p{background:linear-gradient(135deg,var(--gold),var(--am));color:#fff;border:none}
+.toolbar{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:8px 16px;border-bottom:.5px solid var(--border);background:var(--bg2)}
+.sep{width:1px;height:22px;background:var(--border);margin:0 3px}
+.sel{height:32px;border:.5px solid var(--border2);background:var(--bg);color:var(--text2);border-radius:7px;padding:0 8px;font:12px var(--jf);direction:rtl}
+.airow{display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:.5px solid var(--border)}
+.aitrig{display:flex;align-items:center;gap:7px;background:var(--bg2);border:1px solid var(--am);color:var(--text);border-radius:9px;padding:9px 14px;font:700 13.5px var(--jf);cursor:pointer}
+.chk{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2)}.chk input{accent-color:var(--am);width:15px;height:15px}
+.canvas{flex:1;overflow-y:auto;padding:28px 40px;background:var(--paper)}
+.paper{max-width:720px;margin:0 auto;font-size:15px;line-height:2;color:var(--text)}
+.paper h3{color:var(--am);font-size:17px;margin:0 0 12px}
+.paper p{margin:0 0 14px}
+/* AI panel (left) */
+.aip{width:312px;background:var(--bg2);border-inline-end:.5px solid var(--border);flex-shrink:0;display:flex;flex-direction:column}
+.tabs{display:flex;border-bottom:.5px solid var(--border)}
+.tab{flex:1;text-align:center;padding:12px 6px;font-size:13px;color:var(--text);cursor:pointer;border-bottom:2px solid transparent;display:flex;align-items:center;justify-content:center;gap:5px}
+.tab.on{color:var(--am);font-weight:700;border-bottom-color:var(--am)}
+.tab svg{width:14px;height:14px}
+.aibody{flex:1;overflow-y:auto;padding:14px}
+.aihint{color:var(--text3);font-size:12px;text-align:center;padding:24px 10px;line-height:1.7}
+.aicard{background:var(--paper);border:.5px solid var(--paper-bd);border-radius:10px;padding:14px;font-size:13.5px;line-height:1.95;color:var(--text);box-shadow:var(--shadow-1)}
+.aicard .mh{font-size:11px;color:var(--text3);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.aiacts{display:flex;gap:6px;margin-top:10px}
+.aiacts .tbtn{flex:1;justify-content:center;font-size:11px}
+::-webkit-scrollbar{width:9px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:6px}
+.flyout{position:fixed;top:150px;right:330px;background:var(--bg);border:.5px solid var(--border2);border-radius:12px;box-shadow:var(--shadow-2);padding:6px;width:240px;z-index:10}
+.fi{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:8px;color:var(--text);font-size:13px;cursor:pointer}
+.fi:hover{background:var(--ab)}.fi .b{color:var(--am);font-size:16px;line-height:1}
+</style></head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand"><div class="logo"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 6C9.6 4.6 6.4 4.6 4.2 5.3v12.4C6.4 17 9.6 17 12 18.4 14.4 17 17.6 17 19.8 17.7V5.3C17.6 4.6 14.4 4.6 12 6Z" fill="rgba(231,193,107,.95)"/><path d="M12 6v12.4" stroke="#0A2C26" stroke-width="1.1"/></svg></div><div><b>بىلىم خەزىنىسى</b><small>BILIM HEZINISI</small></div></div>
+    <div class="sp"></div>
+    <button class="iconbtn" onclick="document.documentElement.classList.toggle('dark')" title="Day/Night"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg></button>
+  </div>
+  <div class="body">
+    <!-- notes list (right) -->
+    <div class="nlist">
+      <div class="nlhead"><b>خاتىرە دەپتىرىم</b><button class="newbtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>يېڭى خاتىرە</button></div>
+      <div class="nsearch"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text3)"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input placeholder="خاتىرە ئىزدەش…"></div>
+      <div class="note on"><div class="nt"><b><span class="dot" style="background:#1F7A4D"></span>تەفسىر خاتىرىسى</b><time>10:39</time></div><div class="snip">بۇ ئايەتتە ئۇلۇغ بىلىمنىڭ پاكلىقىغا، ھەممە ئىش…</div><span class="tag">تەفسىر</span></div>
+      <div class="note"><div class="nt"><b><span class="dot" style="background:#21314F"></span>ھەدىستىن خاتىرە</b><time>09:15</time></div><div class="snip">دەرسلەردىن ئۆگەنگەن ئۇقتۇرۇشلارنى خاتىرىلەپ قويدۇم…</div><span class="tag">ھەدىس</span></div>
+      <div class="note"><div class="nt"><b><span class="dot" style="background:#B0832F"></span>تۈگۈنۈش پىلانى</b><time>16:40</time></div><div class="snip">بۈگۈنكى ئوقۇشنى تاماملاش، تەكرارلاش…</div><span class="tag">پىلان</span></div>
+    </div>
+    <!-- editor (center) -->
+    <div class="ed">
+      <div class="edhead">
+        <button class="iconbtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h7"/></svg></button>
+        <span class="ttl">يېڭى خاتىرە</span>
+        <span class="st">✓ ساقلاندى</span>
+        <button class="tbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3v5h5M7 3h8l5 5v11a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/></svg>Word</button>
+        <button class="tbtn p"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4h11l4 4v12H5z"/><path d="M8 4v6h7"/></svg>ساقلاش</button>
+        <button class="iconbtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <div class="toolbar">
+        <button class="tbtn"><b>B</b></button><button class="tbtn"><i>I</i></button><button class="tbtn"><u>U</u></button>
+        <span class="sep"></span>
+        <button class="tbtn">→</button><button class="tbtn">≡</button><button class="tbtn">←</button>
+        <span class="sep"></span>
+        <button class="tbtn">”</button><button class="tbtn">• تىزىم</button><button class="tbtn">1. تىزىم</button>
+        <span class="sep"></span>
+        <select class="sel"><option>فونت</option></select><select class="sel"><option>چوڭلۇق</option></select>
+        <span class="sep"></span>
+        <button class="tbtn" title="فورمات سۈپۈرگىسى"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h12v4H4zM10 11v9M6 20h8"/></svg></button>
+        <button class="tbtn">↶</button><button class="tbtn">↷</button>
+      </div>
+      <div class="airow">
+        <div class="aitrig" onclick="document.getElementById('fly').style.display=document.getElementById('fly').style.display==='block'?'none':'block'">✨ سۈنئىي ئىدراك ئىقتىدارلىرى (Gemini API — تور ھالىتىدە) ▾</div>
+        <label class="chk"><input type="checkbox">كىتاب ئامبىرىدىن ئىزدەش (تورسىز)</label>
+        <label class="chk"><input type="checkbox">ئىملانى تەكشۈرۈش (تورسىز)</label>
+      </div>
+      <div class="canvas"><div class="paper">
+        <h3>تەفسىر خاتىرىسى</h3>
+        <p>بۇ ئايەتتە ئۇلۇغ بىلىمنىڭ پاكلىقىغا، ھەممە ئىشنىڭ ئاللاھنىڭ ئىرادىسى بىلەن بولىدىغانلىقىغا ئىشارەت قىلىنغان. ئالىملار بۇ ھەقتە نۇرغۇن چۈشەنچىلەرنى بايان قىلغان.</p>
+        <p>تۆۋەندە مۇھىم نۇقتىلارنى تەرتىپ بويىچە خاتىرىلەپ، كېيىن سۈنئىي ئىدراك ياردىمىدە خۇلاسىلەشنى ئويلىشىۋاتىمەن…</p>
+      </div></div>
+    </div>
+    <!-- AI panel (left) -->
+    <div class="aip">
+      <div class="tabs">
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4h11a2 2 0 0 1 2 2v14H8a2 2 0 0 1-2-2V4Z"/></svg>قۇرئان (تورسىز)</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>مەنبە (تورسىز)</div>
+        <div class="tab on">✨ AI (تورلۇق)</div>
+      </div>
+      <div class="aibody">
+        <div class="aicard"><div class="mh">✨ مودېل: gemini-3.5-flash</div>بۇ تېكىستنىڭ مەركىزىي ئىدىيەسى — بىلىمنىڭ مەنبەسى ۋە ئۇنىڭ ئەخلاق بىلەن بولغان مۇناسىۋىتى. ئاپتور ئوقۇرمەننى چوڭقۇر مۇلاھىزىگە چاقىرىدۇ.<div class="aiacts"><button class="tbtn">كۆچۈرۈش</button><button class="tbtn">خاتىرىگە قىستۇرۇش</button></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="flyout" id="fly" style="display:none">
+  <div class="fi"><span class="b">●</span>تەرجىمە قىلىش ◂</div>
+  <div class="fi"><span class="b">●</span>تىنىش بەلگىلىرى ۋە ئىملانى توغرىلاش</div>
+  <div class="fi"><span class="b">●</span>سۈنئىي ئىدراكتىن سوراش</div>
+  <div class="fi"><span class="b">●</span>كۆرۈنمە بەت ھەققىدە سوئال سوراش ◂</div>
+</div>
+</body></ht

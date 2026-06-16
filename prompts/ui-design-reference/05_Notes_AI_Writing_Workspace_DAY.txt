@@ -1,0 +1,11 @@
+DAY MODE PROMPT — Notes and AI Writing Workspace
+
+Create a premium day-mode desktop application UI redesign for the “Bilim Xezinisi / بىلىم خەزىنىسى” notes and AI-assisted writing workspace. Show only this note-editing screen, not other app pages.
+
+Design a refined right-to-left Uyghur / Arabic-style productivity interface for writing notes, editing text, summarizing book content, and using AI tools. Use warm ivory backgrounds, parchment-like writing surfaces, soft paper grain, translucent glass panels, walnut-brown accents, muted antique-gold highlights, and precise ink-black typography.
+
+The layout should include a polished top app bar with the app name and navigation, a right-side sidebar listing note titles or saved note entries, a left-side tool panel for AI / source / book reference controls, and a large central writing editor. The editor should look like a premium paper document area with generous margins, readable text, paragraph structure, toolbar controls, formatting buttons, font selector, save button, AI model selector, and subtle status indicators.
+
+The AI assistant area should feel professional and integrated, not flashy. Use small refined icons, soft cards, tag-like controls, and elegant buttons for actions such as summarize, rewrite, translate, extract key points, and save note. The selected note in the right panel should be highlighted with a gentle antique-gold accent.
+
+Lighting should be soft daylight from the upper left, with delicate shadows under panels and a calm morning writing atmosphere. Avoid dark mode, clutter, childish colors, excessive decoration, cartoon style, and low-quality icons. The UI must feel spacious, precise, scholarly, premium, and production-ready for serious study and writing.

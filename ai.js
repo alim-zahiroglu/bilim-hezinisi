@@ -793,7 +793,7 @@ function isServerBusyError(err) {
 
 // Friendly Uyghur message for a momentarily busy model (used by ask/askStream/
 // translateStream/chatStream — test() has its own key-reassuring variant).
-const SERVER_BUSY_MESSAGE = 'مودېل ھازىر ئالدىراش (بەك كۆپ تەلەپ بار). بىردەمدىن كېيىن قايتا سىناڭ.';
+const SERVER_BUSY_MESSAGE = 'مودېل ھازىر ئالدىراش (بەك كۆپ تەلەپ بار). بىردەمدىن كېيىن قايتا سىناڭ ياكى https://aistudio.google.com دىن يېڭى api ھاسىل قىلىپ سىناپ بېقىڭ';
 
 // Did Gemini reject the request because the INPUT was too large (token/size
 // limit)? Used to drive the reactive "book too large" fallback — never a

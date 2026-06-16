@@ -1,0 +1,11 @@
+DAY MODE PROMPT — Library Dashboard
+
+Create a premium day-mode desktop application UI redesign for the “Bilim Xezinisi / بىلىم خەزىنىسى” library dashboard. This screen should show only the main book library page, not multiple app screens combined.
+
+Design a high-end right-to-left Uyghur / Arabic-style digital library interface with a warm ivory background, soft parchment panels, subtle paper grain, polished walnut-brown accents, muted antique-gold highlights, and refined ink-black typography. The mood should feel calm, scholarly, professional, and book-centered.
+
+The layout should include a polished top navigation bar with the app logo and name, a refined search bar for searching book titles and internal book text, upload/add-book buttons, folder controls, filter buttons, and small elegant view-toggle icons. On the right side, show a clean vertical navigation sidebar with premium line icons and Uyghur/Arabic-style labels for library, Quran reader, notes, favorites, search, history, downloads, and settings. The selected “Library” item should be highlighted with a soft antique-gold background.
+
+The main content area should display a spacious grid of book and document cards. Each card should have a realistic book-cover thumbnail or document preview, file-type badges such as PDF, DOCX, EPUB, TXT, favorite star, date, action buttons, and elegant spacing. Replace generic placeholder icons with refined book-cover artwork and polished document thumbnails. Include one selected book card with a subtle warm-gold glowing border.
+
+Use soft natural daylight from the upper left, delicate ambient shadows, faint golden reflections on card edges, and tactile paper-like surfaces. Avoid dark mode, cartoon style, clutter, childish colors, low-quality icons, and messy fake UI. The screen must look like a real premium desktop software product, clean, readable, aligned, and production-ready.

@@ -1,0 +1,11 @@
+NIGHT MODE PROMPT — Quran Reader Page
+
+Create a premium night-mode desktop UI redesign for the “Bilim Xezinisi / بىلىم خەزىنىسى” Quran reader page. Show only this Quran reading screen, not the library or note pages.
+
+Design a refined right-to-left Uyghur / Arabic-style Quran reading interface with a calm sacred night-reading atmosphere. Use deep charcoal backgrounds, dark walnut side panels, warm parchment reading surfaces, muted antique-gold verse markers, subtle leather texture, and soft ivory typography. The screen should feel peaceful, focused, elegant, and respectful.
+
+The layout should include a polished dark top bar with search controls, translation toggle, language selector, and reading options. On the right side, show a clean Surah navigation sidebar with numbered Surah entries, circular badges, selected Surah highlight, and subtle bronze-gold dividers. The main reading area should display Surah Al-Fatiha with large elegant Arabic text, refined circular verse markers, and smaller Uyghur translation lines beneath each verse.
+
+The reading page should feel like a softly illuminated parchment manuscript resting inside a dark premium desktop app. Use generous spacing, subtle separators, warm gold highlights, and careful RTL alignment. Keep controls minimal and refined.
+
+Lighting should resemble warm lamplight in a quiet study room at night, with soft shadows and gentle glow around the reading page. Avoid flat black backgrounds, neon colors, clutter, decorative overload, cartoon style, and unreadable text. The interface should look like a professional premium Quran reader with calm spiritual atmosphere and excellent readability.

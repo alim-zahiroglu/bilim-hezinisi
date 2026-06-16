@@ -1,0 +1,11 @@
+DAY MODE PROMPT — Quran Reader Page
+
+Create a premium day-mode desktop UI redesign for the “Bilim Xezinisi / بىلىم خەزىنىسى” Quran reader page. Show only this Quran reading screen, not the library or note pages.
+
+Design a refined right-to-left Uyghur / Arabic-style reading interface with a calm sacred reading atmosphere. Use warm ivory backgrounds, parchment reading surfaces, faint paper grain, soft antique-gold ornaments, walnut-brown accents, and refined black Arabic-style typography. The screen should feel spacious, peaceful, scholarly, and highly readable.
+
+The layout should include a polished top bar with search controls, translation toggle, language selector, and reading options. On the right side, show a clean Surah navigation sidebar with numbered Surah entries, soft circular number badges, selected Surah highlight, and subtle dividers. The main reading area should display Surah Al-Fatiha with large elegant Arabic text, each verse separated by refined circular verse markers, and smaller Uyghur translation lines beneath each verse.
+
+Use a centered reading composition with generous vertical spacing, delicate horizontal separators, soft gold verse markers, and a calm parchment page feel. Add subtle scroll indicators and refined controls without clutter. The selected Surah should be highlighted with a warm antique-gold accent.
+
+Lighting should be bright but soft, like morning daylight entering a quiet study room, with gentle golden reflections and faint shadows. Avoid dark mode, crowded text, low-quality fonts, decorative overload, cartoon style, and harsh white backgrounds. The interface should look like a premium Quran reading product with excellent readability and spiritual calm.

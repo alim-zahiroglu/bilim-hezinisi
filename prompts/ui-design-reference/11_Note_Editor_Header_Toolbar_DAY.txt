@@ -1,0 +1,11 @@
+DAY MODE PROMPT — Note Editor Header and Toolbar
+
+Create a premium day-mode desktop UI redesign for the “Bilim Xezinisi / بىلىم خەزىنىسى” note editor header and formatting toolbar screen. Show only this note-editor top section and immediate writing workspace area, not the full combined app.
+
+Design a refined right-to-left Uyghur / Arabic-style writing interface with warm ivory backgrounds, parchment editor surfaces, subtle paper grain, translucent glass panels, walnut-brown accents, muted antique-gold highlights, and clean ink-black typography. The interface should feel like a professional writing and study tool.
+
+The screen should include a note title area, a save button, close button, formatting toolbar, font dropdown, paragraph alignment controls, bold/italic/underline buttons, quote and list controls, undo/redo icons, AI assistant selector, and small option toggles. The toolbar should be carefully aligned, compact, readable, and elegant, with rounded buttons, soft shadows, thin borders, and subtle selected states.
+
+Below the toolbar, show a calm writing canvas with a parchment-like background and minimal placeholder text. Add a side note/category area if visible, but keep the focus on the editor header and toolbar. The selected actions should use gentle antique-gold highlights.
+
+Lighting should be soft daylight from the upper left, with faint reflections on glass controls and delicate shadows under toolbar groups. Avoid dark mode, clutter, childish colors, generic toolbar icons, messy layout, and flat white UI. The result should look like a premium production-ready desktop note editor.

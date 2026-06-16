@@ -1,0 +1,11 @@
+NIGHT MODE PROMPT — Notes and AI Writing Workspace
+
+Create a premium night-mode desktop application UI redesign for the “Bilim Xezinisi / بىلىم خەزىنىسى” notes and AI-assisted writing workspace. Show only this note-editing screen, not other app pages.
+
+Design a high-end right-to-left Uyghur / Arabic-style productivity interface for writing notes, editing text, summarizing book content, and using AI tools. Use deep charcoal backgrounds, dark leather-like panels, warm parchment writing areas, muted bronze-gold accents, walnut-brown borders, soft ivory typography, and subtle glassmorphism.
+
+The layout should include a polished top app bar with the app name and navigation, a right-side sidebar listing saved notes, a left-side tool panel for AI / source / book reference controls, and a large central writing editor. The editor should feel like a softly illuminated manuscript page placed inside a dark professional workspace. Include refined formatting toolbar controls, font selector, save button, AI model selector, writing status, and small elegant action buttons.
+
+The AI assistant controls should appear as subtle premium cards and tag buttons for summarize, rewrite, translate, extract key ideas, and save note. The selected note should have a warm bronze-gold highlight and soft glow. Keep all text minimal and readable, with realistic RTL alignment.
+
+Lighting should feel like a quiet night study room, with warm desk-lamp illumination falling across the writing page, gentle shadows, and subtle reflections on dark glass panels. Avoid neon colors, flat black UI, clutter, cartoon style, messy fake text, and low-quality icons. The final screen should feel luxurious, focused, scholarly, and production-ready.

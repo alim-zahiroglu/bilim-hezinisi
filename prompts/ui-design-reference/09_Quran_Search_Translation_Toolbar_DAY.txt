@@ -1,0 +1,9 @@
+DAY MODE PROMPT — Quran Search and Translation Toolbar
+
+Create a premium day-mode desktop UI redesign for the “Bilim Xezinisi / بىلىم خەزىنىسى” Quran search and translation toolbar screen. Show only the top toolbar/search section as a focused interface component, not the full app.
+
+Design a refined right-to-left Uyghur / Arabic-style toolbar for searching Quran Surah names, verse numbers, translations, and keywords. Use warm ivory surfaces, translucent parchment-glass input fields, soft paper grain, walnut-brown accents, muted antique-gold highlights, and clean ink-black typography.
+
+The toolbar should include a large elegant search field with a magnifying-glass icon, placeholder text in Uyghur/Arabic style, a translation toggle checkbox, language dropdown, Surah selector, Ayah input, and a refined “Search” button in antique gold. Buttons and dropdowns should have rounded corners, delicate borders, soft shadows, and precise spacing. Include subtle dividers and refined hover/active states.
+
+The design should feel like part of a premium Quran reader and knowledge-library app, highly readable and calm. Use soft daylight from the upper left, faint golden reflections, and gentle depth. Avoid dark mode, clutter, harsh white backgrounds, low-quality icons, cartoon styling, and oversized controls. The result should be a polished reusable toolbar component suitable for a production desktop app.

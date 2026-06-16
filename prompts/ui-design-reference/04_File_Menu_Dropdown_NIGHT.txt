@@ -1,0 +1,9 @@
+NIGHT MODE PROMPT — Top File Menu Dropdown
+
+Create a premium night-mode desktop UI redesign for the “Bilim Xezinisi / بىلىم خەزىنىسى” top navigation and file-menu dropdown screen. Show only this screen state: the top bar with the “File / ھۆججەت” menu opened as a refined floating dropdown.
+
+Use a sophisticated right-to-left Uyghur / Arabic-style desktop app layout with deep charcoal backgrounds, dark translucent glass panels, subtle leather texture, muted bronze-gold accents, warm ivory typography, and soft walnut-brown dividers. The top bar should include the app logo, app name, version indicator, navigation items, and minimal window controls.
+
+The opened dropdown menu should be the visual focus. Design it as a dark glass-and-leather floating panel with rounded corners, warm gold edge glow, subtle shadow, and precise spacing. Include elegant menu rows for creating a new book, adding a book folder, adding from URL, importing by file, syncing information, and quitting the app. Add shortcut hints such as Ctrl+N and Ctrl+Q in muted amber-gray. Each menu item should have a premium line icon, refined hover highlight, and correct RTL alignment.
+
+Lighting should feel like a quiet study room at night, with gentle golden illumination on the active menu button and faint reflections on the dropdown edges. Avoid flat black, neon colors, clutter, cartoon icons, blurry text, and generic UI. The result should look like a professional desktop software interface with luxurious craftsmanship.

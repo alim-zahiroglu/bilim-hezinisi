@@ -1,0 +1,9 @@
+NIGHT MODE PROMPT — Quran Search and Translation Toolbar
+
+Create a premium night-mode desktop UI redesign for the “Bilim Xezinisi / بىلىم خەزىنىسى” Quran search and translation toolbar screen. Show only the top toolbar/search section as a focused interface component, not the full app.
+
+Design a refined right-to-left Uyghur / Arabic-style toolbar for searching Quran Surah names, verse numbers, translations, and keywords. Use deep charcoal background, dark translucent glass input fields, subtle leather texture, walnut-brown dividers, muted bronze-gold highlights, and warm ivory typography.
+
+The toolbar should include a large elegant search field with a magnifying-glass icon, placeholder text in Uyghur/Arabic style, translation toggle checkbox, language dropdown, Surah selector, Ayah input, and a refined “Search” button with warm antique-gold fill. Controls should have rounded corners, thin bronze borders, soft glow, subtle hover states, and precise RTL alignment.
+
+The component should feel quiet, professional, and suitable for a premium Quran reader at night. Use warm lamplight reflections on control edges, delicate shadows, and restrained contrast. Avoid flat black UI, neon colors, clutter, cartoon icons, low-quality controls, and messy fake text. The result should look like a polished production-ready toolbar component.

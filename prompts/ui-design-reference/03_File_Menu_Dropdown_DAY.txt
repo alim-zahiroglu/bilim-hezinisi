@@ -1,0 +1,9 @@
+DAY MODE PROMPT — Top File Menu Dropdown
+
+Create a premium day-mode desktop UI redesign for the “Bilim Xezinisi / بىلىم خەزىنىسى” top navigation and file-menu dropdown screen. Show only this screen state: the top bar with the “File / ھۆججەت” menu opened as an elegant dropdown.
+
+Use a refined right-to-left Uyghur / Arabic-style desktop app layout. The background should be warm ivory with soft parchment texture, subtle paper grain, delicate shadows, walnut-brown accents, muted antique-gold highlights, and clean ink-black typography. The top navigation bar should feel polished and professional, with the app logo, app name, version indicator, navigation items, and window controls.
+
+The opened dropdown menu should be the main focus. Design it as a premium floating parchment-glass panel with rounded corners, soft shadow, thin antique-gold border, and precise spacing. Include elegant menu rows for actions such as creating a new book, adding a book folder, adding from URL, importing by file, syncing information, and quitting the app. Add subtle shortcut hints such as Ctrl+N and Ctrl+Q in a lighter muted tone. Each row should have a refined line icon, hover-state highlight, and careful alignment for RTL reading.
+
+The screen should feel like a luxury desktop application, not a generic menu. Use soft daylight from the upper left, delicate glow on the active “File” button, and realistic depth between the dropdown and background. Avoid dark mode, clutter, oversized icons, cartoon styling, and messy text. Make the interface clean, readable, premium, and production-ready.

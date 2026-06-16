@@ -1,0 +1,11 @@
+NIGHT MODE PROMPT — Note Editor Header and Toolbar
+
+Create a premium night-mode desktop UI redesign for the “Bilim Xezinisi / بىلىم خەزىنىسى” note editor header and formatting toolbar screen. Show only this note-editor top section and immediate writing workspace area, not the full combined app.
+
+Design a refined right-to-left Uyghur / Arabic-style writing interface with deep charcoal backgrounds, dark translucent glass panels, subtle leather texture, warm parchment editor surfaces, walnut-brown dividers, muted bronze-gold highlights, and soft ivory typography. The interface should feel like a serious professional writing tool inside a quiet night study environment.
+
+The screen should include a note title area, save button, close button, formatting toolbar, font dropdown, paragraph alignment controls, bold/italic/underline buttons, quote and list controls, undo/redo icons, AI assistant selector, and small option toggles. Toolbar buttons should be compact and polished, with rounded corners, thin bronze borders, soft shadows, and warm gold selected states.
+
+Below the toolbar, show a softly illuminated writing canvas with subtle parchment texture and minimal placeholder text. Keep the composition focused on the note editor header and toolbar, with precise RTL alignment and excellent visual hierarchy.
+
+Lighting should feel like warm desk-lamp illumination, with gentle gold reflections on toolbar edges and soft shadows separating panels. Avoid flat black UI, neon effects, clutter, childish colors, generic icons, and messy fake text. The final design should look luxurious, focused, and production-ready.
