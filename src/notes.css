@@ -426,7 +426,7 @@ button.notes-ai-item:hover, .notes-ai-has-sub:hover > .notes-ai-item-label {
 }
 #nai-status { font-size: 11px; color: var(--text2); min-height: 16px; display: flex; align-items: center; gap: 8px; }
 /* AI answer card (matches reference .aicard) */
-#nai-result { font-family: var(--jf); font-size: 13px; line-height: 1.9; color: var(--text); direction: rtl; background: var(--bg); border: 0.5px solid var(--border); border-radius: 10px; padding: 12px; }
+#nai-result { font-family: var(--jf); font-size: 13px; line-height: 1.9; color: var(--text); direction: rtl; background: var(--paper); border: 0.5px solid var(--paper-bd); border-radius: 10px; padding: 13px 14px; }
 #nai-result:empty { display: none; }
 #nai-result h1, #nai-result h2, #nai-result h3, #nai-result h4 { font-size: 13.5px; font-weight: 700; color: var(--am); margin: 8px 0 4px; }
 #nai-result p { margin-bottom: 6px; }
