@@ -267,6 +267,11 @@ mark.reader-hit-flash { animation: readerHitFlash 1.5s ease-out 1; }
 #rdr-wrapper { display: flex; flex: 1; overflow: hidden; }
 #rnotes-panel { width: 250px; background: var(--bg2); border-left: 0.5px solid var(--border); overflow-y: auto; flex-shrink: 0; display: none; flex-direction: column; }
 #rnotes-panel.on { display: flex; }
+/* Reader draggable divider (between the reading area and the left AI/notes panel) */
+.reader-splitter { flex: 0 0 5px; align-self: stretch; cursor: col-resize; background: transparent; position: relative; z-index: 5; display: none; }
+.reader-splitter::after { content: ''; position: absolute; top: 0; bottom: 0; left: 2px; width: 1px; background: transparent; transition: background .12s; }
+.reader-splitter:hover::after, .reader-splitter.dragging::after { background: var(--am); }
+.reader-splitter.on { display: block; }
 /* Reader AI panel (سۈنئىي ئىدراك ياردەمچىسى) — right-side drawer, gated on AI enabled + key */
 #rai-panel { width: 330px; background-color: var(--bg2); background-image: var(--grain); border-left: 0.5px solid var(--border); overflow-y: auto; flex-shrink: 0; display: none; flex-direction: column; }
 #rai-panel.on { display: flex; }
@@ -820,6 +825,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
       <div id="rmeta"></div>
       <div id="rt"></div>
     </div></div>
+    <div class="reader-splitter" id="reader-splitter" title="كەڭلىكنى تەڭشەش"></div>
     <div id="rnotes-panel">
       <div id="rnotes-header">ئىزاھاتلار</div>
       <div id="rnotes-list"></div>
@@ -1723,6 +1729,7 @@ function closeReader() {
   document.getElementById('rdr').classList.remove('on');
   document.getElementById('rnotes-panel').classList.remove('on');
   raiOnReaderClose();
+  readerUpdateSplitter();
   if (S.curB) {
     saveData();
   }
@@ -1985,6 +1992,8 @@ function switchNotesTab(tab) {
 function toggleNotes() {
   const panel = document.getElementById('rnotes-panel');
   if (!panel.classList.contains('on')) panel.classList.add('on');
+  readerRestorePanelWidth(panel, 'reader_notes_panel_width');
+  readerUpdateSplitter();
   switchNotesTab('notes');
 }
 
@@ -2509,6 +2518,8 @@ function toggleAiPanel() {
 function openAiPanel(scope, forcedText) {
   if (!RAI.available) return;
   document.getElementById('rai-panel').classList.add('on');
+  readerRestorePanelWidth(document.getElementById('rai-panel'), 'reader_ai_panel_width');
+  readerUpdateSplitter();
   RAI.typeUserSet = false;
   raiUpdateSpellfixVisibility();
   raiSetScope(scope || (raiLiveSelection() ? 'selection' : 'page'), forcedText);
@@ -2519,7 +2530,65 @@ function closeAiPanel() {
   if (p) p.classList.remove('on');
   raiHideTranslateMenu();
   raiHideTermMenu();
+  readerUpdateSplitter();
 }
+
+// ===== Reader draggable divider (resize the left AI / notes panel) =====
+// Mirrors the notebook splitter: document-level pointer handlers, clamp to
+// [280,560]px, persist per-panel width via the settings IPC. Both reader
+// panels sit on the physical LEFT (RTL), so dragging right grows them.
+function readerVisiblePanel() {
+  const ai = document.getElementById('rai-panel');
+  if (ai && ai.classList.contains('on')) return { el: ai, key: 'reader_ai_panel_width' };
+  const nt = document.getElementById('rnotes-panel');
+  if (nt && nt.classList.contains('on')) return { el: nt, key: 'reader_notes_panel_width' };
+  return null;
+}
+function readerUpdateSplitter() {
+  const sp = document.getElementById('reader-splitter');
+  if (sp) sp.classList.toggle('on', !!readerVisiblePanel());
+}
+async function readerRestorePanelWidth(el, key) {
+  if (!el) return;
+  try {
+    const r = await window.electron.dbGetSetting(key, '');
+    const v = (r && typeof r === 'object' && 'value' in r) ? r.value : r;
+    const n = parseInt(v, 10);
+    if (Number.isFinite(n) && n >= 280 && n <= 560) el.style.width = n + 'px';
+  } catch (_) {}
+}
+let _rdrSplitDrag = null;
+function readerSplitterDown(e) {
+  const sp = e.target && e.target.closest ? e.target.closest('#reader-splitter') : null;
+  if (!sp) return;
+  const vp = readerVisiblePanel(); if (!vp) return;
+  _rdrSplitDrag = { el: vp.el, key: vp.key, sp: sp, startX: e.clientX, startW: vp.el.getBoundingClientRect().width };
+  sp.classList.add('dragging');
+  vp.el.style.transition = 'none';
+  document.body.style.userSelect = 'none';
+  try { sp.setPointerCapture(e.pointerId); } catch (_) {}
+  e.preventDefault();
+}
+function readerSplitterMove(e) {
+  if (!_rdrSplitDrag) return;
+  const dx = e.clientX - _rdrSplitDrag.startX;
+  let w = _rdrSplitDrag.startW + dx;   // panel on physical left → drag right grows it
+  w = Math.max(280, Math.min(560, w));
+  _rdrSplitDrag.el.style.width = w + 'px';
+}
+function readerSplitterUp() {
+  if (!_rdrSplitDrag) return;
+  const { el, key, sp } = _rdrSplitDrag;
+  el.style.transition = '';
+  if (sp) sp.classList.remove('dragging');
+  document.body.style.userSelect = '';
+  const w = parseInt(el.style.width, 10);
+  if (Number.isFinite(w)) { try { window.electron.dbSetSetting(key, String(w)); } catch (_) {} }
+  _rdrSplitDrag = null;
+}
+document.addEventListener('pointerdown', readerSplitterDown);
+document.addEventListener('pointermove', readerSplitterMove);
+document.addEventListener('pointerup', readerSplitterUp);
 
 function raiAbort() {
   if (RAI.streamHandle) { try { RAI.streamHandle.abort(); } catch (e) {} RAI.streamHandle = null; }
