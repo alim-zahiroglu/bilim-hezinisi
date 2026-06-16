@@ -69,6 +69,7 @@
     },
     "files": [
       "main.js",
+      "ai.js",
       "preload.js",
       "database.js",
       "ocr-postprocess.js",
