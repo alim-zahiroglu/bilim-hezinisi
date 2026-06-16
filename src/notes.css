@@ -338,37 +338,40 @@
 .notes-toggle-bar {
   display: flex;
   gap: 18px;
-  padding: 4px 12px;
+  padding: 8px 14px;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
   font-family: var(--jf);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text2);
   direction: rtl;
 }
 .notes-toggle-label {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 7px;
   cursor: pointer;
   user-select: none;
+  font-size: 13px;
+  color: var(--text2);
 }
 .notes-toggle-label input[type="checkbox"] {
   accent-color: var(--am);
   cursor: pointer;
+  width: 15px; height: 15px;
 }
 
 /* ===== Notebook AI menu + drawer (Phase 4) ===== */
 .notes-ai-menu-wrap { position: relative; margin-inline-start: auto; }
-/* Gold text on a NEUTRAL surface (never gold-on-gold) — readable in both themes. */
+/* High-contrast --text label on a NEUTRAL surface, gold icon + thin gold border. */
 .notes-ai-trigger {
-  background: var(--bg3); color: var(--am); border: 1px solid var(--am);
+  background: var(--bg3); color: var(--text); border: 1px solid var(--am);
   border-radius: 9px; padding: 8px 13px; cursor: pointer;
   font-family: var(--jf); font-size: 13px; font-weight: 700; white-space: nowrap;
   display: inline-flex; align-items: center; gap: 7px;
 }
-.notes-ai-trigger:hover { background: var(--ab); color: var(--am); }
-.notes-ai-trigger .ic { width: 14px; height: 14px; }
+.notes-ai-trigger:hover { background: var(--ab); }
+.notes-ai-trigger .ic { width: 14px; height: 14px; color: var(--am); }
 .notes-ai-flyout {
   display: none; position: absolute; top: 100%; inset-inline-start: 0;
   margin-top: 6px; min-width: 254px; z-index: 200;
