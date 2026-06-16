@@ -53,12 +53,13 @@
 .quran-toggle input { accent-color: var(--am); }
 .quran-jump { display: flex; gap: 4px; align-items: center; }
 .quran-jump input {
-  width: 58px; padding: 6px;
+  width: 62px; padding: 7px 6px;
   border: 0.5px solid var(--border2); border-radius: 8px;
   background: var(--bg2); color: var(--text); outline: none;
-  text-align: center; font-family: monospace; font-size: 12px;
+  text-align: center; font-family: 'UKIJ Tuz Kitab', var(--jf); font-size: 13.5px;
   transition: border-color .15s;
 }
+.quran-jump input::placeholder { color: var(--text2); font-family: 'UKIJ Tuz Kitab', var(--jf); opacity: 1; }
 .quran-jump input:focus { border-color: var(--am); }
 .quran-jump button {
   padding: 7px 14px; font-size: 12px;
