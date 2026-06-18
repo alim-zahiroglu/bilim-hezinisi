@@ -142,6 +142,36 @@
 }
 .notes-toolbar button.active { background: var(--ab); color: var(--am); border-color: var(--am); }
 
+/* Color pickers + paragraph controls (Task 4) — sized to match toolbar buttons. */
+.notes-color-ctl {
+  position: relative; min-width: 34px; height: 34px; box-sizing: border-box;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--bg2); border: 0.5px solid var(--border);
+  border-radius: 7px; cursor: pointer; overflow: hidden;
+  font: 700 14px var(--jf); color: var(--text);
+  transition: color .12s, border-color .12s, background .12s;
+}
+.notes-color-ctl:hover { color: var(--am); border-color: var(--border2); }
+/* Native swatch reduced to a thin bar under the glyph (text-color control). */
+.notes-color-ctl input[type="color"] {
+  position: absolute; left: 4px; right: 4px; bottom: 3px; height: 5px;
+  width: auto; margin: 0; padding: 0; border: none; background: none; cursor: pointer;
+}
+.notes-color-ctl input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.notes-color-ctl input[type="color"]::-webkit-color-swatch { border: none; border-radius: 1px; }
+/* Highlight control: show the picked color as a full swatch fill (no glyph). */
+.notes-color-back input[type="color"] { top: 4px; left: 4px; right: 4px; bottom: 4px; height: auto; border-radius: 3px; }
+/* First-line-indent numeric input. */
+.notes-num-ctl {
+  width: 56px; height: 34px; box-sizing: border-box; text-align: center;
+  background: var(--bg2); border: 0.5px solid var(--border); border-radius: 7px;
+  color: var(--text); font: 400 13px var(--jf); outline: none; padding: 0 4px;
+  -moz-appearance: textfield;
+}
+.notes-num-ctl:hover, .notes-num-ctl:focus { border-color: var(--am); }
+.notes-num-ctl::placeholder { color: var(--text3); font-family: var(--jf); }
+.notes-num-ctl::-webkit-outer-spin-button, .notes-num-ctl::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
 /* Title bar */
 .notes-title-bar {
   padding: 10px 16px; border-bottom: 0.5px solid var(--border);
@@ -230,8 +260,13 @@
   flex: 1; min-width: 0;
   background: var(--bg2); border: 0.5px solid var(--border);
   border-radius: var(--radius2); padding: 5px 8px;
-  font-family: monospace; font-size: 12px;
+  font-family: 'UKIJ Ekran', var(--jf); font-size: 13px;
   color: var(--text); text-align: center;
+}
+/* The سۈرە / ئايەت placeholders rendered faint under the old monospace
+   fallback — pin them to UKIJ Ekran so the Uyghur reads clearly. */
+.notes-quran-picker input::placeholder {
+  font-family: 'UKIJ Ekran', var(--jf); color: var(--text3); opacity: 1;
 }
 .notes-quran-picker button {
   background: var(--am); color: #fff; border: none;

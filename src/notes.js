@@ -375,6 +375,24 @@
         <button onclick="window.notesExec('justifyLeft')" title="سولغا">${icon('align-left')}</button>
       </div>
       <div class="notes-toolbar-group">
+        <label class="notes-color-ctl notes-color-fore" title="خەت رەڭگى">A<input type="color" id="notes-color-fore" value="#1A1208"
+          onmousedown="window.notesSaveSel()" onchange="window.notesSetColor(this.value)"></label>
+        <label class="notes-color-ctl notes-color-back" title="بەلگىلەش رەڭگى (Highlight)"><input type="color" id="notes-color-back" value="#FFF176"
+          onmousedown="window.notesSaveSel()" onchange="window.notesSetHilite(this.value)"></label>
+      </div>
+      <div class="notes-toolbar-group">
+        <input type="number" class="notes-num-ctl" id="notes-indent" min="0" max="5" step="0.1" placeholder="cm"
+          title="ئابزاس بېشى كىرىش (cm)" onmousedown="window.notesSaveSel()" onchange="window.notesSetIndent(this.value)">
+        <select class="notes-ls-ctl" id="notes-linespacing" title="قۇر ئارىلىقى"
+          onmousedown="window.notesSaveSel()" onchange="window.notesSetLineHeight(this.value);this.selectedIndex=0">
+          <option value="" disabled selected>قۇر ئارىلىقى</option>
+          <option value="1">1.0</option>
+          <option value="1.15">1.15</option>
+          <option value="1.5">1.5</option>
+          <option value="2">2.0</option>
+        </select>
+      </div>
+      <div class="notes-toolbar-group">
         <button id="notes-fp-btn" type="button" onmousedown="window.notesFpPress(event)"
           title="فورمات سۈپۈرگىسى (Alt+Ctrl+C / Alt+Ctrl+V)">${icon('brush')}</button>
         <button type="button" onclick="window.notesImageOcr()"
@@ -623,14 +641,15 @@
       // Alt+Ctrl+V applies the captured format to the selection. Legacy
       // Ctrl+Shift+C / Ctrl+Shift+V also accepted. Esc always disarms.
       const k = e.key.toLowerCase();
+      const code = e.code || '';   // physical key — robust when Ctrl+Alt (AltGr) remaps e.key
       const fpMod = (e.ctrlKey || e.metaKey) && (e.altKey || e.shiftKey);
-      if (fpMod && k === 'c') {
+      if (fpMod && (code === 'KeyC' || k === 'c')) {
         e.preventDefault();
         fpFormat = fpCaptureFormat();
         fpArm(false);
         return;
       }
-      if (fpMod && k === 'v') {
+      if (fpMod && (code === 'KeyV' || k === 'v')) {
         e.preventDefault();
         if (!fpFormat) return;
         fpApplyFormat();
@@ -735,6 +754,76 @@
     markDirty();
   };
 
+  // ========== FORMATTING CONTROLS (Task 4) ==========
+  // Clicking a toolbar color picker / select moves focus off the editor, which
+  // can collapse its selection. Save the range on the control's mousedown and
+  // restore it before applying.
+  let _savedSelRange = null;
+  window.notesSaveSel = function notesSaveSel() {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount && editorEl && editorEl.contains(sel.anchorNode)) {
+      _savedSelRange = sel.getRangeAt(0).cloneRange();
+    }
+  };
+  function restoreSel() {
+    if (!editorEl) return false;
+    editorEl.focus();
+    if (!_savedSelRange) return false;
+    try {
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(_savedSelRange);
+      return true;
+    } catch (_) { return false; }
+  }
+
+  // Text color — styleWithCSS so foreColor emits inline CSS (it sticks).
+  window.notesSetColor = function notesSetColor(val) {
+    if (!editorEl || !val) return;
+    restoreSel();
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !editorEl.contains(sel.anchorNode)) return; // need a selection
+    document.execCommand('styleWithCSS', false, true);
+    document.execCommand('foreColor', false, val);
+    document.execCommand('styleWithCSS', false, false);
+    markDirty();
+  };
+
+  // Highlight / background color — styleWithCSS then hiliteColor.
+  window.notesSetHilite = function notesSetHilite(val) {
+    if (!editorEl || !val) return;
+    restoreSel();
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !editorEl.contains(sel.anchorNode)) return; // need a selection
+    document.execCommand('styleWithCSS', false, true);
+    document.execCommand('hiliteColor', false, val);
+    document.execCommand('styleWithCSS', false, false);
+    markDirty();
+  };
+
+  // First-line indent in cm (Word-style) on every target paragraph; 0/empty clears it.
+  // Works with just a caret in the paragraph (no text selection required).
+  window.notesSetIndent = function notesSetIndent(cm) {
+    if (!editorEl) return;
+    restoreSel();
+    const blocks = selectedBlocks();
+    if (!blocks.length) return;
+    const v = parseFloat(cm);
+    const val = (Number.isFinite(v) && v > 0) ? (v + 'cm') : '';
+    for (const b of blocks) b.style.textIndent = val;
+    markDirty();
+  };
+
+  // Line spacing (1.0 / 1.15 / 1.5 / 2.0) on every target paragraph.
+  window.notesSetLineHeight = function notesSetLineHeight(val) {
+    if (!editorEl || !val) return;
+    restoreSel();
+    const blocks = selectedBlocks();
+    if (!blocks.length) return;
+    for (const b of blocks) b.style.lineHeight = String(val);
+    markDirty();
+  };
+
   window.notesSaveNow = function() { saveNow(); };
 
   // ========== FORMAT PAINTER (Phase 3) — Word's «سۈپۈرگە» ==========
@@ -793,8 +882,35 @@
       color: cs.color,
       background: cs.backgroundColor,
       align: bcs.textAlign,
-      blockquote: !!(block && block.tagName === 'BLOCKQUOTE')
+      blockquote: !!(block && block.tagName === 'BLOCKQUOTE'),
+      // Block-level paragraph metrics (Word parity): copied from the containing
+      // block's computed style and re-applied to every target block on paste.
+      lineHeight: bcs.lineHeight,
+      textIndent: bcs.textIndent,
+      marginTop: bcs.marginTop,
+      marginBottom: bcs.marginBottom
     };
+  }
+
+  // Collect every block element that intersects the current selection. Used by
+  // the format painter's block-level paste and the paragraph controls (Task 4).
+  // Falls back to the caret's containing block when nothing intersects.
+  function selectedBlocks() {
+    if (!editorEl) return [];
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return [];
+    const range = sel.getRangeAt(0);
+    const SEL = 'p,div,h1,h2,h3,h4,h5,h6,li,blockquote';
+    const blocks = Array.from(editorEl.querySelectorAll(SEL)).filter(b => {
+      try { return range.intersectsNode(b); } catch (_) { return false; }
+    });
+    if (blocks.length) return blocks;
+    let node = range.startContainer;
+    let el = (node && node.nodeType === Node.TEXT_NODE) ? node.parentElement : node;
+    while (el && el !== editorEl && !/^(P|DIV|H[1-6]|LI|BLOCKQUOTE)$/.test(el.tagName || '')) {
+      el = el.parentElement;
+    }
+    return (el && el !== editorEl) ? [el] : [];
   }
 
   // Apply the captured format to the current (non-collapsed) selection.
@@ -812,15 +928,28 @@
     if (document.queryCommandState('strikeThrough') !== f.strike) document.execCommand('strikeThrough');
     if (f.fontFamily) document.execCommand('fontName', false, f.fontFamily);
     if (f.fontSizePx) document.execCommand('fontSize', false, String(fpPxToSize(f.fontSizePx)));
+    // styleWithCSS makes foreColor/hiliteColor emit inline CSS (color/background)
+    // instead of <font> tags — without it the color/highlight does NOT stick.
+    document.execCommand('styleWithCSS', false, true);
     if (f.color) document.execCommand('foreColor', false, fpRgbToHex(f.color));
     if (f.background && !fpIsTransparent(f.background)) {
       document.execCommand('hiliteColor', false, fpRgbToHex(f.background));
     }
+    document.execCommand('styleWithCSS', false, false);
     // Block-level bits.
     if (f.align === 'center') document.execCommand('justifyCenter');
     else if (f.align === 'left') document.execCommand('justifyLeft');
     else if (f.align === 'right' || f.align === 'start') document.execCommand('justifyRight');
     document.execCommand('formatBlock', false, f.blockquote ? 'blockquote' : 'p');
+    // execCommand has no command for line-height / text-indent / margins, so set
+    // them directly on every block element that intersects the selection.
+    const blocks = selectedBlocks();
+    for (const b of blocks) {
+      if (f.lineHeight && f.lineHeight !== 'normal') b.style.lineHeight = f.lineHeight;
+      if (f.textIndent) b.style.textIndent = f.textIndent;
+      if (f.marginTop) b.style.marginTop = f.marginTop;
+      if (f.marginBottom) b.style.marginBottom = f.marginBottom;
+    }
     markDirty();
   }
 
