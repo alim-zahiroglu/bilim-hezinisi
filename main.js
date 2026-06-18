@@ -1206,6 +1206,20 @@ ipcMain.handle('ai-set-key', (event, key) => {
   catch (e) { return { ok: false, error: e.message }; }
 });
 
+ipcMain.handle('ai-get-backup-keys', () => {
+  try { return ai.getBackupKeysMasked(); } catch (e) { return ['', '', '']; }
+});
+
+ipcMain.handle('ai-set-backup-keys', (event, arr) => {
+  try { ai.setBackupKeys(arr); return { ok: true }; }
+  catch (e) { return { ok: false, error: e.message }; }
+});
+
+ipcMain.handle('ai-test-key-slot', async (event, index) => {
+  try { return await ai.testKeySlot(index); }
+  catch (e) { return { ok: false, message: e.message }; }
+});
+
 ipcMain.handle('ai-get-model', () => {
   try { return ai.getModel(); } catch (e) { return ai.DEFAULT_MODEL; }
 });

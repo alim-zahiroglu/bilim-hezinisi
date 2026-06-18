@@ -66,6 +66,9 @@ const SELECTABLE_MODELS = [
 const API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 
 const PREF_API_KEY = 'ai_gemini_api_key';
+// Up to 3 BACKUP keys. Each should come from a SEPARATE Google Cloud project
+// (free-tier quota is per-project) so failover actually buys fresh quota.
+const PREF_BACKUP_KEYS = ['ai_gemini_api_key_b1', 'ai_gemini_api_key_b2', 'ai_gemini_api_key_b3'];
 const PREF_MODEL   = 'ai_gemini_model';
 const PREF_ENABLED = 'ai_enabled';
 
@@ -164,6 +167,61 @@ function setApiKey(key) {
   cachedKey = trimmed;
   cachedKeyLoaded = true;
 }
+
+// ----------------------------------------------------------------
+// Backup keys (up to 3) + the ordered key list used for failover.
+// Free-tier rate/quota limits are per-PROJECT, so a key from a SEPARATE
+// project carries its OWN quota. On a 429 (quota / rate-limit) the request
+// paths fail over to the next key with the SAME model — STRICT model
+// selection is untouched (only the key changes). A 503 (server overload) is
+// NOT a quota problem and never triggers failover. Backups are read fresh
+// from the settings table (not cached) so a Settings edit applies at once.
+// ----------------------------------------------------------------
+function maskKey(k) {
+  if (!k) return '';
+  if (k.length <= 8) return '••••';
+  return k.slice(0, 4) + '…' + k.slice(-4);
+}
+
+function getBackupKeys() {
+  return PREF_BACKUP_KEYS.map(function (pref) {
+    try { return deobfuscateKey(database.getSetting(pref, '')).trim(); }
+    catch (_) { return ''; }
+  });
+}
+
+function getBackupKeysMasked() {
+  return getBackupKeys().map(maskKey);
+}
+
+function setBackupKeys(arr) {
+  const list = Array.isArray(arr) ? arr : [];
+  for (let i = 0; i < PREF_BACKUP_KEYS.length; i++) {
+    // null / undefined = "leave this slot unchanged" — the renderer sends null
+    // for an empty field so re-saving never wipes a key the user didn't
+    // retype. An explicit '' string clears the slot.
+    const item = list[i];
+    if (item === null || item === undefined) continue;
+    const v = String(item).trim();
+    try { database.setSetting(PREF_BACKUP_KEYS[i], v ? obfuscateKey(v) : ''); }
+    catch (e) { console.warn('[ai] setBackupKeys persist failed:', e && e.message); }
+  }
+}
+
+// Ordered, de-duplicated usable keys: primary first, then backups. Every
+// request path iterates this so the failover order is deterministic.
+function getKeyList() {
+  const all = [loadKey()].concat(getBackupKeys());
+  const seen = {};
+  const out = [];
+  for (let i = 0; i < all.length; i++) {
+    const k = String(all[i] || '').trim();
+    if (k && k.length > 8 && !seen[k]) { seen[k] = 1; out.push(k); }
+  }
+  return out;
+}
+
+function firstKey() { return getKeyList()[0] || ''; }
 
 function getModel() {
   try {
@@ -614,18 +672,23 @@ function fetchWithTimeout(url, opts, timeoutMs) {
 // Main API call
 // ----------------------------------------------------------------
 
-async function callGemini(model, key, body) {
+async function callGemini(model, key, body, opts) {
+  opts = opts || {};
+  // x-goog-api-key HEADER auth (Google's current standard). Works for BOTH
+  // legacy "AIza…" keys AND the newer "AQ.…" auth keys AI Studio now issues by
+  // default, so the call path keeps working past the 2026-06-19 / 2026-09
+  // standard-key deprecation. The key rides in a header, never in the URL or a
+  // log line.
   const url = API_BASE + '/models/' + encodeURIComponent(model)
-            + ':generateContent?key=' + encodeURIComponent(key);
-  // NOTE: the key is only ever in the URL we fetch — never in any log line.
-  console.log('[ai] POST', API_BASE + '/models/' + model + ':generateContent');
+            + ':generateContent';
+  console.log('[ai] POST', url);
 
   let lastErr = null;
   for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
     try {
       const resp = await fetchWithTimeout(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
         body: JSON.stringify(body)
       }, REQUEST_TIMEOUT_MS);
 
@@ -638,6 +701,10 @@ async function callGemini(model, key, body) {
         // "quota exhausted" message instead of the raw Gemini string.
         lastErr.status = resp.status;
         console.warn('[ai] attempt', attempt + 1, 'retryable error:', lastErr.message);
+        // Quota (429) on a key that still has backups: don't burn the whole
+        // backoff budget on an exhausted key — fail over fast. (callGeminiFailover
+        // sets quotaFastFail for every key except the last.) 503/5xx still retry.
+        if (resp.status === 429 && opts.quotaFastFail) break;
         await sleep(BACKOFF_MS[attempt] || 3000);
         continue;
       }
@@ -749,6 +816,33 @@ function modelListFor(requestedModel) {
   return [requestedModel || DEFAULT_MODEL];
 }
 
+// Run a request across the key list (primary → backup1 → … ). ONLY a 429
+// (quota / rate-limit) advances to the next key, since a separate project's
+// key carries its own quota. 503 (overload), 404/permission, and size errors
+// are NOT quota problems and surface immediately — a different key can't fix
+// them. The MODEL never changes here (STRICT model selection); only the key.
+// quotaFastFail skips the per-key backoff for every key except the last so
+// failover stays snappy; the last key keeps the full retry budget.
+async function callGeminiFailover(model, body) {
+  const keys = getKeyList();
+  if (!keys.length) { const e = new Error('NO_KEY'); e.noKey = true; throw e; }
+  let lastErr = null;
+  for (let i = 0; i < keys.length; i++) {
+    const isLast = (i === keys.length - 1);
+    try {
+      return await callGemini(model, keys[i], body, { quotaFastFail: !isLast });
+    } catch (e) {
+      lastErr = e;
+      if (isQuotaError(e) && !isLast) {
+        console.warn('[ai] key #' + (i + 1) + ' quota-limited — failing over to next key');
+        continue;
+      }
+      throw e;
+    }
+  }
+  throw lastErr || new Error('سوراش مەغلۇپ بولدى');
+}
+
 function isQuotaError(err) {
   return !!(err && (err.status === 429 ||
     /\b429\b|quota|resource has been exhausted|rate.?limit/i.test(String(err.message || ''))));
@@ -793,7 +887,13 @@ function isServerBusyError(err) {
 
 // Friendly Uyghur message for a momentarily busy model (used by ask/askStream/
 // translateStream/chatStream — test() has its own key-reassuring variant).
-const SERVER_BUSY_MESSAGE = 'مودېل ھازىر ئالدىراش (بەك كۆپ تەلەپ بار). بىردەمدىن كېيىن قايتا سىناڭ ياكى https://aistudio.google.com دىن يېڭى api ھاسىل قىلىپ سىناپ بېقىڭ';
+const SERVER_BUSY_MESSAGE = 'مودېل ھازىر ئالدىراش (بەك كۆپ تەلەپ بار). بىردەمدىن كېيىن قايتا سىناڭ ياكى زاپاس Gemini API ئاچقۇچىغا ئالماشتۇرۇپ بېقىڭ.';
+
+// Shown when EVERY key (primary + backups) is quota-limited. canSwitchKey on
+// the result drives the renderer's "API ئالماشتۇرىمەن" button (jump to Settings
+// to add / fix a backup key). On a single-key setup it still hints the user
+// toward adding a backup.
+const QUOTA_ALL_MSG = 'ھەقسىز ئىشلىتىش ھەققىڭىز توشۇپ قالدى. بىردەمدىن كېيىن قايتا سىناڭ ياكى زاپاس Gemini API ئاچقۇچىغا ئالماشتۇرۇپ بېقىڭ.';
 
 // Did Gemini reject the request because the INPUT was too large (token/size
 // limit)? Used to drive the reactive "book too large" fallback — never a
@@ -866,36 +966,34 @@ async function ask(opts) {
   }
 
   const requestedModel = getModel();
-  const models = modelListFor(requestedModel);
   // Kept for the usage-log line below; buildBody() computes its own copy.
   const thinkingBudget = opts.deepThink ? 1024 : 0;
   const body = buildBody(opts);
 
+  // Same model on every attempt; callGeminiFailover walks primary → backups,
+  // advancing only on a 429. STRICT model selection is preserved.
   let lastErr = null;
-  for (const m of models) {
-    try {
-      const json = await callGemini(m, key, body);
-      const text = extractText(json);
-      if (!text) {
-        const reason = (json.promptFeedback && json.promptFeedback.blockReason)
-                    || (json.candidates && json.candidates[0] && json.candidates[0].finishReason)
-                    || 'unknown';
-        // Log the response shape so we can diagnose safety-filter blocks vs.
-        // token-budget exhaustion vs. odd response shapes.
-        console.warn('[ai] empty response from', m, '— reason:', reason, 'json:',
-                     JSON.stringify(json).slice(0, 400));
-        return { ok: false, error: 'جاۋاب چىقمىدى — سەۋەب: ' + reason };
-      }
-      bumpUsage();
-      logTokenUsage(m, json.usageMetadata, !!thinkingBudget);
-      return { ok: true, text: text, model: m };
-    } catch (e) {
-      // STRICT: the selected model failed — no fallback to another model
-      // and no selfHealModel. The error is mapped to a clear message below
-      // and the USER decides what to do (switch model / enable billing).
-      lastErr = e;
-      break;
+  try {
+    const json = await callGeminiFailover(requestedModel, body);
+    const text = extractText(json);
+    if (!text) {
+      const reason = (json.promptFeedback && json.promptFeedback.blockReason)
+                  || (json.candidates && json.candidates[0] && json.candidates[0].finishReason)
+                  || 'unknown';
+      // Log the response shape so we can diagnose safety-filter blocks vs.
+      // token-budget exhaustion vs. odd response shapes.
+      console.warn('[ai] empty response from', requestedModel, '— reason:', reason, 'json:',
+                   JSON.stringify(json).slice(0, 400));
+      return { ok: false, error: 'جاۋاب چىقمىدى — سەۋەب: ' + reason };
     }
+    bumpUsage();
+    logTokenUsage(requestedModel, json.usageMetadata, !!thinkingBudget);
+    return { ok: true, text: text, model: requestedModel };
+  } catch (e) {
+    // STRICT: the selected model failed on every key — no model substitution.
+    // The error is mapped to a clear message below and the USER decides what
+    // to do (switch model / enable billing / wait).
+    lastErr = e;
   }
 
   // The API rejected the input on size. Signal the UI to offer the
@@ -913,20 +1011,21 @@ async function ask(opts) {
 
   // Model momentarily busy (HTTP 503/500) — not a quota problem, just retry.
   if (isServerBusyError(lastErr)) {
-    return { ok: false, busy: true, error: SERVER_BUSY_MESSAGE };
+    return { ok: false, busy: true, canSwitchKey: true, error: SERVER_BUSY_MESSAGE };
   }
 
-  // Map 429 ("quota exhausted" or "rate limited") onto a friendly Uyghur
-  // message. Both Gemini's per-minute rate limit and its per-day free-tier
-  // quota return 429; we treat both the same from the user's perspective —
-  // they should just try again later. Once the quota refreshes on Google's
-  // side, the very next request will succeed automatically; we don't
-  // persist any "blocked" state locally.
+  // 429 on EVERY key ("quota exhausted" or "rate limited"). Both Gemini's
+  // per-minute rate limit and its per-day free-tier quota return 429; once the
+  // quota refreshes on Google's side the next request succeeds automatically.
+  // allKeysExhausted / canSwitchKey tell the renderer to offer the "switch
+  // key" action (add or fix a backup key in Settings).
   if (isQuotaError(lastErr)) {
     return {
       ok: false,
       quotaExhausted: true,
-      error: 'ھەقسىز ئىشلىتىش ھەققىڭىز توشۇپ قالدى. بىردەمدىن كېيىن قايتا سىناڭ.'
+      allKeysExhausted: true,
+      canSwitchKey: true,
+      error: QUOTA_ALL_MSG
     };
   }
 
@@ -982,6 +1081,42 @@ async function test() {
   }
 }
 
+// Validate a SPECIFIC key string against the currently-selected model. Used by
+// the Settings "test backup key" buttons. A 503/429 still means the KEY is
+// valid (auth succeeded) — reported as a soft ✓ so a momentarily-busy model
+// doesn't look like a bad key. STRICT: probes only the selected model.
+async function testGivenKey(rawKey) {
+  const key = String(rawKey || '').trim();
+  if (!key) return { ok: false, message: 'ئاچقۇچ بوش' };
+  const model = getModel();
+  try {
+    const json = await callGemini(model, key, {
+      contents: [{ role: 'user', parts: [{ text: 'سالام دەپ بىر سۆزلا جاۋاب بەر.' }] }],
+      generationConfig: { temperature: 0.2, thinkingConfig: { thinkingBudget: 0 }, maxOutputTokens: 64 }
+    }, { quotaFastFail: true });
+    const text = extractText(json);
+    if (text) return { ok: true, message: text, model: model };
+    return { ok: false, message: 'جاۋاب بوش' };
+  } catch (e) {
+    if (isModelUnavailableError(e)) return { ok: false, message: modelUnavailableMessage(model) };
+    // 503/429 → auth succeeded, so the key itself is fine.
+    if (isServerBusyError(e)) return { ok: true, busy: true, message: '✓ ئاچقۇچ توغرا (مودېل ھازىر ئالدىراش).' };
+    if (isQuotaError(e)) return { ok: true, quota: true, message: '✓ ئاچقۇچ توغرا، ئەمما ھەققى ھازىرچە توشۇپ تۇرۇپتۇ.' };
+    return { ok: false, message: (e && e.message) || 'سىناشتا خاتالىق' };
+  }
+}
+
+// Test the key STORED in a slot: 0 = primary, 1..3 = backups. Lets the Settings
+// UI verify each saved backup key by index — the renderer never sees the real
+// key, only the ok/message result.
+async function testKeySlot(index) {
+  const i = parseInt(index, 10) || 0;
+  const all = [loadKey()].concat(getBackupKeys());
+  const key = all[i] || '';
+  if (!key) return { ok: false, message: 'بۇ ئورۇندا ئاچقۇچ يوق' };
+  return testGivenKey(key);
+}
+
 // ----------------------------------------------------------------
 // Streaming variant of ask() — Server-Sent Events
 //
@@ -1025,40 +1160,47 @@ function askStream(opts, onChunk, onDone, onError) {
     if (aborted) return;
 
     const requestedModel = getModel();
-    const models = modelListFor(requestedModel);
+    const keys = getKeyList();              // primary → backup1 → backup2 → …
     const body = buildBody(opts);
     let lastErr = null;
     let emittedAny = false;   // did we hand any text to onChunk?
     let streamed = '';        // accumulated text for the current attempt
-    let lastModel = requestedModel;
 
-    for (let mi = 0; mi < models.length; mi++) {
-      const m = models[mi];
-      lastModel = m;
+    // Stream with each key in turn. A 429 (quota / rate-limit) on one key fails
+    // over to the NEXT key with the SAME model — so the answer streams straight
+    // from a backup with no user-visible "busy". STRICT model selection holds:
+    // only the key changes, never the model. Once any text has streamed we do
+    // NOT switch keys (that would duplicate the answer).
+    for (let ki = 0; ki < keys.length; ki++) {
+      const k = keys[ki];
+      const isLastKey = (ki === keys.length - 1);
       if (aborted) return;
       streamed = '';
       try {
         controller = new AbortController();
-        const url = API_BASE + '/models/' + encodeURIComponent(m)
-                  + ':streamGenerateContent?alt=sse&key=' + encodeURIComponent(key);
-        console.log('[ai] STREAM', API_BASE + '/models/' + m + ':streamGenerateContent');
+        const url = API_BASE + '/models/' + encodeURIComponent(requestedModel)
+                  + ':streamGenerateContent?alt=sse';
+        console.log('[ai] STREAM', url, '(key #' + (ki + 1) + ')');
         const resp = await fetch(url, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': k },
           body: JSON.stringify(body),
           signal: controller.signal
         });
 
         if (resp.status === 404) {
-          const e = new Error('Model not found: ' + m); e.notFound = true;
-          lastErr = e; break;   // STRICT: no other model to try — mapped below
+          const e = new Error('Model not found: ' + requestedModel); e.notFound = true;
+          lastErr = e; break;   // STRICT: model issue — another key won't help
         }
         if (!resp.ok) {
           let detail = '';
           try { const j = await resp.json(); detail = (j.error && j.error.message) || ''; } catch (_) {}
           lastErr = new Error('HTTP ' + resp.status + (detail ? ' — ' + detail : ''));
           lastErr.status = resp.status;
-          break;   // non-404 HTTP error → stop and fall back to ask()
+          // 429 (quota) → fail over to the next key; any other HTTP error
+          // (503 busy / 4xx) won't be fixed by a different key, so stop.
+          if (resp.status === 429 && !isLastKey) continue;
+          break;
         }
         if (!resp.body || typeof resp.body.getReader !== 'function') {
           throw new Error('NO_STREAM');
@@ -1096,14 +1238,14 @@ function askStream(opts, onChunk, onDone, onError) {
         if (!streamed) { lastErr = new Error('EMPTY_STREAM'); break; }
 
         bumpUsage();
-        logTokenUsage(m, usage, !!opts.deepThink);
-        onDone(streamed, m, usage);
+        logTokenUsage(requestedModel, usage, !!opts.deepThink);
+        onDone(streamed, requestedModel, usage);
         return;
       } catch (e) {
         if (aborted) return;
-        // STRICT: never retry on a different model — record and map below.
+        // Network error / NO_STREAM → fall back to ask() below (same model).
         lastErr = e;
-        break;   // network error / NO_STREAM → fall back to ask() (same model)
+        break;
       }
     }
 
@@ -1113,7 +1255,7 @@ function askStream(opts, onChunk, onDone, onError) {
     // re-running ask() (which would duplicate the whole answer).
     if (emittedAny && streamed) {
       bumpUsage();
-      onDone(streamed, lastModel, null);
+      onDone(streamed, requestedModel, null);
       return;
     }
 
@@ -1135,7 +1277,14 @@ function askStream(opts, onChunk, onDone, onError) {
     // Model momentarily busy (HTTP 503/500) — don't re-send the whole body via
     // ask(); just tell the user to retry shortly.
     if (isServerBusyError(lastErr)) {
-      onError({ ok: false, busy: true, error: SERVER_BUSY_MESSAGE });
+      onError({ ok: false, busy: true, canSwitchKey: true, error: SERVER_BUSY_MESSAGE });
+      return;
+    }
+
+    // 429 on every key — all keys are quota-limited. Surface it directly with
+    // the switch-key action instead of re-running the non-stream ask().
+    if (isQuotaError(lastErr)) {
+      onError({ ok: false, quotaExhausted: true, allKeysExhausted: true, canSwitchKey: true, error: QUOTA_ALL_MSG });
       return;
     }
 
@@ -1149,7 +1298,7 @@ function askStream(opts, onChunk, onDone, onError) {
     } catch (e2) {
       if (aborted) return;
       if (isQuotaError(lastErr) || isQuotaError(e2)) {
-        onError({ ok: false, quotaExhausted: true, error: 'ھەقسىز ئىشلىتىش ھەققىڭىز توشۇپ قالدى. بىردەمدىن كېيىن قايتا سىناڭ.' });
+        onError({ ok: false, quotaExhausted: true, allKeysExhausted: true, canSwitchKey: true, error: QUOTA_ALL_MSG });
       } else {
         onError({ ok: false, error: 'سوراش مەغلۇپ بولدى: ' + ((lastErr && lastErr.message) || (e2 && e2.message) || 'نامەلۇم خاتالىق') });
       }
@@ -1212,10 +1361,10 @@ async function streamOnce(model, key, body, onDelta, isAborted, setController) {
   const controller = new AbortController();
   if (typeof setController === 'function') setController(controller);
   const url = API_BASE + '/models/' + encodeURIComponent(model)
-            + ':streamGenerateContent?alt=sse&key=' + encodeURIComponent(key);
+            + ':streamGenerateContent?alt=sse';
   const resp = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
     body: JSON.stringify(body),
     signal: controller.signal
   });
@@ -1306,15 +1455,15 @@ function translateStream(opts, onChunk, onDone, onError) {
         if (e && e.aborted) return;
         // Streaming failed for this segment → non-stream fallback.
         try {
-          const json = await callGemini(model, key, body);
+          const json = await callGeminiFailover(model, body);
           if (aborted) return;
           const t = extractText(json);
           if (t) { full += t; emittedAny = true; onChunk(t); }
         } catch (e2) {
           if (aborted) return;
           if (isSizeError(e) || isSizeError(e2)) { onError({ ok: false, tooLargeFallback: true, error: 'بۇ تېكىست بەك چوڭ بولۇپ، API نى بىراقلا قوبۇل قىلمىدى.' }); return; }
-          if (isServerBusyError(e) || isServerBusyError(e2)) { onError({ ok: false, busy: true, error: SERVER_BUSY_MESSAGE }); return; }
-          if (isQuotaError(e) || isQuotaError(e2)) { onError({ ok: false, quotaExhausted: true, error: 'ھەقسىز ئىشلىتىش ھەققىڭىز توشۇپ قالدى. بىردەمدىن كېيىن قايتا سىناڭ.' }); return; }
+          if (isServerBusyError(e) || isServerBusyError(e2)) { onError({ ok: false, busy: true, canSwitchKey: true, error: SERVER_BUSY_MESSAGE }); return; }
+          if (isQuotaError(e) || isQuotaError(e2)) { onError({ ok: false, quotaExhausted: true, allKeysExhausted: true, canSwitchKey: true, error: QUOTA_ALL_MSG }); return; }
           onError({ ok: false, error: 'تەرجىمە مەغلۇپ بولدى: ' + ((e2 && e2.message) || (e && e.message) || 'نامەلۇم خاتالىق') }); return;
         }
       }
@@ -1381,7 +1530,7 @@ function chatStream(messages, onChunk, onDone, onError) {
       if (aborted || (e && e.aborted)) return;
       // Streaming failed → one non-stream retry on the SAME model (STRICT).
       try {
-        const json = await callGemini(model, key, body);
+        const json = await callGeminiFailover(model, body);
         if (aborted) return;
         const t = extractText(json);
         if (t) { bumpUsage(); onChunk(t); onDone(t, model, json.usageMetadata || null); return; }
@@ -1389,8 +1538,8 @@ function chatStream(messages, onChunk, onDone, onError) {
       } catch (e2) {
         if (aborted) return;
         if (isModelUnavailableError(e) || isModelUnavailableError(e2)) { onError({ ok: false, error: modelUnavailableMessage(model) }); return; }
-        if (isServerBusyError(e) || isServerBusyError(e2)) { onError({ ok: false, busy: true, error: SERVER_BUSY_MESSAGE }); return; }
-        if (isQuotaError(e) || isQuotaError(e2)) { onError({ ok: false, quotaExhausted: true, error: 'ھەقسىز ئىشلىتىش ھەققىڭىز توشۇپ قالدى. بىردەمدىن كېيىن قايتا سىناڭ.' }); return; }
+        if (isServerBusyError(e) || isServerBusyError(e2)) { onError({ ok: false, busy: true, canSwitchKey: true, error: SERVER_BUSY_MESSAGE }); return; }
+        if (isQuotaError(e) || isQuotaError(e2)) { onError({ ok: false, quotaExhausted: true, allKeysExhausted: true, canSwitchKey: true, error: QUOTA_ALL_MSG }); return; }
         onError({ ok: false, error: 'سوراش مەغلۇپ بولدى: ' + ((e2 && e2.message) || (e && e.message) || 'نامەلۇم خاتالىق') });
       }
     }
@@ -1450,7 +1599,7 @@ async function ocrImages(imagesBase64, opts) {
       safetySettings: SAFETY_SETTINGS
     };
     try {
-      const json = await callGemini(model, key, body);
+      const json = await callGeminiFailover(model, body);
       const text = extractText(json);
       if (text) out.push(text);
       bumpUsage();
@@ -1462,7 +1611,7 @@ async function ocrImages(imagesBase64, opts) {
       // Unavailable model → strict message. Size/quota → free-tier fallback.
       if (isModelUnavailableError(e)) return { ok: false, error: modelUnavailableMessage(model), pages: out };
       if (isSizeError(e) || isQuotaError(e)) return { ok: false, freeTierLimit: true, error: FREE_TIER_MSG, pages: out };
-      if (isServerBusyError(e)) return { ok: false, busy: true, error: SERVER_BUSY_MESSAGE, pages: out };
+      if (isServerBusyError(e)) return { ok: false, busy: true, canSwitchKey: true, error: SERVER_BUSY_MESSAGE, pages: out };
       return { ok: false, error: (e && e.message) || 'Gemini OCR مەغلۇپ بولدى', pages: out };
     }
   }
@@ -1479,6 +1628,9 @@ module.exports = {
   getApiKey: getApiKey,             // main-process internal — never wire to IPC
   getApiKeyMasked: getApiKeyMasked,
   setApiKey: setApiKey,
+  getBackupKeysMasked: getBackupKeysMasked,
+  setBackupKeys: setBackupKeys,
+  testKeySlot: testKeySlot,
   getModel: getModel,
   setModel: setModel,
   isEnabled: isEnabled,

@@ -118,6 +118,11 @@ contextBridge.exposeInMainWorld('AIBridge', {
   hasApiKey: () => ipcRenderer.invoke('ai-has-key'),
   getApiKey: () => ipcRenderer.invoke('ai-get-key-masked'),
   setApiKey: (key) => ipcRenderer.invoke('ai-set-key', key),
+  // Backup keys: masked array out, raw array in, plus a per-slot test
+  // (0 = primary, 1..3 = backups). The real keys stay in the main process.
+  getBackupKeys: () => ipcRenderer.invoke('ai-get-backup-keys'),
+  setBackupKeys: (arr) => ipcRenderer.invoke('ai-set-backup-keys', arr),
+  testKeySlot: (index) => ipcRenderer.invoke('ai-test-key-slot', index),
   getModel: () => ipcRenderer.invoke('ai-get-model'),
   setModel: (name) => ipcRenderer.invoke('ai-set-model', name),
   isEnabled: () => ipcRenderer.invoke('ai-is-enabled'),

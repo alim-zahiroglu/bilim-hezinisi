@@ -732,6 +732,20 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
       </div>
       <div id="aiTestResult" style="font-size:12px;color:var(--text2);min-height:18px;margin-bottom:10px"></div>
 
+      <!-- Backup Gemini API keys — automatic failover when the main key is busy (429). -->
+      <div style="border-top:1px solid rgba(128,128,128,.25);margin:6px 0 12px"></div>
+      <label style="font-size:13px;font-weight:600;color:var(--text)">زاپاس Gemini API ئاچقۇچلىرى</label>
+      <p style="font-size:11px;color:var(--text3);margin:4px 0 10px">ئەگەر يۇقىرىدىكى Gemini API ئاچقۇچى ئالدىراش بولۇپ قالسا، زاپاس ئاچقۇچقا ئاپتوماتىك ئالمىشىدۇ. ھەر بىر زاپاس ئاچقۇچنى ھاسىل قىلغاندا چوقۇم «<b>Choose an imported project</b>» دىن ئوخشىمىغان «<b>project</b>» بەلگىلەپ ھاسىل قىلىڭ. شۇنداق بولغاندا، ھەربىر Gemini API مۇستەقىل ھەققى بولىدۇ.</p>
+      <div class="fl"><label>زاپاس ئاچقۇچ 1</label><input type="password" id="aiKeyB1" class="inp" dir="ltr" placeholder="AIza... / AQ..." autocomplete="off" spellcheck="false"></div>
+      <div id="aiKeyB1Res" style="font-size:11px;color:var(--text3);min-height:15px;margin:2px 0 6px"></div>
+      <div class="fl"><label>زاپاس ئاچقۇچ 2</label><input type="password" id="aiKeyB2" class="inp" dir="ltr" placeholder="AIza... / AQ..." autocomplete="off" spellcheck="false"></div>
+      <div id="aiKeyB2Res" style="font-size:11px;color:var(--text3);min-height:15px;margin:2px 0 6px"></div>
+      <div class="fl"><label>زاپاس ئاچقۇچ 3</label><input type="password" id="aiKeyB3" class="inp" dir="ltr" placeholder="AIza... / AQ..." autocomplete="off" spellcheck="false"></div>
+      <div id="aiKeyB3Res" style="font-size:11px;color:var(--text3);min-height:15px;margin:2px 0 10px"></div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button onclick="aiSaveBackupKeys()" class="hbtn p" id="aiSaveBackupBtn">ساقلاش ۋە سىناش</button>
+      </div>
+
       <div class="fl">
         <label>مودېل</label>
         <select id="aiModel" class="inp" style="cursor:pointer;direction:ltr" onchange="aiChangeModel()"></select>
@@ -819,6 +833,11 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
     <select id="fontSelector" class="font-selector" onchange="changeReaderFont(this.value)" title="خەت نۇسخىسىنى تاللاش">
       <option value="auto">ئاپتوماتىك</option>
       <option value="ukij">UKIJ Ekran</option>
+      <option value="ukijtuz">UKIJ Tuz</option>
+      <option value="ukijtuztom">UKIJ Tuz Tom</option>
+      <option value="ukijtuzkitab">UKIJ Tuz Kitab</option>
+      <option value="ukijesliye">UKIJ Esliye</option>
+      <option value="uthmanic">Uthmanic Hafs</option>
       <option value="traditional">Traditional Arabic</option>
       <option value="bahij">Bahij Nazanin</option>
     </select>
@@ -1919,6 +1938,21 @@ function changeReaderFont(font) {
   } else if (font === 'ukij') {
     rt.style.fontFamily = "'UKIJ Ekran', serif";
     renderReaderPagePlain();
+  } else if (font === 'ukijtuz') {
+    rt.style.fontFamily = "'UKIJ Tuz', serif";
+    renderReaderPagePlain();
+  } else if (font === 'ukijtuztom') {
+    rt.style.fontFamily = "'UKIJ Tuz Tom', serif";
+    renderReaderPagePlain();
+  } else if (font === 'ukijtuzkitab') {
+    rt.style.fontFamily = "'UKIJ Tuz Kitab', serif";
+    renderReaderPagePlain();
+  } else if (font === 'ukijesliye') {
+    rt.style.fontFamily = "'UKIJ Esliye', serif";
+    renderReaderPagePlain();
+  } else if (font === 'uthmanic') {
+    rt.style.fontFamily = "'UthmanicHafs', serif";
+    renderReaderPagePlain();
   } else if (font === 'traditional') {
     rt.style.fontFamily = "'Traditional Arabic', 'trad-arabic', serif";
     renderReaderPagePlain();
@@ -2325,6 +2359,15 @@ async function showSettings() {
     ki.value = '';
     const masked = await window.AI.getApiKey();   // masked form (first4…last4)
     ki.placeholder = masked || 'AIza... / AQ...';
+    // Backup keys: masked placeholders; the fields stay empty until edited.
+    try {
+      const bk = (await window.AI.getBackupKeys()) || [];
+      ['aiKeyB1', 'aiKeyB2', 'aiKeyB3'].forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (el) { el.value = ''; el.placeholder = bk[i] || 'AIza... / AQ...'; }
+      });
+      ['aiKeyB1Res', 'aiKeyB2Res', 'aiKeyB3Res'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = ''; });
+    } catch (_) {}
     const sel = document.getElementById('aiModel');
     const cur = await window.AI.getModel();
     const models = (window.AI.SELECTABLE_MODELS || window.AI.MODEL_FALLBACKS || []).slice();
@@ -2389,6 +2432,52 @@ async function aiSaveKey() {
   } catch (e) {
     console.warn('[settings] AI key save failed:', e);
     toast('ساقلاشتا خاتالىق', 'e');
+  }
+}
+
+// Save the 3 backup keys, then verify each saved slot. Empty field = keep the
+// existing saved key (sent as null); a typed value overwrites that slot.
+async function aiSaveBackupKeys() {
+  const btn = document.getElementById('aiSaveBackupBtn');
+  const ids = ['aiKeyB1', 'aiKeyB2', 'aiKeyB3'];
+  const resIds = ['aiKeyB1Res', 'aiKeyB2Res', 'aiKeyB3Res'];
+  const payload = ids.map(id => {
+    const el = document.getElementById(id);
+    const v = (el && el.value || '').trim();
+    return v ? v : null;
+  });
+  for (const v of payload) {
+    if (v && !/^[A-Za-z0-9._-]{20,}$/.test(v)) {
+      if (!confirm('ئاچقۇچلارنىڭ بىرىنىڭ شەكلى ئادەتتىكى Gemini ئاچقۇچىغا ئوخشىمايدۇ. شۇنداقتىمۇ ساقلامسىز؟')) return;
+      break;
+    }
+  }
+  if (btn) btn.disabled = true;
+  try {
+    await window.AI.setBackupKeys(payload);
+    const masks = (await window.AI.getBackupKeys()) || [];
+    ids.forEach((id, i) => { const el = document.getElementById(id); if (el) { el.value = ''; el.placeholder = masks[i] || 'AIza... / AQ...'; } });
+    toast('زاپاس ئاچقۇچلار ساقلاندى — سىنىلىۋاتىدۇ…', 's');
+    // Verify each slot that now holds a key (backup slots are 1..3).
+    for (let i = 0; i < 3; i++) {
+      const res = document.getElementById(resIds[i]);
+      if (!masks[i]) { if (res) res.textContent = ''; continue; }
+      if (res) { res.style.color = ''; res.textContent = '⏳ سىنىلىۋاتىدۇ…'; }
+      try {
+        const r = await window.AI.testKeySlot(i + 1);
+        if (res) {
+          if (r && r.ok) { res.style.color = '#2e7d32'; res.textContent = '✓ ئىشلەۋاتىدۇ'; }
+          else { res.style.color = '#c62828'; res.textContent = '✗ ' + ((r && r.message) || 'ئىشلىمىدى'); }
+        }
+      } catch (e) {
+        if (res) { res.style.color = '#c62828'; res.textContent = '✗ ' + ((e && e.message) || 'خاتالىق'); }
+      }
+    }
+  } catch (e) {
+    console.warn('[settings] backup keys save failed:', e);
+    toast('ساقلاشتا خاتالىق', 'e');
+  } finally {
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -2843,6 +2932,15 @@ function raiRenderError(res) {
   retry.textContent = 'قايتا سىناش';
   retry.addEventListener('click', () => { if (RAI.lastReq) raiExecute(RAI.lastReq); });
   ans.appendChild(retry);
+  // Busy / quota → offer a jump to Settings to switch/add a backup key.
+  if (res && (res.busy || res.quotaExhausted)) {
+    const sw = document.createElement('button');
+    sw.type = 'button'; sw.className = 'hbtn';
+    sw.textContent = 'API ئالماشتۇرىمەن';
+    sw.style.marginInlineStart = '8px';
+    sw.addEventListener('click', () => showSettings());
+    ans.appendChild(sw);
+  }
 }
 
 // Minimal markdown → HTML for AI answers (the prompts ask for Markdown with
@@ -2994,6 +3092,14 @@ function naiRenderError(res) {
     btn.textContent = 'قايتا سىناش';
     btn.addEventListener('click', () => { if (typeof NAI.lastReq === 'function') NAI.lastReq(); });
     r.appendChild(btn);
+  }
+  // Busy / quota → offer a jump to Settings to switch/add a backup key.
+  if (res && (res.busy || res.quotaExhausted)) {
+    const sw = document.createElement('button'); sw.type = 'button'; sw.className = 'hbtn';
+    sw.textContent = 'API ئالماشتۇرىمەن';
+    sw.style.marginInlineStart = '8px';
+    sw.addEventListener('click', () => showSettings());
+    r.appendChild(sw);
   }
 }
 
