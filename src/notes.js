@@ -836,22 +836,6 @@
   let fpFormat = null;     // captured format descriptor
   let fpPressTimer = null; // single- vs double-click discrimination
 
-  // Map a pixel size onto execCommand fontSize's 1–7 scale (as notesSetSize uses).
-  function fpPxToSize(px) {
-    const table = [10, 13, 16, 18, 24, 32, 48]; // sizes 1..7
-    let best = 3, bestD = Infinity;
-    for (let i = 0; i < table.length; i++) {
-      const d = Math.abs(px - table[i]);
-      if (d < bestD) { bestD = d; best = i + 1; }
-    }
-    return best;
-  }
-  function fpRgbToHex(c) {
-    const m = String(c || '').match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
-    if (!m) return c;
-    const h = (n) => ('0' + parseInt(n, 10).toString(16)).slice(-2);
-    return '#' + h(m[1]) + h(m[2]) + h(m[3]);
-  }
   function fpIsTransparent(c) {
     const s = String(c || '').replace(/\s/g, '');
     return !s || s === 'transparent' || /rgba\(\d+,\d+,\d+,0(\.0+)?\)/.test(s);
@@ -872,6 +856,15 @@
     }
     const bcs = block && block !== editorEl ? window.getComputedStyle(block) : cs;
     const td = (cs.textDecorationLine || cs.textDecoration || '');
+    // Background (highlight): the anchor's own background-color is often
+    // transparent when the selection starts at a text boundary OUTSIDE the
+    // highlighted span. Walk UP to the first non-transparent background, stopping
+    // before the editor root so the paper surface isn't captured as a highlight.
+    let bg = '';
+    for (let p = el; p && p !== editorEl; p = p.parentElement) {
+      const c = window.getComputedStyle(p).backgroundColor;
+      if (!fpIsTransparent(c)) { bg = c; break; }
+    }
     return {
       bold: parseInt(cs.fontWeight, 10) >= 600,
       italic: cs.fontStyle === 'italic' || cs.fontStyle === 'oblique',
@@ -880,7 +873,7 @@
       fontFamily: (cs.fontFamily || '').split(',')[0].replace(/^["']|["']$/g, '').trim(),
       fontSizePx: parseFloat(cs.fontSize) || 0,
       color: cs.color,
-      background: cs.backgroundColor,
+      background: bg,
       align: bcs.textAlign,
       blockquote: !!(block && block.tagName === 'BLOCKQUOTE'),
       // Block-level paragraph metrics (Word parity): copied from the containing
@@ -914,37 +907,40 @@
   }
 
   // Apply the captured format to the current (non-collapsed) selection.
+  // Character formatting is written as ONE inline-styled span via insertHTML:
+  // deterministic, undoable in a single Ctrl+Z, and — unlike hiliteColor — the
+  // background color reliably sticks. Block-level metrics are then set directly
+  // on every block the selection touched.
   function fpApplyFormat() {
     if (!editorEl || !fpFormat) return;
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed || !sel.anchorNode || !editorEl.contains(sel.anchorNode)) return;
     editorEl.focus();
     const f = fpFormat;
-    // Toggle inline marks to MATCH the source — painting from plain text REMOVES
-    // bold/italic/etc on the target (Word parity).
-    if (document.queryCommandState('bold') !== f.bold) document.execCommand('bold');
-    if (document.queryCommandState('italic') !== f.italic) document.execCommand('italic');
-    if (document.queryCommandState('underline') !== f.underline) document.execCommand('underline');
-    if (document.queryCommandState('strikeThrough') !== f.strike) document.execCommand('strikeThrough');
-    if (f.fontFamily) document.execCommand('fontName', false, f.fontFamily);
-    if (f.fontSizePx) document.execCommand('fontSize', false, String(fpPxToSize(f.fontSizePx)));
-    // styleWithCSS makes foreColor/hiliteColor emit inline CSS (color/background)
-    // instead of <font> tags — without it the color/highlight does NOT stick.
+    const blocks = selectedBlocks();            // capture BEFORE insertHTML collapses the selection
+    const text = sel.toString();
+    if (!text) return;
+    const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    // Build one inline style string carrying the full character format. Painting
+    // OVERRIDES the target (Word parity), so weight/style/decoration are always
+    // written explicitly rather than toggled against the target's current state.
+    const st = [];
+    if (f.fontFamily) st.push("font-family:'" + f.fontFamily + "'");
+    if (f.fontSizePx) st.push('font-size:' + Math.round(f.fontSizePx) + 'px');
+    if (f.color) st.push('color:' + f.color);
+    if (f.background && !fpIsTransparent(f.background)) st.push('background-color:' + f.background);
+    st.push('font-weight:' + (f.bold ? '700' : '400'));
+    st.push('font-style:' + (f.italic ? 'italic' : 'normal'));
+    const deco = [f.underline ? 'underline' : '', f.strike ? 'line-through' : ''].filter(Boolean).join(' ') || 'none';
+    st.push('text-decoration:' + deco);
     document.execCommand('styleWithCSS', false, true);
-    if (f.color) document.execCommand('foreColor', false, fpRgbToHex(f.color));
-    if (f.background && !fpIsTransparent(f.background)) {
-      document.execCommand('hiliteColor', false, fpRgbToHex(f.background));
-    }
-    document.execCommand('styleWithCSS', false, false);
-    // Block-level bits.
-    if (f.align === 'center') document.execCommand('justifyCenter');
-    else if (f.align === 'left') document.execCommand('justifyLeft');
-    else if (f.align === 'right' || f.align === 'start') document.execCommand('justifyRight');
-    document.execCommand('formatBlock', false, f.blockquote ? 'blockquote' : 'p');
-    // execCommand has no command for line-height / text-indent / margins, so set
-    // them directly on every block element that intersects the selection.
-    const blocks = selectedBlocks();
+    document.execCommand('insertHTML', false, '<span style="' + st.join(';') + '">' + esc(text) + '</span>');
+    // Block-level metrics: execCommand has no command for these, so set them
+    // directly on every block the (original) selection intersected.
     for (const b of blocks) {
+      if (f.align === 'center') b.style.textAlign = 'center';
+      else if (f.align === 'left') b.style.textAlign = 'left';
+      else if (f.align === 'right' || f.align === 'start') b.style.textAlign = 'right';
       if (f.lineHeight && f.lineHeight !== 'normal') b.style.lineHeight = f.lineHeight;
       if (f.textIndent) b.style.textIndent = f.textIndent;
       if (f.marginTop) b.style.marginTop = f.marginTop;
