@@ -701,10 +701,11 @@ async function callGemini(model, key, body, opts) {
         // "quota exhausted" message instead of the raw Gemini string.
         lastErr.status = resp.status;
         console.warn('[ai] attempt', attempt + 1, 'retryable error:', lastErr.message);
-        // Quota (429) on a key that still has backups: don't burn the whole
-        // backoff budget on an exhausted key — fail over fast. (callGeminiFailover
-        // sets quotaFastFail for every key except the last.) 503/5xx still retry.
-        if (resp.status === 429 && opts.quotaFastFail) break;
+        // Quota (429) OR server-busy (503/5xx) on a key that still has backups:
+        // don't burn the whole backoff budget — fail over fast so we reach a
+        // working key quickly. (callGeminiFailover sets quotaFastFail for every
+        // key except the last; the last key keeps the full retry budget.)
+        if (opts.quotaFastFail && (resp.status === 429 || (resp.status >= 500 && resp.status < 600))) break;
         await sleep(BACKOFF_MS[attempt] || 3000);
         continue;
       }
@@ -833,8 +834,8 @@ async function callGeminiFailover(model, body) {
       return await callGemini(model, keys[i], body, { quotaFastFail: !isLast });
     } catch (e) {
       lastErr = e;
-      if (isQuotaError(e) && !isLast) {
-        console.warn('[ai] key #' + (i + 1) + ' quota-limited — failing over to next key');
+      if ((isQuotaError(e) || isServerBusyError(e)) && !isLast) {
+        console.warn('[ai] key #' + (i + 1) + ' busy/quota-limited — failing over to next key');
         continue;
       }
       throw e;
@@ -1197,9 +1198,10 @@ function askStream(opts, onChunk, onDone, onError) {
           try { const j = await resp.json(); detail = (j.error && j.error.message) || ''; } catch (_) {}
           lastErr = new Error('HTTP ' + resp.status + (detail ? ' — ' + detail : ''));
           lastErr.status = resp.status;
-          // 429 (quota) → fail over to the next key; any other HTTP error
-          // (503 busy / 4xx) won't be fixed by a different key, so stop.
-          if (resp.status === 429 && !isLastKey) continue;
+          // 429 (quota) OR 503/5xx (server busy) → try the next key: a backup key
+          // from a DIFFERENT Cloud project often gets through when the primary is
+          // busy. Any other HTTP error (4xx) won't be fixed by a key, so stop.
+          if ((resp.status === 429 || (resp.status >= 500 && resp.status < 600)) && !isLastKey) continue;
           break;
         }
         if (!resp.body || typeof resp.body.getReader !== 'function') {
