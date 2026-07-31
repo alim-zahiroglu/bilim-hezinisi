@@ -1,6 +1,17 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 contextBridge.exposeInMainWorld('electron', {
+  // Resolve the on-disk path of a dropped File. Electron 32 removed the
+  // non-standard File.path property, so drag-and-drop import must go through
+  // webUtils.getPathForFile() instead. Returns '' when the path is unavailable.
+  getDroppedFilePath: (file) => {
+    try {
+      return webUtils.getPathForFile(file) || '';
+    } catch (_) {
+      return '';
+    }
+  },
+
   // Database operations (new SQLite-based)
   dbGetBooks: () => ipcRenderer.invoke('db-get-books'),
   dbGetBooksByCategory: (cat) => ipcRenderer.invoke('db-get-books-by-category', cat),

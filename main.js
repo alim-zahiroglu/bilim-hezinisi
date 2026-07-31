@@ -33,9 +33,18 @@ function coarseSanitizeHtml(html) {
 // Normal runs (npm start) AND any built .exe use this REAL library, so you
 // always see your real books. Only `npm run dev` (the --dev flag) switches to a
 // separate empty sandbox (JamiyKutupxana-DEV) for testing risky changes safely.
+//
+// macOS is the exception. The Mac App Store build is sandboxed, which silently
+// rewrites os.homedir() to ~/Library/Containers/<bundle-id>/Data — the library
+// would still work but land somewhere users cannot find, and it would differ
+// between the sandboxed (App Store) and unsandboxed (DMG) builds of the same
+// app. app.getPath('userData') resolves to one stable, correct location under
+// both. Windows and Linux keep the historical home-folder layout untouched.
 const IS_DEV = process.argv.includes('--dev');
 const DATA_FOLDER_NAME = IS_DEV ? 'JamiyKutupxana-DEV' : 'JamiyKutupxana';
-const DATA_DIR = path.join(os.homedir(), DATA_FOLDER_NAME);
+const DATA_DIR = process.platform === 'darwin'
+  ? path.join(app.getPath('appData'), DATA_FOLDER_NAME)
+  : path.join(os.homedir(), DATA_FOLDER_NAME);
 const DATA_FILE = path.join(DATA_DIR, 'library.json');
 const CONTENT_DIR = path.join(DATA_DIR, 'content');
 const DB_PATH = path.join(DATA_DIR, 'library.db');
@@ -193,8 +202,66 @@ function createWindow() {
   });
 }
 
+/**
+ * macOS routes the standard editing shortcuts (Cmd+C/V/X/A/Z, Cmd+Q, Cmd+W)
+ * through the application menu, so a null menu leaves them dead and an app
+ * without an Edit menu fails App Store review. Windows keeps no menu bar at
+ * all, which is the intended look there.
+ */
+function applyApplicationMenu() {
+  if (process.platform !== 'darwin') {
+    Menu.setApplicationMenu(null);
+    return;
+  }
+
+  const appName = app.getName();
+  Menu.setApplicationMenu(Menu.buildFromTemplate([
+    {
+      label: appName,
+      submenu: [
+        { role: 'about', label: `${appName} ھەققىدە` },
+        { type: 'separator' },
+        { role: 'hide', label: 'يوشۇرۇش' },
+        { role: 'hideOthers', label: 'باشقىلىرىنى يوشۇرۇش' },
+        { role: 'unhide', label: 'ھەممىنى كۆرسىتىش' },
+        { type: 'separator' },
+        { role: 'quit', label: 'چېكىنىش' }
+      ]
+    },
+    {
+      label: 'تەھرىرلەش',
+      submenu: [
+        { role: 'undo', label: 'يېنىۋېلىش' },
+        { role: 'redo', label: 'قايتا قىلىش' },
+        { type: 'separator' },
+        { role: 'cut', label: 'كېسىش' },
+        { role: 'copy', label: 'كۆچۈرۈش' },
+        { role: 'paste', label: 'چاپلاش' },
+        { role: 'selectAll', label: 'ھەممىنى تاللاش' }
+      ]
+    },
+    {
+      label: 'كۆرۈنۈش',
+      submenu: [
+        { role: 'resetZoom', label: 'ئەسلىگە قايتۇرۇش' },
+        { role: 'zoomIn', label: 'چوڭايتىش' },
+        { role: 'zoomOut', label: 'كىچىكلىتىش' },
+        { type: 'separator' },
+        { role: 'togglefullscreen', label: 'پۈتۈن ئېكران' }
+      ]
+    },
+    {
+      label: 'كۆزنەك',
+      submenu: [
+        { role: 'minimize', label: 'كىچىكلىتىش' },
+        { role: 'close', label: 'تاقاش' }
+      ]
+    }
+  ]));
+}
+
 app.whenReady().then(async () => {
-  Menu.setApplicationMenu(null);
+  applyApplicationMenu();
   await initDatabase();
   createWindow();
   app.on('activate', () => {

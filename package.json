@@ -1,6 +1,6 @@
 {
   "name": "bilim-hezinisi",
-  "version": "2.9.1",
+  "version": "3.1.0",
   "description": "بىلىم خەزىنىسى - Uyghur Digital Library",
   "main": "main.js",
   "scripts": {
@@ -12,7 +12,10 @@
     "start": "electron .",
     "dev": "electron . --dev",
     "dist-win": "electron-builder --win --x64",
-    "dist-mac": "electron-builder --mac",
+    "dist-win-store": "electron-builder --win appx --x64",
+    "dist-mac": "CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac",
+    "dist-mac-release": "electron-builder --mac -c.mac.notarize=true",
+    "dist-mas": "electron-builder --mac mas",
     "dist-linux": "electron-builder --linux",
     "dist": "electron-builder --win --x64"
   },
@@ -41,7 +44,11 @@
         }
       ],
       "icon": "assets/icon.ico",
-      "requestedExecutionLevel": "asInvoker"
+      "requestedExecutionLevel": "asInvoker",
+      "files": [
+        "!node_modules/better-sqlite3/prebuilds/darwin-*",
+        "!node_modules/better-sqlite3/prebuilds/linux*"
+      ]
     },
     "nsis": {
       "oneClick": false,
@@ -59,9 +66,65 @@
     "portable": {
       "artifactName": "BilimHezinisi-Portable-${version}.exe"
     },
+    "appx": {
+      "identityName": "REPLACE-WITH-PARTNER-CENTER-IDENTITY-NAME",
+      "publisher": "CN=REPLACE-WITH-PARTNER-CENTER-PUBLISHER-ID",
+      "publisherDisplayName": "REPLACE-WITH-PARTNER-CENTER-DISPLAY-NAME",
+      "applicationId": "BilimHezinisi",
+      "displayName": "بىلىم خەزىنىسى",
+      "backgroundColor": "#FFFBF5",
+      "languages": [
+        "ug",
+        "en-US"
+      ],
+      "artifactName": "BilimHezinisi-${version}-store.${ext}"
+    },
     "mac": {
-      "target": "dmg",
-      "icon": "assets/icon.icns"
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.reference",
+      "files": [
+        "!node_modules/better-sqlite3/prebuilds/win32-*",
+        "!node_modules/better-sqlite3/prebuilds/linux*"
+      ],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "notarize": false,
+      "extendInfo": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSHumanReadableCopyright": "Jamiy Kutupxana"
+      },
+      "artifactName": "BilimHezinisi-${version}-mac-${arch}.${ext}"
+    },
+    "dmg": {
+      "artifactName": "BilimHezinisi-${version}-mac-${arch}.${ext}"
+    },
+    "mas": {
+      "category": "public.app-category.reference",
+      "entitlements": "build/entitlements.mas.plist",
+      "entitlementsInherit": "build/entitlements.mas.inherit.plist",
+      "hardenedRuntime": false,
+      "provisioningProfile": "build/embedded.provisionprofile",
+      "extendInfo": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "linux": {
       "target": "AppImage",
@@ -114,21 +177,23 @@
   ],
   "author": "Jamiy Kutupxana",
   "license": "MIT",
+  "overrides": {
+    "node-abi": "^4.33.0"
+  },
   "devDependencies": {
-    "@electron/rebuild": "^4.0.4",
-    "electron": "^28.0.0",
-    "electron-builder": "^24.0.0",
+    "@electron/rebuild": "^4.2.0",
+    "electron": "^43.2.0",
+    "electron-builder": "^26.0.12",
     "pdfjs-dist": "3.11.174"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
-    "better-sqlite3": "^11.10.0",
+    "better-sqlite3": "^13.0.2",
     "docx": "^8.5.0",
     "dompurify": "^3.4.1",
     "electron-window-state": "^5.0.3",
     "mammoth": "^1.6.0",
     "node-html-parser": "^6.1.13",
-    "sql.js": "^1.10.0",
     "tesseract.js": "^5.0.0",
     "turndown": "^7.2.4",
     "word-extractor": "^1.0.4"

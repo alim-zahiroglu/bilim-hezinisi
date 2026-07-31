@@ -1,0 +1,90 @@
+name: Release
+
+# Tag a commit to publish, e.g.:  git tag v3.1.0 && git push origin v3.1.0
+# The GitHub Release is created as a draft so the notes can be written in
+# Uyghur before anything becomes public.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            name: macOS
+          - os: windows-latest
+            name: Windows
+
+    runs-on: ${{ matrix.os }}
+    name: Build ${{ matrix.name }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set up local pdf.js
+        run: npm run setup
+
+      # REQUIRED. assets/ocr/tessdata/*.traineddata are gitignored, so without
+      # this step the packaged app ships with offline OCR that silently does
+      # nothing. Never remove it from the release path.
+      - name: Fetch offline OCR models
+        run: npm run fetch-ocr-models
+
+      - name: Verify OCR models are present
+        shell: bash
+        run: |
+          for m in ukij uig eng tur; do
+            test -s "assets/ocr/tessdata/$m.traineddata" || { echo "::error::missing OCR model $m"; exit 1; }
+          done
+          echo "All OCR models present."
+
+      - name: Build and publish (macOS)
+        if: matrix.os == 'macos-latest'
+        run: npx electron-builder --mac --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Developer ID signing + notarization. When these secrets are absent
+          # the build still succeeds, just unsigned — useful before the
+          # certificates exist. Signing is only attempted once MAC_CSC_LINK is
+          # set, otherwise electron-builder would fail looking for an identity.
+          CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.MAC_CSC_LINK != '' }}
+          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Build and publish (Windows)
+        if: matrix.os == 'windows-latest'
+        run: npx electron-builder --win --x64 --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}-installers
+          retention-days: 14
+          path: |
+            dist/*.dmg
+            dist/*.zip
+            dist/*.exe
+            dist/*.blockmap
+            dist/latest*.yml
+          if-no-files-found: warn

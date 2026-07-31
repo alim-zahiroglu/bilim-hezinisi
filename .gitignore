@@ -40,3 +40,13 @@ assets/ocr/tessdata/*.traineddata
 # `node scripts/copy-vendor.js` (postinstall); large + regenerable.
 assets/pdfjs/cmaps/
 assets/pdfjs/standard_fonts/
+
+# Code-signing secrets — NEVER commit these.
+# The Mac App Store provisioning profile and any exported certificates are tied
+# to the Apple developer account; keep them local / in CI secrets only.
+build/embedded.provisionprofile
+*.provisionprofile
+*.p12
+*.mobileprovision
+.env
+.env.local
