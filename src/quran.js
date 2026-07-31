@@ -114,6 +114,7 @@
           <div class="quran-content-inner" id="quran-content-inner">
             <div class="quran-no-results">يۈكلىنىۋاتىدۇ...</div>
           </div>
+          ${renderTranslationCredit()}
         </div>
       </div>
     </div>`;
@@ -124,6 +125,16 @@
       await renderSura(_s().curSura || 1);
     }
   };
+
+  // QuranEnc.com's terms of use require the publisher, the source and the
+  // version number to be shown wherever the translation is republished.
+  // The translation itself is stored and displayed verbatim.
+  function renderTranslationCredit() {
+    return `<div class="quran-credit">
+      ئۇيغۇرچە تەرجىمە مەنبەسى: <span class="quran-credit-src">QuranEnc.com</span>
+      — «قۇرئان كەرىم تەرجىمىسى» (شەيخ محمد صالح) · نۇسخا v1.0.2
+    </div>`;
+  }
 
   function renderToolbar() {
     const q = _s().searchQuery || '';

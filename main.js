@@ -107,9 +107,23 @@ async function initDatabase() {
   // Ensure default categories exist
   database.ensureDefaultCategories(defaultCats());
 
-  // Seed Quran data (no-op if already seeded)
+  // Seed Quran data (no-op if already seeded).
+  //
+  // Earlier versions stripped inline markers like (1) and [12] out of the
+  // Uyghur translation before storing it. QuranEnc.com's terms of use forbid
+  // modifying the translation, so the text is now stored verbatim — and
+  // existing libraries, which would otherwise never re-seed, are refreshed
+  // once so they hold the published text too.
+  let forceReseed = false;
   try {
-    await seedQuran(__dirname, database);
+    forceReseed = !database.getSetting('quran_verbatim_translation_v1', false);
+  } catch(e) {
+    console.warn('[seed-quran] Could not read re-seed flag:', e.message);
+  }
+
+  try {
+    await seedQuran(__dirname, database, { force: forceReseed });
+    if (forceReseed) database.setSetting('quran_verbatim_translation_v1', true);
     database.saveDB(DATA_DIR);
   } catch(e) {
     console.error('[seed-quran] Seed failed:', e.message);

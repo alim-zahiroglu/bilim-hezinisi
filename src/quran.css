@@ -218,6 +218,16 @@
   margin-bottom: 14px; font-family: sans-serif;
 }
 
+/* Translation source credit — required by QuranEnc.com's terms of use. */
+.quran-credit {
+  margin: 28px auto 8px; padding-top: 12px;
+  max-width: 760px;
+  border-top: 1px solid var(--border, rgba(128,128,128,.25));
+  font-family: sans-serif; font-size: 11px; line-height: 1.7;
+  color: var(--text3); text-align: center;
+}
+.quran-credit-src { font-weight: 600; }
+
 /* Responsive */
 @media (max-width: 900px) {
   .quran-content { padding: 18px 20px; }

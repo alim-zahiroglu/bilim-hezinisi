@@ -222,8 +222,10 @@ function parseUyghurXml(xmlContent) {
       if (!ayaNum || !trEl) continue;
       let text = trEl.text.trim();
       // Strip CDATA wrappers that node-html-parser doesn't unwrap automatically.
+      // This is an artefact of the parser, not part of the published text.
       text = text.replace(/^<!\[CDATA\[([\s\S]*?)\]\]>$/, '$1').trim();
-      text = text.replace(/\(\d+\)[.。]?\s*$/, '').trim();
+      // Nothing else is removed: QuranEnc.com's terms forbid modifying the
+      // translation, so the trailing verse markers it publishes are kept.
       map[suraNum][ayaNum] = text;
     }
   }
@@ -268,9 +270,11 @@ function findUyghurXml(projectRoot) {
  * Main entry. Called from main.js at startup.
  * @param {string} projectRoot
  * @param {object} database
+ * @param {{force?: boolean}} [options] force re-seeds an already-populated DB.
+ *   quranSeedBulk clears both Quran tables first, so this is safe to repeat.
  */
-async function seedQuran(projectRoot, database) {
-  if (database.quranSuraExists && database.quranSuraExists()) {
+async function seedQuran(projectRoot, database, options = {}) {
+  if (!options.force && database.quranSuraExists && database.quranSuraExists()) {
     console.log('[seed-quran] Already seeded, skipping.');
     return { skipped: true };
   }
@@ -356,7 +360,10 @@ async function seedQuran(projectRoot, database) {
         sura: sn, aya: an,
         text_ar: ar,
         text_ar_simple: stripTashkil(ar),
-        text_ug: cleanUyghurTranslation(ug)
+        // Stored verbatim. QuranEnc.com's terms of use forbid modification,
+        // addition, or deletion of the translation, so the inline markers the
+        // Saleh translation carries are kept exactly as published.
+        text_ug: String(ug || '').trim()
       });
     }
   }
@@ -366,17 +373,4 @@ async function seedQuran(projectRoot, database) {
   return result;
 }
 
-/**
- * Cleans Uyghur translation text by removing tafsir citation markers
- * like (1), (2،3), [12] that appear inline in the Saleh translation.
- */
-function cleanUyghurTranslation(text) {
-  if (!text) return '';
-  return String(text)
-    .replace(/\([\d،,\s\-]+\)/g, '')
-    .replace(/\[[\d،,\s\-]+\]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-module.exports = { seedQuran, stripTashkil, stripBasmalaPrefix, cleanUyghurTranslation, SURA_META };
+module.exports = { seedQuran, stripTashkil, stripBasmalaPrefix, SURA_META };
