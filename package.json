@@ -15,7 +15,7 @@
     "dist-win-store": "electron-builder --win appx --x64",
     "dist-mac": "CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac",
     "dist-mac-release": "electron-builder --mac -c.mac.notarize=true",
-    "dist-mas": "electron-builder --mac mas",
+    "dist-mas": "electron-builder --mac mas -c.buildVersion=${MAS_BUILD:-1}",
     "dist-linux": "electron-builder --linux",
     "dist": "electron-builder --win --x64"
   },

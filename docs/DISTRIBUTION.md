@@ -98,12 +98,21 @@ MSIX does not virtualize the user profile for app data, so the library keeps liv
    - a **Mac App Store** provisioning profile for the App ID
 3. Save the profile as `build/embedded.provisionprofile` (already referenced by
    `build.mas.provisioningProfile`; the file is gitignored — never commit it).
-4. Build and upload:
+4. Create the app record in App Store Connect first (Apps → + → New App, platform
+   macOS, bundle ID `com.bilim.hezinisi`). Uploads are rejected until it exists.
+5. Build and upload:
+
    ```bash
-   npm run dist-mas
-   xcrun altool --upload-app -f "dist/mas/Bilim Hezinisi.pkg" -t macos \
-     -u "$APPLE_ID" -p "$APPLE_APP_SPECIFIC_PASSWORD"
+   npm run dist-mas                 # → dist/mas-arm64/Bilim Hezinisi.pkg
+   MAS_BUILD=2 npm run dist-mas     # bump for every re-upload of the same version
    ```
+
+   Upload the `.pkg` with **Transporter** (free on the Mac App Store) — drag the file
+   in and press Deliver. `xcrun altool --upload-app` still works but Apple has
+   deprecated it.
+
+   App Store Connect refuses a build number it has already seen. `MAS_BUILD` sets
+   `CFBundleVersion`, so raise it on every upload that reuses the same `version`.
 
 ### Listing requirements
 
