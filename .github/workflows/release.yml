@@ -1,8 +1,10 @@
 name: Release
 
 # Tag a commit to publish, e.g.:  git tag v3.1.0 && git push origin v3.1.0
-# The GitHub Release is created as a draft so the notes can be written in
-# Uyghur before anything becomes public.
+# The build jobs never publish themselves — if two of them race to create the
+# same GitHub release, you get two half-filled draft releases. Instead each
+# platform uploads its installers as workflow artifacts, and a single final job
+# collects them into one draft release.
 on:
   push:
     tags:
@@ -54,37 +56,69 @@ jobs:
           done
           echo "All OCR models present."
 
-      - name: Build and publish (macOS)
+      - name: Build (macOS)
         if: matrix.os == 'macos-latest'
-        run: npx electron-builder --mac --publish always
+        # An env var set to "" still counts as set, and electron-builder would
+        # read an empty CSC_LINK as a certificate path — resolving it to the
+        # project directory and failing with "<dir> not a file". So when no
+        # certificate secret exists, unset the signing vars and build unsigned.
+        # Signing + notarization switch on automatically once MAC_CSC_LINK is
+        # added to the repository secrets.
+        shell: bash
+        run: |
+          if [ -z "$CSC_LINK" ]; then
+            echo "No Developer ID certificate configured — building unsigned."
+            unset CSC_LINK CSC_KEY_PASSWORD
+            export CSC_IDENTITY_AUTO_DISCOVERY=false
+            npx electron-builder --mac --publish never
+          else
+            echo "Signing with Developer ID and notarizing."
+            npx electron-builder --mac -c.mac.notarize=true --publish never
+          fi
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Developer ID signing + notarization. When these secrets are absent
-          # the build still succeeds, just unsigned — useful before the
-          # certificates exist. Signing is only attempted once MAC_CSC_LINK is
-          # set, otherwise electron-builder would fail looking for an identity.
-          CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.MAC_CSC_LINK != '' }}
           CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
-      - name: Build and publish (Windows)
+      - name: Build (Windows)
         if: matrix.os == 'windows-latest'
-        run: npx electron-builder --win --x64 --publish always
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --win --x64 --publish never
 
-      - name: Upload artifacts
+      - name: Upload installers
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}-installers
           retention-days: 14
+          if-no-files-found: error
           path: |
+            dist/*.exe
             dist/*.dmg
             dist/*.zip
-            dist/*.exe
-            dist/*.blockmap
-            dist/latest*.yml
-          if-no-files-found: warn
+
+  release:
+    name: Publish release
+    needs: build
+    # Runs even if one platform failed, so a working Windows build is still
+    # publishable while macOS signing is being sorted out.
+    if: always() && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: List collected installers
+        run: ls -lh artifacts/
+
+      - name: Create draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          tag_name: ${{ github.ref_name }}
+          name: بىلىم خەزىنىسى ${{ github.ref_name }}
+          fail_on_unmatched_files: true
+          files: artifacts/*
