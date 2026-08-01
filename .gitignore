@@ -41,6 +41,11 @@ assets/ocr/tessdata/*.traineddata
 assets/pdfjs/cmaps/
 assets/pdfjs/standard_fonts/
 
+# The user's global gitignore carries a Gradle-style "/build/" rule, which
+# silently excluded the macOS entitlements this project keeps in build/.
+# Re-include the directory here; the signing secrets below stay excluded.
+!/build/
+
 # Code-signing secrets — NEVER commit these.
 # The Mac App Store provisioning profile and any exported certificates are tied
 # to the Apple developer account; keep them local / in CI secrets only.

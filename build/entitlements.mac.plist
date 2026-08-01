@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!--
+    Developer ID / notarized DMG build (NOT the Mac App Store build).
+    Electron needs these three under the hardened runtime: V8 JITs JavaScript,
+    and tesseract.js compiles WASM at runtime for offline OCR.
+  -->
+  <key>com.apple.security.cs.allow-jit</key>
+  <true/>
+  <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+  <true/>
+  <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+  <true/>
+
+  <!-- Gemini AI is opt-in and main-process only; the renderer stays on connect-src 'self'. -->
+  <key>com.apple.security.network.client</key>
+  <true/>
+</dict>
+</plist>
