@@ -210,10 +210,31 @@ function createWindow() {
     mainWindow.show();
   });
 
+  // macOS keeps the app running after the window closes; drop the reference
+  // so showMainWindow() knows to build a fresh one.
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
     return { action: 'deny' };
   });
+}
+
+/**
+ * Bring the main window back: restore/focus it if it still exists, otherwise
+ * recreate it. App Store review requires a menu path to reopen the window
+ * after the user closes it (Guideline 4).
+ */
+function showMainWindow() {
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+  } else if (dbReady) {
+    createWindow();
+  }
 }
 
 /**
@@ -265,10 +286,15 @@ function applyApplicationMenu() {
       ]
     },
     {
+      // role 'window' makes this the macOS Windows menu, which also lists
+      // open windows automatically.
+      role: 'window',
       label: 'كۆزنەك',
       submenu: [
         { role: 'minimize', label: 'كىچىكلىتىش' },
-        { role: 'close', label: 'تاقاش' }
+        { role: 'close', label: 'تاقاش' },
+        { type: 'separator' },
+        { label: 'بىلىم خەزىنىسى', click: showMainWindow }
       ]
     }
   ]));
@@ -279,7 +305,7 @@ app.whenReady().then(async () => {
   await initDatabase();
   createWindow();
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (!mainWindow) createWindow();
   });
 });
 
